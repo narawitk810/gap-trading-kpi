@@ -46,10 +46,10 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
         <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลไลฟ์สด</p>
         <div className="grid grid-cols-2 gap-3">
-          {ex.live_hours && (
+          {!!ex.live_hours && (
             <DetailRow label="ชั่วโมงไลฟ์" value={`${ex.live_hours} ชั่วโมง`} />
           )}
-          {ex.sales_amount && (
+          {!!ex.sales_amount && (
             <DetailRow
               label="ยอดขาย"
               value={`${Number(ex.sales_amount).toLocaleString()} บาท`}
