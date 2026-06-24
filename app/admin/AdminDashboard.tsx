@@ -4,8 +4,53 @@ import { useSearchParams } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
 import { DEPARTMENTS } from '@/types/kpi'
 import type { KPIEntry } from '@/types/kpi'
+import * as XLSX from 'xlsx'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
+
+function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
+  if (!entry.extra_data) return {}
+  let ex: Record<string, unknown> = {}
+  try { ex = JSON.parse(entry.extra_data) } catch { return {} }
+  if (entry.department === 'ไลฟ์สด') {
+    return {
+      'ชั่วโมงไลฟ์': ex.live_hours ? String(ex.live_hours) : '',
+      'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
+    }
+  }
+  if (entry.department === 'Creative') {
+    const links = (ex.clip_links as string[] | undefined) || []
+    return { 'ลิ้งคลิป': links.join('\n') }
+  }
+  if (entry.department === 'การตลาด') {
+    return {
+      'Ads Shopee (บาท)': ex.ads_shopee ? Number(ex.ads_shopee) : '',
+      'Ads Lazada (บาท)': ex.ads_lazada ? Number(ex.ads_lazada) : '',
+      'Ads TikTok (บาท)': ex.ads_tiktok ? Number(ex.ads_tiktok) : '',
+      'Ads Facebook (บาท)': ex.ads_facebook ? Number(ex.ads_facebook) : '',
+    }
+  }
+  return {}
+}
+
+function exportToExcel(entries: KPIEntry[], dateFrom: string, dateTo: string) {
+  const rows = entries.map((e) => ({
+    'รหัส': e.id,
+    'วันที่': formatDate(e.date),
+    'เวลา': e.time,
+    'แผนก': e.department,
+    'ชื่อเล่น': e.nickname,
+    'ช่องที่ดูแล': e.channel_name,
+    'งานที่ทำ': e.tasks.join('\n'),
+    'อุปสรรค': e.obstacles || '',
+    ...parseExtraForExcel(e),
+  }))
+  const ws = XLSX.utils.json_to_sheet(rows)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'KPI')
+  const label = dateFrom || dateTo ? `${dateFrom || 'all'}_ถึง_${dateTo || 'all'}` : 'ทั้งหมด'
+  XLSX.writeFile(wb, `KPI_${label}.xlsx`)
+}
 
 function getTodayDate() {
   const now = new Date()
@@ -272,16 +317,28 @@ export default function AdminDashboard() {
               className="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
             />
           </div>
-          {hasFilters && (
+          <div className="mt-3 flex items-center gap-4">
+            {hasFilters && (
+              <button
+                onClick={() =>
+                  setFilters({ department: '', dateFrom: '', dateTo: '', nickname: '' })
+                }
+                className="text-xs text-[#DC2626] font-semibold hover:underline"
+              >
+                ล้างตัวกรองทั้งหมด
+              </button>
+            )}
             <button
-              onClick={() =>
-                setFilters({ department: '', dateFrom: '', dateTo: '', nickname: '' })
-              }
-              className="mt-3 text-xs text-[#DC2626] font-semibold hover:underline"
+              onClick={() => exportToExcel(filteredEntries, filters.dateFrom, filters.dateTo)}
+              disabled={filteredEntries.length === 0}
+              className="ml-auto flex items-center gap-2 bg-[#16A34A] text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-[#15803d] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              ล้างตัวกรองทั้งหมด
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export Excel ({filteredEntries.length} รายการ)
             </button>
-          )}
+          </div>
         </div>
 
         {/* Table */}
