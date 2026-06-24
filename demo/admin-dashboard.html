@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — GAP TRADING KPI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{font-family:'Sarabun',sans-serif}*{box-sizing:border-box}</style>
+</head>
+<body class="bg-[#F5F6F8] min-h-screen">
+
+<!-- HEADER -->
+<div class="bg-[#1E3A5F] text-white shadow-md">
+  <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div>
+      <h1 class="text-lg font-bold">GAP TRADING — Admin</h1>
+      <p class="text-xs opacity-70 mt-0.5">ระบบ KPI รายวัน</p>
+    </div>
+    <span class="bg-white/20 text-xs px-3 py-1.5 rounded-full font-medium">เข้าสู่ระบบแล้ว</span>
+  </div>
+</div>
+
+<div class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+      <p class="text-3xl font-bold text-[#1E3A5F]" id="c-today">0</p>
+      <p class="text-xs text-gray-500 mt-1">รายการวันนี้</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+      <p class="text-3xl font-bold text-[#16A34A]" id="c-dept">0</p>
+      <p class="text-xs text-gray-500 mt-1">แผนกที่บันทึก</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+      <p class="text-3xl font-bold text-[#374151]" id="c-total">0</p>
+      <p class="text-xs text-gray-500 mt-1">รวมทั้งหมด</p>
+    </div>
+    <div class="bg-white rounded-2xl p-4 shadow-sm text-center">
+      <p class="text-3xl font-bold text-[#1E3A5F]" id="c-tasks">0</p>
+      <p class="text-xs text-gray-500 mt-1">งานที่บันทึก</p>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="bg-white rounded-2xl p-4 shadow-sm">
+    <p class="text-sm font-semibold text-[#374151] mb-3">ค้นหาและกรอง</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <select id="f-dept" class="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" onchange="applyFilter()">
+        <option value="">ทุกแผนก</option>
+        <option>ไลฟ์สด</option><option>การตลาด</option><option>Creative</option>
+        <option>บัญชี</option><option>ธุรการ</option><option>บุคคล</option>
+        <option>Stock</option><option>แพค</option><option>ผู้จัดการ</option>
+      </select>
+      <input id="f-date" type="date" class="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" onchange="applyFilter()" />
+      <input id="f-name" type="text" placeholder="ค้นชื่อเล่น..." class="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" oninput="applyFilter()" />
+      <button onclick="clearFilter()" class="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm text-[#374151] hover:bg-[#F5F6F8] font-medium">ล้างตัวกรอง</button>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between">
+      <p class="text-sm font-semibold text-[#374151]">รายการ KPI</p>
+      <span id="result-count" class="text-xs bg-[#F5F6F8] text-gray-500 px-2 py-1 rounded-full">— รายการ</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-[#F5F6F8] text-xs text-gray-500">
+          <tr>
+            <th class="text-left px-4 py-3 font-semibold">วันที่ / เวลา</th>
+            <th class="text-left px-4 py-3 font-semibold">แผนก</th>
+            <th class="text-left px-4 py-3 font-semibold">ชื่อเล่น</th>
+            <th class="text-left px-4 py-3 font-semibold hidden sm:table-cell">ช่อง</th>
+            <th class="text-left px-4 py-3 font-semibold hidden sm:table-cell">งาน</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div id="empty-state" class="hidden text-center py-12 text-gray-400">
+      <p class="text-4xl mb-3">📋</p>
+      <p class="text-sm">ไม่พบข้อมูลที่ตรงกัน</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detail-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+      <div>
+        <h3 id="modal-title" class="text-lg font-bold text-[#1E3A5F]">รายละเอียด KPI</h3>
+        <p id="modal-id" class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <button onclick="closeModal()" class="text-2xl text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg">×</button>
+    </div>
+    <div class="px-5 py-4 space-y-5" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const today = new Date().toISOString().split('T')[0]
+
+const MOCK = [
+  {
+    id:'KPI-0001', date:today, time:'09:15', department:'ไลฟ์สด',
+    nickname:'มิ้น', channel_name:'@GAPofficial',
+    tasks:['เปิดไลฟ์สินค้าใหม่','โปรโมทแคมเปญลดราคา','ตอบคำถามลูกค้า 40+ คน'],
+    obstacles:'สัญญาณอินเทอร์เน็ตไม่เสถียรช่วง 10 โมง',
+    extra_data: JSON.stringify({ live_hours:'4.5', sales_amount:'87500' })
+  },
+  {
+    id:'KPI-0002', date:today, time:'10:30', department:'Creative',
+    nickname:'บีม', channel_name:'@GAPcreative',
+    tasks:['ตัดคลิปสินค้าใหม่ 3 ชิ้น','ทำ thumbnail','รีวิวสคริปต์กับทีม'],
+    obstacles:'',
+    extra_data: JSON.stringify({ clip_links:['https://youtube.com/shorts/abc123','https://tiktok.com/@gap/video/456','https://youtube.com/watch?v=xyz789'] })
+  },
+  {
+    id:'KPI-0003', date:today, time:'11:00', department:'การตลาด',
+    nickname:'ฝ้าย', channel_name:'@GAPtrading',
+    tasks:['ปรับ bidding Shopee','วิเคราะห์ CTR Facebook','ทำ report ประจำสัปดาห์'],
+    obstacles:'งบ Lazada ถูก reject ต้องส่ง creative ใหม่',
+    extra_data: JSON.stringify({ ads_shopee:'2500', ads_lazada:'0', ads_tiktok:'4800', ads_facebook:'3200' })
+  },
+  {
+    id:'KPI-0004', date:today, time:'13:45', department:'บัญชี',
+    nickname:'แนน', channel_name:'-',
+    tasks:['ปิดบัญชีรายเดือน','ตรวจสอบใบเสร็จค้างชำระ','อัปเดต spreadsheet สต็อก'],
+    obstacles:'', extra_data:''
+  },
+  {
+    id:'KPI-0005', date:today, time:'14:00', department:'ผู้จัดการ',
+    nickname:'บอส', channel_name:'ทุกแผนก',
+    tasks:['ประชุมทีมไลฟ์สด','ตรวจ KPI รายสัปดาห์','ติดตามยอดขาย Q2'],
+    obstacles:'', extra_data:''
+  },
+  {
+    id:'KPI-0006', date:today, time:'15:20', department:'Stock',
+    nickname:'ต้น', channel_name:'-',
+    tasks:['รับสินค้าเข้าคลัง 200 ชิ้น','อัปเดตระบบสต็อก','เตรียมออเดอร์พรุ่งนี้'],
+    obstacles:'Barcode บางชิ้นสแกนไม่ได้', extra_data:''
+  },
+]
+
+let filtered = [...MOCK]
+
+function applyFilter() {
+  const dept = document.getElementById('f-dept').value
+  const date = document.getElementById('f-date').value
+  const name = document.getElementById('f-name').value.trim().toLowerCase()
+  filtered = MOCK.filter(e =>
+    (!dept || e.department === dept) &&
+    (!date || e.date === date) &&
+    (!name || e.nickname.toLowerCase().includes(name))
+  )
+  renderTable()
+}
+
+function clearFilter() {
+  document.getElementById('f-dept').value=''
+  document.getElementById('f-date').value=''
+  document.getElementById('f-name').value=''
+  filtered=[...MOCK]
+  renderTable()
+}
+
+function formatDate(d) {
+  const p=d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`
+}
+
+function deptBadgeClass(dept) {
+  const map={
+    'ไลฟ์สด':'bg-red-100 text-red-700','Creative':'bg-purple-100 text-purple-700',
+    'การตลาด':'bg-orange-100 text-orange-700','บัญชี':'bg-blue-100 text-blue-700',
+    'ธุรการ':'bg-gray-100 text-gray-600','บุคคล':'bg-pink-100 text-pink-700',
+    'Stock':'bg-yellow-100 text-yellow-700','แพค':'bg-green-100 text-green-700',
+    'ผู้จัดการ':'bg-[#1E3A5F]/10 text-[#1E3A5F]'
+  }
+  return map[dept] || 'bg-gray-100 text-gray-600'
+}
+
+function renderTable() {
+  const tbody=document.getElementById('table-body')
+  const empty=document.getElementById('empty-state')
+  document.getElementById('result-count').textContent=filtered.length+' รายการ'
+  if(!filtered.length){tbody.innerHTML='';empty.classList.remove('hidden');return}
+  empty.classList.add('hidden')
+  tbody.innerHTML=filtered.map((e,i)=>`
+    <tr class="border-t border-[#E2E8F0] hover:bg-[#F5F6F8] cursor-pointer transition-colors" onclick="openModal(${i})">
+      <td class="px-4 py-3 text-xs text-gray-500">${formatDate(e.date)}<br/><span class="text-gray-400">${e.time} น.</span></td>
+      <td class="px-4 py-3">
+        <span class="text-xs px-2 py-1 rounded-full font-semibold ${deptBadgeClass(e.department)}">${e.department}</span>
+      </td>
+      <td class="px-4 py-3 font-medium text-[#374151]">${e.nickname}</td>
+      <td class="px-4 py-3 text-gray-500 hidden sm:table-cell">${e.channel_name}</td>
+      <td class="px-4 py-3 hidden sm:table-cell">
+        <span class="text-xs bg-[#F5F6F8] text-[#374151] px-2 py-1 rounded-full">${e.tasks.length} งาน</span>
+      </td>
+      <td class="px-4 py-3 text-right">
+        <span class="text-xs text-[#1E3A5F] font-semibold">ดูรายละเอียด</span>
+      </td>
+    </tr>`).join('')
+}
+
+function row(label, value) {
+  return `<div><p class="text-xs text-gray-500">${label}</p><p class="text-sm font-medium text-[#374151]">${value}</p></div>`
+}
+
+function renderExtra(e) {
+  if(!e.extra_data) return ''
+  let ex={}
+  try{ex=JSON.parse(e.extra_data)}catch{return ''}
+  const dept=e.department
+
+  if(dept==='ไลฟ์สด' && (ex.live_hours||ex.sales_amount)) return `
+    <div class="pt-2 border-t border-[#E2E8F0]">
+      <p class="text-xs font-bold text-[#1E3A5F] mb-2">ข้อมูลไลฟ์สด</p>
+      <div class="bg-blue-50 rounded-xl p-3 grid grid-cols-2 gap-4">
+        ${ex.live_hours ? row('ชั่วโมงไลฟ์', ex.live_hours+' ชั่วโมง') : ''}
+        ${ex.sales_amount ? row('ยอดขาย', Number(ex.sales_amount).toLocaleString()+' บาท') : ''}
+      </div>
+    </div>`
+
+  if(dept==='Creative') {
+    const links=(ex.clip_links||[]).filter(Boolean)
+    if(!links.length) return ''
+    return `
+      <div class="pt-2 border-t border-[#E2E8F0]">
+        <p class="text-xs font-bold text-[#1E3A5F] mb-2">ลิ้งคลิปที่ทำเสร็จ (${links.length} คลิป)</p>
+        <div class="bg-blue-50 rounded-xl p-3">
+          <ul class="space-y-1.5">${links.map((l,i)=>`
+            <li class="flex gap-2 text-xs">
+              <span class="text-gray-400 shrink-0">${i+1}.</span>
+              <a href="${l}" target="_blank" rel="noopener noreferrer" class="text-[#1E3A5F] underline truncate">${l}</a>
+            </li>`).join('')}</ul>
+        </div>
+      </div>`
+  }
+
+  if(dept==='การตลาด') {
+    const platforms=[['Shopee','ads_shopee'],['Lazada','ads_lazada'],['TikTok','ads_tiktok'],['Facebook','ads_facebook']]
+      .filter(([,k])=>ex[k]&&Number(ex[k])>0)
+    if(!platforms.length) return ''
+    const total=platforms.reduce((s,[,k])=>s+Number(ex[k]),0)
+    return `
+      <div class="pt-2 border-t border-[#E2E8F0]">
+        <p class="text-xs font-bold text-[#1E3A5F] mb-2">ค่า Ads วันนี้ (รวม ${total.toLocaleString()} บาท)</p>
+        <div class="bg-blue-50 rounded-xl p-3 grid grid-cols-2 gap-3">
+          ${platforms.map(([l,k])=>row(l, Number(ex[k]).toLocaleString()+' บาท')).join('')}
+        </div>
+      </div>`
+  }
+  return ''
+}
+
+function openModal(i) {
+  const e=filtered[i]
+  document.getElementById('modal-title').textContent=`${e.department} — ${e.nickname}`
+  document.getElementById('modal-id').textContent=e.id
+  document.getElementById('modal-body').innerHTML=`
+    <div class="grid grid-cols-2 gap-4">
+      ${row('แผนก', e.department)}
+      ${row('วันที่ / เวลา', formatDate(e.date)+'&nbsp;&nbsp;'+e.time+' น.')}
+      ${row('ชื่อเล่น', e.nickname)}
+      ${row('ช่องที่ดูแล', e.channel_name)}
+    </div>
+    ${renderExtra(e)}
+    <div>
+      <p class="text-xs text-gray-500 mb-2">สิ่งที่ทำวันนี้</p>
+      <ul class="space-y-2">${e.tasks.map((t,i)=>`
+        <li class="flex gap-2 text-sm bg-[#F5F6F8] rounded-xl px-3 py-2.5">
+          <span class="text-gray-400 shrink-0">${i+1}.</span>
+          <span class="text-[#374151]">${t}</span>
+        </li>`).join('')}</ul>
+    </div>
+    ${e.obstacles ? `
+    <div>
+      <p class="text-xs text-gray-500 mb-2">อุปสรรคที่เจอ</p>
+      <p class="text-sm text-[#374151] bg-[#F5F6F8] rounded-xl px-3 py-2.5">${e.obstacles}</p>
+    </div>` : ''}
+    <p class="text-xs text-gray-400 text-right">บันทึกเมื่อ: ${formatDate(e.date)} ${e.time} น.</p>
+  `
+  document.getElementById('detail-modal').classList.remove('hidden')
+}
+
+function closeModal() {
+  document.getElementById('detail-modal').classList.add('hidden')
+}
+document.getElementById('detail-modal').addEventListener('click', function(ev) {
+  if(ev.target===this) closeModal()
+})
+
+function updateSummary() {
+  const todayEntries=MOCK.filter(e=>e.date===today)
+  document.getElementById('c-today').textContent=todayEntries.length
+  document.getElementById('c-dept').textContent=new Set(todayEntries.map(e=>e.department)).size
+  document.getElementById('c-total').textContent=MOCK.length
+  document.getElementById('c-tasks').textContent=MOCK.reduce((s,e)=>s+e.tasks.length,0)
+}
+
+document.getElementById('f-date').value=today
+applyFilter()
+updateSummary()
+</script>
+</body>
+</html>

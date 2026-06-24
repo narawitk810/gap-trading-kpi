@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPI รายวัน — GAP TRADING</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{font-family:'Sarabun',sans-serif}*{box-sizing:border-box}</style>
+</head>
+<body class="bg-[#F5F6F8] min-h-screen">
+
+<!-- SUCCESS -->
+<div id="success" class="hidden min-h-screen bg-[#F5F6F8] flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+    <div class="text-6xl mb-4">✅</div>
+    <h2 class="text-2xl font-bold text-[#1E3A5F] mb-2">บันทึกข้อมูลสำเร็จ</h2>
+    <p class="text-gray-500 text-sm mb-1">เลขอ้างอิง</p>
+    <p class="text-xl font-bold text-[#16A34A] mb-8" id="ref-id">#KPI-0001</p>
+    <button onclick="resetForm()" class="w-full bg-[#1E3A5F] text-white py-3.5 rounded-xl font-semibold">กรอกข้อมูลอีกครั้ง</button>
+  </div>
+</div>
+
+<!-- FORM -->
+<div id="main">
+  <div class="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md">
+    <h1 class="text-xl font-bold">GAP TRADING</h1>
+    <p class="text-sm mt-1 opacity-75">บันทึก KPI รายวัน</p>
+  </div>
+
+  <div class="max-w-lg mx-auto px-4 py-6 space-y-5 pb-10">
+
+    <!-- Department -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <label class="block text-sm font-semibold text-[#374151] mb-3">แผนก <span class="text-[#DC2626]">*</span></label>
+      <div class="grid grid-cols-3 gap-2" id="dept-grid"></div>
+      <p id="err-dept" class="text-[#DC2626] text-xs mt-2 hidden">กรุณาเลือกแผนก</p>
+    </div>
+
+    <!-- Date + Time -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-semibold text-[#374151] mb-2">วันที่ <span class="text-[#DC2626]">*</span></label>
+          <input id="inp-date" type="date" class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-[#374151] mb-2">เวลา</label>
+          <input id="inp-time" type="time" class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Nickname + Channel -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+      <div>
+        <label class="block text-sm font-semibold text-[#374151] mb-2">ชื่อเล่น <span class="text-[#DC2626]">*</span></label>
+        <input id="inp-nickname" type="text" placeholder="ชื่อเล่นของคุณ" class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+        <p id="err-nickname" class="text-[#DC2626] text-xs mt-1 hidden">กรุณากรอกชื่อเล่น</p>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-[#374151] mb-2">ชื่อช่องที่ดูแล <span class="text-[#DC2626]">*</span></label>
+        <input id="inp-channel" type="text" placeholder="ชื่อช่องที่คุณดูแล" class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+        <p id="err-channel" class="text-[#DC2626] text-xs mt-1 hidden">กรุณากรอกชื่อช่อง</p>
+      </div>
+    </div>
+
+    <!-- Tasks -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <label class="block text-sm font-semibold text-[#374151] mb-3">
+        สิ่งที่ทำวันนี้ <span class="text-[#DC2626]">*</span>
+        <span id="task-counter" class="text-xs font-normal text-gray-400 ml-2">(0/1 รายการ)</span>
+      </label>
+      <div id="tasks-list" class="space-y-2"></div>
+      <p id="err-tasks" class="text-[#DC2626] text-xs mt-2 hidden">กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ</p>
+      <button id="add-task-btn" onclick="addTask()" class="mt-3 text-sm text-[#1E3A5F] font-semibold hover:underline">+ เพิ่มรายการ</button>
+    </div>
+
+    <!-- Extra: ไลฟ์สด -->
+    <div id="extra-live" class="hidden bg-white rounded-2xl p-4 shadow-sm space-y-3">
+      <p class="text-sm font-bold text-[#1E3A5F]">ข้อมูลไลฟ์สด</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-[#374151] mb-2">ชั่วโมงไลฟ์วันนี้</label>
+          <div class="relative">
+            <input id="live-hours" type="number" min="0" step="0.5" placeholder="0" class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm pr-16 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">ชั่วโมง</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[#374151] mb-2">ยอดขายวันนี้</label>
+          <div class="relative">
+            <input id="live-sales" type="number" min="0" placeholder="0" class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extra: Creative -->
+    <div id="extra-creative" class="hidden bg-white rounded-2xl p-4 shadow-sm">
+      <p class="text-sm font-bold text-[#1E3A5F] mb-3">
+        ลิ้งคลิปที่ทำเสร็จวันนี้
+        <span id="clip-counter" class="text-xs font-normal text-gray-400 ml-2">(0/1 คลิป)</span>
+      </p>
+      <div id="clips-list" class="space-y-2"></div>
+      <button id="add-clip-btn" onclick="addClip()" class="mt-3 text-sm text-[#1E3A5F] font-semibold hover:underline">+ เพิ่มลิ้งคลิป</button>
+    </div>
+
+    <!-- Extra: การตลาด -->
+    <div id="extra-marketing" class="hidden bg-white rounded-2xl p-4 shadow-sm space-y-3">
+      <p class="text-sm font-bold text-[#1E3A5F]">ค่า Ads วันนี้ (บาท)</p>
+      <div id="ads-total" class="text-xs text-gray-500 hidden">รวม: <span id="ads-total-val" class="font-bold text-[#1E3A5F]">0</span> บาท</div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#374151] font-medium w-20 shrink-0">Shopee</span>
+        <div class="relative flex-1">
+          <input type="number" min="0" placeholder="0" oninput="calcAdsTotal()" id="ads-shopee"
+            class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#374151] font-medium w-20 shrink-0">Lazada</span>
+        <div class="relative flex-1">
+          <input type="number" min="0" placeholder="0" oninput="calcAdsTotal()" id="ads-lazada"
+            class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#374151] font-medium w-20 shrink-0">TikTok</span>
+        <div class="relative flex-1">
+          <input type="number" min="0" placeholder="0" oninput="calcAdsTotal()" id="ads-tiktok"
+            class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-[#374151] font-medium w-20 shrink-0">Facebook</span>
+        <div class="relative flex-1">
+          <input type="number" min="0" placeholder="0" oninput="calcAdsTotal()" id="ads-facebook"
+            class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Obstacles -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <label class="block text-sm font-semibold text-[#374151] mb-2">
+        อุปสรรคที่เจอวันนี้ <span class="text-xs font-normal text-gray-400 ml-1">(ไม่บังคับ)</span>
+      </label>
+      <textarea id="inp-obstacles" placeholder="อธิบายอุปสรรคที่พบ หากมี" rows="3"
+        class="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"></textarea>
+    </div>
+
+    <button onclick="handleSubmit()" class="w-full bg-[#1E3A5F] text-white py-4 rounded-xl font-bold text-base shadow-md">ตรวจสอบและส่งข้อมูล</button>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+  <div class="bg-white rounded-2xl w-full max-w-lg max-h-[88vh] overflow-y-auto shadow-2xl">
+    <div class="px-5 py-4 border-b border-[#E2E8F0]">
+      <h3 class="text-lg font-bold text-[#1E3A5F]">ตรวจสอบข้อมูลก่อนส่ง</h3>
+      <p class="text-xs text-gray-400 mt-0.5">กรุณาตรวจสอบความถูกต้องก่อนยืนยัน</p>
+    </div>
+    <div class="px-5 py-4 space-y-4" id="confirm-body"></div>
+    <div class="px-5 py-4 border-t border-[#E2E8F0] flex gap-3">
+      <button onclick="document.getElementById('confirm-modal').classList.add('hidden')"
+        class="flex-1 py-3 rounded-xl border-2 border-[#E2E8F0] text-[#374151] font-semibold text-sm">แก้ไข</button>
+      <button onclick="submitForm()"
+        class="flex-1 py-3 rounded-xl bg-[#16A34A] text-white font-bold text-sm">ยืนยันส่งข้อมูล</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEPARTMENTS = ['ไลฟ์สด','การตลาด','Creative','บัญชี','ธุรการ','บุคคล','Stock','แพค','ผู้จัดการ']
+let selectedDept = ''
+let tasks = ['']
+let clips = ['']
+let kpiCounter = 1
+
+const now = new Date()
+document.getElementById('inp-date').value = now.toISOString().split('T')[0]
+document.getElementById('inp-time').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')
+
+// Render departments
+function renderDepts() {
+  document.getElementById('dept-grid').innerHTML = DEPARTMENTS.map(d => `
+    <button type="button" onclick="selectDept('${d}')"
+      class="py-2.5 px-1 text-xs rounded-xl border-2 font-semibold transition-all ${
+        selectedDept===d ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                         : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'}">
+      ${d}
+    </button>`).join('')
+}
+renderDepts()
+
+function selectDept(d) {
+  selectedDept = d
+  document.getElementById('err-dept').classList.add('hidden')
+  renderDepts()
+  // Show/hide extra sections
+  document.getElementById('extra-live').classList.toggle('hidden', d!=='ไลฟ์สด')
+  document.getElementById('extra-creative').classList.toggle('hidden', d!=='Creative')
+  document.getElementById('extra-marketing').classList.toggle('hidden', d!=='การตลาด')
+  // Reset extra fields when switching dept
+  document.getElementById('live-hours').value = ''
+  document.getElementById('live-sales').value = ''
+  clips = ['']
+  renderClips()
+  ;['shopee','lazada','tiktok','facebook'].forEach(p => {
+    const el = document.getElementById('ads-'+p)
+    if(el) el.value = ''
+  })
+  document.getElementById('ads-total').classList.add('hidden')
+}
+
+// Tasks
+function renderTasks() {
+  document.getElementById('tasks-list').innerHTML = tasks.map((t,i) => `
+    <div class="flex gap-2 items-center">
+      <span class="text-xs text-gray-400 w-5 text-right shrink-0">${i+1}.</span>
+      <input type="text" value="${t.replace(/"/g,'&quot;')}" oninput="tasks[${i}]=this.value;updateTaskCounter()"
+        placeholder="รายการที่ ${i+1}"
+        class="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+      ${tasks.length>1 ? `<button type="button" onclick="removeTask(${i})"
+        class="text-[#DC2626] text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50">×</button>` : ''}
+    </div>`).join('')
+  document.getElementById('add-task-btn').style.display = tasks.length>=10 ? 'none' : 'block'
+  updateTaskCounter()
+}
+function addTask() { if(tasks.length<10){tasks.push('');renderTasks()} }
+function removeTask(i) { tasks.splice(i,1);renderTasks() }
+function updateTaskCounter() {
+  const v=tasks.filter(t=>t.trim()).length
+  document.getElementById('task-counter').textContent=`(${v}/${tasks.length} รายการ)`
+}
+renderTasks()
+
+// Clips
+function renderClips() {
+  document.getElementById('clips-list').innerHTML = clips.map((c,i) => `
+    <div class="flex gap-2 items-center">
+      <span class="text-xs text-gray-400 w-5 text-right shrink-0">${i+1}.</span>
+      <input type="url" value="${c.replace(/"/g,'&quot;')}" oninput="clips[${i}]=this.value;updateClipCounter()"
+        placeholder="https://..."
+        class="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+      ${clips.length>1 ? `<button type="button" onclick="removeClip(${i})"
+        class="text-[#DC2626] text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50">×</button>` : ''}
+    </div>`).join('')
+  document.getElementById('add-clip-btn').style.display = clips.length>=10 ? 'none' : 'block'
+  updateClipCounter()
+}
+function addClip() { if(clips.length<10){clips.push('');renderClips()} }
+function removeClip(i) { clips.splice(i,1);renderClips() }
+function updateClipCounter() {
+  const v=clips.filter(c=>c.trim()).length
+  document.getElementById('clip-counter').textContent=`(${v}/${clips.length} คลิป)`
+}
+renderClips()
+
+// Ads total
+function calcAdsTotal() {
+  const total = ['shopee','lazada','tiktok','facebook'].reduce((s,p)=>{
+    const el=document.getElementById('ads-'+p);return s+(el?Number(el.value)||0:0)},0)
+  const div=document.getElementById('ads-total')
+  if(total>0){div.classList.remove('hidden');document.getElementById('ads-total-val').textContent=total.toLocaleString()}
+  else div.classList.add('hidden')
+}
+
+// Validation
+function handleSubmit() {
+  let valid=true
+  if(!selectedDept){document.getElementById('err-dept').classList.remove('hidden');valid=false}
+  if(!document.getElementById('inp-nickname').value.trim()){document.getElementById('err-nickname').classList.remove('hidden');valid=false}
+  if(!document.getElementById('inp-channel').value.trim()){document.getElementById('err-channel').classList.remove('hidden');valid=false}
+  if(!tasks.some(t=>t.trim())){document.getElementById('err-tasks').classList.remove('hidden');valid=false}
+  if(!valid) return
+
+  const date=document.getElementById('inp-date').value
+  const time=document.getElementById('inp-time').value
+  const validTasks=tasks.filter(t=>t.trim())
+  const obstacles=document.getElementById('inp-obstacles').value.trim()
+
+  let extraHtml=''
+  if(selectedDept==='ไลฟ์สด'){
+    const h=document.getElementById('live-hours').value
+    const s=document.getElementById('live-sales').value
+    if(h||s) extraHtml=`
+      <div class="pt-1 border-t border-[#E2E8F0]">
+        <p class="text-xs font-bold text-[#1E3A5F] mb-2">ข้อมูลไลฟ์สด</p>
+        <div class="grid grid-cols-2 gap-3">
+          ${h?`<div><p class="text-xs text-gray-500">ชั่วโมงไลฟ์</p><p class="text-sm font-medium">${h} ชั่วโมง</p></div>`:''}
+          ${s?`<div><p class="text-xs text-gray-500">ยอดขาย</p><p class="text-sm font-medium">${Number(s).toLocaleString()} บาท</p></div>`:''}
+        </div>
+      </div>`
+  } else if(selectedDept==='Creative'){
+    const vl=clips.filter(c=>c.trim())
+    if(vl.length>0) extraHtml=`
+      <div class="pt-1 border-t border-[#E2E8F0]">
+        <p class="text-xs font-bold text-[#1E3A5F] mb-2">ลิ้งคลิปที่ทำเสร็จ (${vl.length} คลิป)</p>
+        <ul class="space-y-1">${vl.map((l,i)=>`<li class="text-xs text-[#1E3A5F] truncate">${i+1}. ${l}</li>`).join('')}</ul>
+      </div>`
+  } else if(selectedDept==='การตลาด'){
+    const ads=[['Shopee','shopee'],['Lazada','lazada'],['TikTok','tiktok'],['Facebook','facebook']]
+      .map(([l,k])=>{const el=document.getElementById('ads-'+k);return{l,v:el?el.value:''}})
+      .filter(a=>a.v&&Number(a.v)>0)
+    if(ads.length>0){
+      const total=ads.reduce((s,a)=>s+Number(a.v),0)
+      extraHtml=`
+        <div class="pt-1 border-t border-[#E2E8F0]">
+          <p class="text-xs font-bold text-[#1E3A5F] mb-2">ค่า Ads วันนี้ (รวม ${total.toLocaleString()} บาท)</p>
+          <div class="grid grid-cols-2 gap-2">
+            ${ads.map(a=>`<div><p class="text-xs text-gray-500">${a.l}</p><p class="text-sm font-medium">${Number(a.v).toLocaleString()} บาท</p></div>`).join('')}
+          </div>
+        </div>`
+    }
+  }
+
+  document.getElementById('confirm-body').innerHTML = `
+    <div class="grid grid-cols-2 gap-4">
+      <div><p class="text-xs text-gray-500">แผนก</p><p class="text-sm font-medium text-[#374151]">${selectedDept}</p></div>
+      <div><p class="text-xs text-gray-500">วันที่ / เวลา</p><p class="text-sm font-medium text-[#374151]">${date} ${time} น.</p></div>
+      <div><p class="text-xs text-gray-500">ชื่อเล่น</p><p class="text-sm font-medium text-[#374151]">${document.getElementById('inp-nickname').value.trim()}</p></div>
+      <div><p class="text-xs text-gray-500">ช่องที่ดูแล</p><p class="text-sm font-medium text-[#374151]">${document.getElementById('inp-channel').value.trim()}</p></div>
+    </div>
+    ${extraHtml}
+    <div>
+      <p class="text-xs text-gray-500 mb-2">สิ่งที่ทำวันนี้</p>
+      <ul class="space-y-1.5">${validTasks.map((t,i)=>`<li class="flex gap-2 text-sm"><span class="text-gray-400">${i+1}.</span><span class="text-[#374151]">${t}</span></li>`).join('')}</ul>
+    </div>
+    ${obstacles?`<div><p class="text-xs text-gray-500 mb-1">อุปสรรคที่เจอ</p><p class="text-sm text-[#374151] bg-[#F5F6F8] rounded-xl p-3">${obstacles}</p></div>`:''}
+  `
+  document.getElementById('confirm-modal').classList.remove('hidden')
+}
+
+function submitForm() {
+  document.getElementById('confirm-modal').classList.add('hidden')
+  document.getElementById('ref-id').textContent = '#KPI-' + String(kpiCounter++).padStart(4,'0')
+  document.getElementById('main').classList.add('hidden')
+  document.getElementById('success').classList.remove('hidden')
+}
+
+function resetForm() {
+  selectedDept=''
+  tasks=['']
+  clips=['']
+  document.getElementById('inp-nickname').value=''
+  document.getElementById('inp-channel').value=''
+  document.getElementById('inp-obstacles').value=''
+  document.getElementById('live-hours').value=''
+  document.getElementById('live-sales').value=''
+  ;['shopee','lazada','tiktok','facebook'].forEach(p=>{const el=document.getElementById('ads-'+p);if(el)el.value=''})
+  ;['err-dept','err-nickname','err-channel','err-tasks'].forEach(id=>document.getElementById(id).classList.add('hidden'))
+  ;['extra-live','extra-creative','extra-marketing'].forEach(id=>document.getElementById(id).classList.add('hidden'))
+  const n=new Date()
+  document.getElementById('inp-date').value=n.toISOString().split('T')[0]
+  document.getElementById('inp-time').value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')
+  renderDepts()
+  renderTasks()
+  renderClips()
+  document.getElementById('success').classList.add('hidden')
+  document.getElementById('main').classList.remove('hidden')
+}
+</script>
+</body>
+</html>
