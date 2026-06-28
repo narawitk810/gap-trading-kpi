@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { DEPARTMENTS } from '@/types/kpi'
 import type { KPIEntry } from '@/types/kpi'
 import * as XLSX from 'xlsx'
@@ -225,6 +225,31 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage'>('kpi')
   const [wageFilters, setWageFilters] = useState({ department: '', dateFrom: '', dateTo: '', nickname: '' })
+  const [wageAnalysis, setWageAnalysis] = useState<Record<string, { score: number; estimated_wage: number; verdict: string; reason: string }>>({})
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+
+  async function handleAnalyze(entry: KPIEntry) {
+    const base = BASE_RATES[entry.department]
+    if (!base) return
+    setAnalyzingId(entry.id)
+    try {
+      const res = await fetch('/api/analyze-wage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entry_id: entry.id,
+          department: entry.department,
+          tasks: entry.tasks,
+          obstacles: entry.obstacles,
+          base_rate: base,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) setWageAnalysis((prev) => ({ ...prev, [entry.id]: data }))
+      else alert(data.error || 'วิเคราะห์ไม่สำเร็จ')
+    } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setAnalyzingId(null) }
+  }
   const [entries, setEntries] = useState<KPIEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<KPIEntry | null>(null)
@@ -591,9 +616,10 @@ export default function AdminDashboard() {
                         <th className="text-left px-4 py-3">ชื่อเล่น</th>
                         <th className="text-left px-4 py-3">แผนก</th>
                         <th className="text-right px-4 py-3">งาน</th>
-                        <th className="text-right px-4 py-3">ค่าแรงฐาน</th>
-                        <th className="text-right px-4 py-3">ค่าแรงประเมิน</th>
+                        <th className="text-right px-4 py-3">ฐาน</th>
+                        <th className="text-right px-4 py-3">ประเมิน</th>
                         <th className="text-center px-4 py-3">ผล</th>
+                        <th className="text-center px-4 py-3">AI</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -601,20 +627,44 @@ export default function AdminDashboard() {
                         const est = estimateWage(e)
                         const base = BASE_RATES[e.department] ?? 0
                         const col = wageColor(est, base)
+                        const ai = wageAnalysis[e.id]
+                        const aiColor = ai ? (ai.verdict === 'ดีมาก' || ai.verdict === 'ดี' ? colorClass.green : ai.verdict === 'ไม่ตรงงาน' || ai.verdict === 'ต่ำ' ? colorClass.red : colorClass.yellow) : ''
                         return (
-                          <tr key={e.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
-                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(e.date)}</td>
-                            <td className="px-4 py-3 font-semibold text-[#374151]">{e.nickname}</td>
-                            <td className="px-4 py-3 text-gray-500">{e.department}</td>
-                            <td className="px-4 py-3 text-right text-gray-600">{e.tasks.filter(t => t.trim()).length} รายการ</td>
-                            <td className="px-4 py-3 text-right text-gray-500">{base.toLocaleString()} บ.</td>
-                            <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">{est.toLocaleString()} บ.</td>
-                            <td className="px-4 py-3 text-center">
-                              <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${colorClass[col]}`}>
-                                {col === 'green' ? '▲' : col === 'yellow' ? '~' : '▼'}
-                              </span>
-                            </td>
-                          </tr>
+                          <React.Fragment key={e.id}>
+                            <tr className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(e.date)}</td>
+                              <td className="px-4 py-3 font-semibold text-[#374151]">{e.nickname}</td>
+                              <td className="px-4 py-3 text-gray-500">{e.department}</td>
+                              <td className="px-4 py-3 text-right text-gray-600">{e.tasks.filter(t => t.trim()).length} รายการ</td>
+                              <td className="px-4 py-3 text-right text-gray-500">{base.toLocaleString()} บ.</td>
+                              <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">{est.toLocaleString()} บ.</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${colorClass[col]}`}>
+                                  {col === 'green' ? '▲' : col === 'yellow' ? '~' : '▼'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  onClick={() => handleAnalyze(e)}
+                                  disabled={analyzingId === e.id}
+                                  className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-2.5 py-1 hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {analyzingId === e.id ? '...' : '🤖 วิเคราะห์'}
+                                </button>
+                              </td>
+                            </tr>
+                            {ai && (
+                              <tr className={`${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                                <td colSpan={8} className="px-4 pb-3 pt-0">
+                                  <div className={`rounded-xl px-4 py-2.5 flex items-start gap-3 ${aiColor}`}>
+                                    <span className="text-sm font-bold shrink-0">{ai.verdict}</span>
+                                    <span className="text-xs">{ai.reason}</span>
+                                    <span className="ml-auto text-sm font-bold shrink-0">{ai.estimated_wage.toLocaleString()} บ.</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
                         )
                       })}
                     </tbody>
