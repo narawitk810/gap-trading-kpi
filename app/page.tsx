@@ -46,9 +46,7 @@ interface ExtraData {
   // แพค
   packCount: string
   // Upselling
-  upsellingInitial: string
-  upsellingFreebie: string
-  upsellingFinal: string
+  upsellingOrders: { initial: string; freebie: string; final: string }[]
 }
 
 const defaultExtraData: ExtraData = {
@@ -60,9 +58,7 @@ const defaultExtraData: ExtraData = {
   adsTiktok: '',
   adsFacebook: '',
   packCount: '',
-  upsellingInitial: '',
-  upsellingFreebie: '',
-  upsellingFinal: '',
+  upsellingOrders: [{ initial: '', freebie: '', final: '' }],
 }
 
 interface FormData {
@@ -123,24 +119,21 @@ function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, u
     const payload: Record<string, unknown> = {}
     if (extra.liveHours.trim()) payload.live_hours = extra.liveHours.trim()
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
-    if (extra.upsellingInitial.trim()) payload.upselling_initial = extra.upsellingInitial.trim()
-    if (extra.upsellingFreebie.trim()) payload.upselling_freebie = extra.upsellingFreebie.trim()
-    if (extra.upsellingFinal.trim()) payload.upselling_final = extra.upsellingFinal.trim()
+    const validOrders = extra.upsellingOrders.filter(o => o.initial.trim() || o.final.trim())
+    if (validOrders.length > 0) payload.upselling_orders = validOrders
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   if (dept === 'sale admin') {
     const payload: Record<string, unknown> = {}
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
-    if (extra.upsellingInitial.trim()) payload.upselling_initial = extra.upsellingInitial.trim()
-    if (extra.upsellingFreebie.trim()) payload.upselling_freebie = extra.upsellingFreebie.trim()
-    if (extra.upsellingFinal.trim()) payload.upselling_final = extra.upsellingFinal.trim()
+    const validOrders = extra.upsellingOrders.filter(o => o.initial.trim() || o.final.trim())
+    if (validOrders.length > 0) payload.upselling_orders = validOrders
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   if (dept === 'ผู้จัดการ') {
     const payload: Record<string, unknown> = {}
-    if (extra.upsellingInitial.trim()) payload.upselling_initial = extra.upsellingInitial.trim()
-    if (extra.upsellingFreebie.trim()) payload.upselling_freebie = extra.upsellingFreebie.trim()
-    if (extra.upsellingFinal.trim()) payload.upselling_final = extra.upsellingFinal.trim()
+    const validOrders = extra.upsellingOrders.filter(o => o.initial.trim() || o.final.trim())
+    if (validOrders.length > 0) payload.upselling_orders = validOrders
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   if (dept === 'แพค') {
@@ -605,55 +598,88 @@ export default function Home() {
 
         {/* Upselling */}
         {UPSELLING_DEPTS.includes(formData.department) && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-            <p className="text-sm font-bold text-[#1E3A5F]">อัพเซลล์วันนี้</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-2">ยอดแรกที่ลูกค้าซื้อ</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    value={extra.upsellingInitial}
-                    onChange={(e) => setExtra({ upsellingInitial: e.target.value })}
-                    placeholder="0"
-                    className={inputClass + ' pr-10'}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-2">ยอดสุดท้ายที่ซื้อจริง</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    value={extra.upsellingFinal}
-                    onChange={(e) => setExtra({ upsellingFinal: e.target.value })}
-                    placeholder="0"
-                    className={inputClass + ' pr-10'}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
-                </div>
-              </div>
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-[#1E3A5F]">อัพเซลล์วันนี้</p>
+              <span className="text-xs text-gray-400">{extra.upsellingOrders.length}/15 order</span>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#374151] mb-2">ของแถมที่เสนอ</label>
-              <input
-                type="text"
-                value={extra.upsellingFreebie}
-                onChange={(e) => setExtra({ upsellingFreebie: e.target.value })}
-                placeholder="เช่น แฟ้ม A4, กระเป๋า, ส่วนลด 10%"
-                className={inputClass}
-              />
-            </div>
-            {extra.upsellingInitial && extra.upsellingFinal && Number(extra.upsellingFinal) > Number(extra.upsellingInitial) && (
-              <div className="bg-[#16A34A]/10 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <span className="text-[#16A34A] text-sm">📈</span>
-                <span className="text-sm font-bold text-[#16A34A]">
-                  ยอดเพิ่มขึ้น +{(Number(extra.upsellingFinal) - Number(extra.upsellingInitial)).toLocaleString()} บาท
-                </span>
-              </div>
+            {extra.upsellingOrders.map((order, i) => {
+              const diff = order.initial && order.final ? Number(order.final) - Number(order.initial) : null
+              return (
+                <div key={i} className="border border-[#E2E8F0] rounded-xl p-3 space-y-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-[#1E3A5F]">Order #{i + 1}</span>
+                    {extra.upsellingOrders.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setExtra({ upsellingOrders: extra.upsellingOrders.filter((_, idx) => idx !== i) })}
+                        className="text-gray-300 hover:text-[#DC2626] text-lg leading-none w-6 h-6 flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">ยอดแรก (บาท)</label>
+                      <input
+                        type="number" min="0"
+                        value={order.initial}
+                        onChange={(e) => {
+                          const orders = [...extra.upsellingOrders]
+                          orders[i] = { ...orders[i], initial: e.target.value }
+                          setExtra({ upsellingOrders: orders })
+                        }}
+                        placeholder="0"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 mb-1">ยอดสุดท้าย (บาท)</label>
+                      <input
+                        type="number" min="0"
+                        value={order.final}
+                        onChange={(e) => {
+                          const orders = [...extra.upsellingOrders]
+                          orders[i] = { ...orders[i], final: e.target.value }
+                          setExtra({ upsellingOrders: orders })
+                        }}
+                        placeholder="0"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">ของแถมที่เสนอ</label>
+                    <input
+                      type="text"
+                      value={order.freebie}
+                      onChange={(e) => {
+                        const orders = [...extra.upsellingOrders]
+                        orders[i] = { ...orders[i], freebie: e.target.value }
+                        setExtra({ upsellingOrders: orders })
+                      }}
+                      placeholder="เช่น แฟ้ม A4, กระเป๋า"
+                      className={inputClass}
+                    />
+                  </div>
+                  {diff !== null && diff > 0 && (
+                    <div className="bg-[#16A34A]/10 rounded-lg px-3 py-1.5 flex items-center gap-1.5">
+                      <span className="text-xs">📈</span>
+                      <span className="text-xs font-bold text-[#16A34A]">+{diff.toLocaleString()} บาท</span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            {extra.upsellingOrders.length < 15 && (
+              <button
+                type="button"
+                onClick={() => setExtra({ upsellingOrders: [...extra.upsellingOrders, { initial: '', freebie: '', final: '' }] })}
+                className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-2.5 text-sm text-gray-400 hover:border-[#1E3A5F] hover:text-[#1E3A5F] transition-colors"
+              >
+                + เพิ่ม Order
+              </button>
             )}
           </div>
         )}

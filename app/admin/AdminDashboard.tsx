@@ -93,31 +93,32 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
   if (!entry.extra_data) return {}
   let ex: Record<string, unknown> = {}
   try { ex = JSON.parse(entry.extra_data) } catch { return {} }
+  const upOrders = (ex.upselling_orders as { initial: string; freebie: string; final: string }[] | undefined) || []
+  const upTotalDiff = upOrders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
+  const upSummary = upOrders.map((o, i) => `#${i+1} ${o.initial||'?'}→${o.final||'?'} บาท${o.freebie ? ` (แถม:${o.freebie})` : ''}`).join(', ')
+
   if (entry.department === 'ไลฟ์สด') {
     return {
       'ชั่วโมงไลฟ์': ex.live_hours ? String(ex.live_hours) : '',
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
-      'ยอดแรก Upsell (บาท)': ex.upselling_initial ? Number(ex.upselling_initial) : '',
-      'ของแถม': ex.upselling_freebie ? String(ex.upselling_freebie) : '',
-      'ยอดสุดท้าย Upsell (บาท)': ex.upselling_final ? Number(ex.upselling_final) : '',
-      'ยอดเพิ่ม (บาท)': (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : '',
+      'จำนวน Upsell Order': upOrders.length || '',
+      'ยอดเพิ่มรวม Upsell (บาท)': upTotalDiff > 0 ? upTotalDiff : '',
+      'รายละเอียด Upsell': upSummary,
     }
   }
   if (entry.department === 'sale admin') {
     return {
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
-      'ยอดแรก Upsell (บาท)': ex.upselling_initial ? Number(ex.upselling_initial) : '',
-      'ของแถม': ex.upselling_freebie ? String(ex.upselling_freebie) : '',
-      'ยอดสุดท้าย Upsell (บาท)': ex.upselling_final ? Number(ex.upselling_final) : '',
-      'ยอดเพิ่ม (บาท)': (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : '',
+      'จำนวน Upsell Order': upOrders.length || '',
+      'ยอดเพิ่มรวม Upsell (บาท)': upTotalDiff > 0 ? upTotalDiff : '',
+      'รายละเอียด Upsell': upSummary,
     }
   }
   if (entry.department === 'ผู้จัดการ') {
     return {
-      'ยอดแรก Upsell (บาท)': ex.upselling_initial ? Number(ex.upselling_initial) : '',
-      'ของแถม': ex.upselling_freebie ? String(ex.upselling_freebie) : '',
-      'ยอดสุดท้าย Upsell (บาท)': ex.upselling_final ? Number(ex.upselling_final) : '',
-      'ยอดเพิ่ม (บาท)': (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : '',
+      'จำนวน Upsell Order': upOrders.length || '',
+      'ยอดเพิ่มรวม Upsell (บาท)': upTotalDiff > 0 ? upTotalDiff : '',
+      'รายละเอียด Upsell': upSummary,
     }
   }
   if (entry.department === 'แพค') {
@@ -191,8 +192,9 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
   const dept = entry.department
 
-  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount || ex.upselling_initial || ex.upselling_final)) {
-    const upDiff = (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : null
+  const upOrders = (ex.upselling_orders as { initial: string; freebie: string; final: string }[] | undefined) || []
+  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount || upOrders.length > 0)) {
+    const totalDiff = upOrders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
     return (
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
         <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
@@ -203,42 +205,43 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
           {!!ex.sales_amount && (
             <DetailRow label="ยอดขาย" value={`${Number(ex.sales_amount).toLocaleString()} บาท`} />
           )}
-          {!!ex.upselling_initial && (
-            <DetailRow label="ยอดแรก (Upsell)" value={`${Number(ex.upselling_initial).toLocaleString()} บาท`} />
-          )}
-          {!!ex.upselling_final && (
-            <DetailRow label="ยอดสุดท้าย (Upsell)" value={`${Number(ex.upselling_final).toLocaleString()} บาท`} />
-          )}
-          {!!ex.upselling_freebie && (
-            <DetailRow label="ของแถมที่เสนอ" value={String(ex.upselling_freebie)} />
-          )}
-          {upDiff !== null && upDiff > 0 && (
-            <DetailRow label="ยอดเพิ่มขึ้น" value={`+${upDiff.toLocaleString()} บาท`} />
-          )}
         </div>
+        {upOrders.length > 0 && (
+          <div className="pt-1 space-y-1.5">
+            <p className="text-xs font-semibold text-[#1E3A5F]">อัพเซลล์ ({upOrders.length} order{totalDiff > 0 ? ` · +${totalDiff.toLocaleString()} บาทรวม` : ''})</p>
+            {upOrders.map((o, i) => {
+              const diff = Number(o.final || 0) - Number(o.initial || 0)
+              return (
+                <div key={i} className="text-xs text-[#374151] bg-white rounded-lg px-2.5 py-1.5 flex gap-2 flex-wrap">
+                  <span className="text-gray-400">#{i+1}</span>
+                  {o.initial && <span>{Number(o.initial).toLocaleString()} → {o.final ? Number(o.final).toLocaleString() : '?'} บาท</span>}
+                  {o.freebie && <span className="text-[#1E3A5F]">· แถม: {o.freebie}</span>}
+                  {diff > 0 && <span className="text-[#16A34A] font-semibold">+{diff.toLocaleString()}</span>}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     )
   }
 
-  if (dept === 'ผู้จัดการ' && (ex.upselling_initial || ex.upselling_final)) {
-    const upDiff = (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : null
+  if (dept === 'ผู้จัดการ' && upOrders.length > 0) {
+    const totalDiff = upOrders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
     return (
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
-        <p className="text-xs font-bold text-[#1E3A5F]">อัพเซลล์</p>
-        <div className="grid grid-cols-2 gap-3">
-          {!!ex.upselling_initial && (
-            <DetailRow label="ยอดแรก" value={`${Number(ex.upselling_initial).toLocaleString()} บาท`} />
-          )}
-          {!!ex.upselling_final && (
-            <DetailRow label="ยอดสุดท้าย" value={`${Number(ex.upselling_final).toLocaleString()} บาท`} />
-          )}
-          {!!ex.upselling_freebie && (
-            <DetailRow label="ของแถมที่เสนอ" value={String(ex.upselling_freebie)} />
-          )}
-          {upDiff !== null && upDiff > 0 && (
-            <DetailRow label="ยอดเพิ่มขึ้น" value={`+${upDiff.toLocaleString()} บาท`} />
-          )}
-        </div>
+        <p className="text-xs font-bold text-[#1E3A5F]">อัพเซลล์ ({upOrders.length} order{totalDiff > 0 ? ` · +${totalDiff.toLocaleString()} บาทรวม` : ''})</p>
+        {upOrders.map((o, i) => {
+          const diff = Number(o.final || 0) - Number(o.initial || 0)
+          return (
+            <div key={i} className="text-xs text-[#374151] bg-white rounded-lg px-2.5 py-1.5 flex gap-2 flex-wrap">
+              <span className="text-gray-400">#{i+1}</span>
+              {o.initial && <span>{Number(o.initial).toLocaleString()} → {o.final ? Number(o.final).toLocaleString() : '?'} บาท</span>}
+              {o.freebie && <span className="text-[#1E3A5F]">· แถม: {o.freebie}</span>}
+              {diff > 0 && <span className="text-[#16A34A] font-semibold">+{diff.toLocaleString()}</span>}
+            </div>
+          )
+        })}
       </div>
     )
   }
