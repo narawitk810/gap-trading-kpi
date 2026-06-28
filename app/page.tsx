@@ -108,6 +108,7 @@ const inputClass =
 const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
 const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
+const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการ']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
@@ -510,6 +511,24 @@ export default function Home() {
               <p className="text-xs text-gray-400 mt-0.5">แนบรูปสินค้าและรายละเอียด → Admin อนุมัติ</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
+        {VIP_BIRTHDAY_DEPTS.includes(formData.department) && (
+          <Link
+            href="/vip-birthday/index.html"
+            className="flex items-center gap-3 bg-[#534AB7]/5 border border-[#534AB7]/20 rounded-2xl p-4 hover:bg-[#534AB7]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#534AB7] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              🎂
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#534AB7]">VIP Birthday</p>
+              <p className="text-xs text-gray-400 mt-0.5">จัดการข้อมูลวันเกิดลูกค้า VIP</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#534AB7] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>
