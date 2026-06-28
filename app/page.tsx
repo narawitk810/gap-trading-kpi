@@ -90,6 +90,7 @@ const inputClass =
 
 const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
+const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
@@ -409,6 +410,25 @@ export default function Home() {
         </div>
 
         {/* ── Department-specific fields ── */}
+
+        {/* บัญชี / สต๊อค&จัดซื้อ — ลิงก์ใบกำกับภาษี */}
+        {TAX_INVOICE_DEPTS.includes(formData.department) && (
+          <Link
+            href="/tax-invoice"
+            className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              🧾
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1E3A5F]">รวมใบกำกับภาษีซื้อ</p>
+              <p className="text-xs text-gray-400 mt-0.5">อัปโหลดใบกำกับ → สรุป VAT ซื้อรายเดือน</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
 
         {/* ไลฟ์สด / sale admin — ลิงก์ขอสินค้า */}
         {LIVE_DEPTS.includes(formData.department) && (

@@ -60,6 +60,17 @@ type Complaint = {
   reviewed_at: string | null
 }
 
+type TaxInvoice = {
+  id: string
+  nickname: string
+  department: string
+  amount: number
+  invoice_date: string
+  description: string
+  image_data: string
+  created_at: string
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString('th-TH', {
@@ -226,7 +237,11 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax'>('kpi')
+  const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
+  const [loadingTax, setLoadingTax] = useState(false)
+  const [taxMonth, setTaxMonth] = useState('')
+  const [taxImageModal, setTaxImageModal] = useState<string | null>(null)
   const [wageFilters, setWageFilters] = useState({ department: '', dateFrom: '', dateTo: '', nickname: '' })
   const [wageAnalysis, setWageAnalysis] = useState<Record<string, { score: number; estimated_wage: number; verdict: string; reason: string }>>({})
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
@@ -330,6 +345,16 @@ export default function AdminDashboard() {
     finally { setLoadingComplaints(false) }
   }, [])
 
+  const fetchTaxInvoices = useCallback(async (month?: string) => {
+    setLoadingTax(true)
+    try {
+      const url = `/api/tax-invoices?key=${ADMIN_KEY}${month ? `&month=${month}` : ''}`
+      const res = await fetch(url)
+      if (res.ok) setTaxInvoices(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingTax(false) }
+  }, [])
+
   async function handleReview(id: string) {
     setReviewingId(id)
     try {
@@ -352,8 +377,9 @@ export default function AdminDashboard() {
       fetchEntries()
       fetchProductRequests()
       fetchComplaints()
+      fetchTaxInvoices()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices])
 
   if (!isAuthorized) {
     return (
@@ -397,7 +423,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined) }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -454,6 +480,16 @@ export default function AdminDashboard() {
             }`}
           >
             ค่าแรง
+          </button>
+          <button
+            onClick={() => setActiveTab('tax')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              activeTab === 'tax'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            ใบกำกับภาษี
           </button>
         </div>
       </div>
@@ -915,6 +951,154 @@ export default function AdminDashboard() {
       )}
 
       {/* Detail Modal */}
+      {/* Tax Invoices Tab */}
+      {activeTab === 'tax' && (() => {
+        const filtered = taxMonth
+          ? taxInvoices.filter((t) => t.invoice_date.startsWith(taxMonth))
+          : taxInvoices
+
+        // Group by YYYY-MM for monthly summary
+        const byMonth: Record<string, TaxInvoice[]> = {}
+        filtered.forEach((t) => {
+          const m = t.invoice_date.slice(0, 7)
+          if (!byMonth[m]) byMonth[m] = []
+          byMonth[m].push(t)
+        })
+        const months = Object.keys(byMonth).sort().reverse()
+
+        function thMonth(ym: string) {
+          const [y, m] = ym.split('-')
+          const names = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+          return `${names[parseInt(m) - 1]} ${parseInt(y) + 543}`
+        }
+
+        return (
+          <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+            {/* Filter */}
+            <div className="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 flex-wrap">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">กรองเดือน</p>
+              <input
+                type="month"
+                value={taxMonth}
+                onChange={(e) => { setTaxMonth(e.target.value); fetchTaxInvoices(e.target.value || undefined) }}
+                className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+              />
+              {taxMonth && (
+                <button onClick={() => { setTaxMonth(''); fetchTaxInvoices() }}
+                  className="text-xs text-gray-400 hover:text-gray-600 underline">ล้างตัวกรอง</button>
+              )}
+              <span className="ml-auto text-xs text-gray-400">{filtered.length} รายการ</span>
+            </div>
+
+            {loadingTax ? (
+              <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : filtered.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีข้อมูลใบกำกับภาษี</div>
+            ) : (
+              <>
+                {/* Monthly summary table */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                    <h3 className="font-bold text-[#1E3A5F]">สรุปรายเดือน</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[480px]">
+                      <thead>
+                        <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                          <th className="text-left px-4 py-3">เดือน</th>
+                          <th className="text-right px-4 py-3">จำนวนใบ</th>
+                          <th className="text-right px-4 py-3">ยอดรวม (บาท)</th>
+                          <th className="text-right px-4 py-3 text-[#16A34A]">VAT ซื้อ 7% (บาท)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {months.map((m, idx) => {
+                          const items = byMonth[m]
+                          const total = items.reduce((s, t) => s + t.amount, 0)
+                          const vat = Math.round(total * 7 / 107 * 100) / 100
+                          return (
+                            <tr key={m} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                              <td className="px-4 py-3 font-semibold text-[#374151]">{thMonth(m)}</td>
+                              <td className="px-4 py-3 text-right text-gray-500">{items.length} ใบ</td>
+                              <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">
+                                {total.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 text-right font-bold text-[#16A34A]">
+                                {vat.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Detail table */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                    <h3 className="font-bold text-[#1E3A5F]">รายการทั้งหมด</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[680px]">
+                      <thead>
+                        <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                          <th className="text-left px-4 py-3">วันที่ในใบ</th>
+                          <th className="text-left px-4 py-3">ชื่อเล่น</th>
+                          <th className="text-left px-4 py-3">แผนก</th>
+                          <th className="text-left px-4 py-3">รายละเอียด</th>
+                          <th className="text-right px-4 py-3">ยอดรวม</th>
+                          <th className="text-right px-4 py-3 text-[#16A34A]">VAT 7%</th>
+                          <th className="text-center px-4 py-3">รูป</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((t, idx) => {
+                          const vat = Math.round(t.amount * 7 / 107 * 100) / 100
+                          return (
+                            <tr key={t.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                              <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{t.invoice_date}</td>
+                              <td className="px-4 py-3 font-semibold text-[#374151]">{t.nickname}</td>
+                              <td className="px-4 py-3 text-gray-500">{t.department}</td>
+                              <td className="px-4 py-3 text-gray-500 max-w-[180px] truncate">{t.description || '—'}</td>
+                              <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">
+                                {t.amount.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 text-right font-semibold text-[#16A34A]">
+                                {vat.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <button onClick={() => setTaxImageModal(t.image_data)}
+                                  className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-2.5 py-1 hover:bg-[#F5F6F8]">
+                                  ดูรูป
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )
+      })()}
+
+      {/* Tax image modal */}
+      {taxImageModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setTaxImageModal(null)}>
+          <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <img src={taxImageModal} alt="ใบกำกับภาษี" className="w-full rounded-2xl shadow-2xl" />
+            <button onClick={() => setTaxImageModal(null)}
+              className="absolute top-3 right-3 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg hover:bg-black/70">
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {selectedEntry && (
         <div
           className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4"

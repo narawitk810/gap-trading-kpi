@@ -71,6 +71,18 @@ export async function ensureSchema(): Promise<void> {
       reviewed_at     TEXT
     )
   `)
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tax_invoices (
+      id           TEXT PRIMARY KEY,
+      nickname     TEXT NOT NULL,
+      department   TEXT NOT NULL,
+      amount       REAL NOT NULL,
+      invoice_date TEXT NOT NULL,
+      description  TEXT NOT NULL DEFAULT '',
+      image_data   TEXT NOT NULL,
+      created_at   TEXT NOT NULL
+    )
+  `)
   g.dbReady = true
 }
 
