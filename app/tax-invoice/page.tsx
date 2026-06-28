@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { DEPARTMENTS } from '@/types/kpi'
 
-const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ']
+const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

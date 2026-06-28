@@ -90,7 +90,7 @@ const inputClass =
 
 const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
-const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ']
+const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
