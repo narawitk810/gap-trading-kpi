@@ -111,7 +111,7 @@ const inputClass =
 const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
 const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
-const UPSELLING_DEPTS = ['ไลฟ์สด', 'sale admin', 'ผู้จัดการ']
+const UPSELLING_DEPTS = ['ไลฟ์สด', 'sale admin']
 const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการ']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
@@ -126,12 +126,6 @@ function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, u
   if (dept === 'sale admin') {
     const payload: Record<string, unknown> = {}
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
-    const validOrders = extra.upsellingOrders.filter(o => o.initial.trim() || o.final.trim())
-    if (validOrders.length > 0) payload.upselling_orders = validOrders
-    return Object.keys(payload).length > 0 ? payload : undefined
-  }
-  if (dept === 'ผู้จัดการ') {
-    const payload: Record<string, unknown> = {}
     const validOrders = extra.upsellingOrders.filter(o => o.initial.trim() || o.final.trim())
     if (validOrders.length > 0) payload.upselling_orders = validOrders
     return Object.keys(payload).length > 0 ? payload : undefined
