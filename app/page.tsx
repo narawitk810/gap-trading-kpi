@@ -569,6 +569,12 @@ export default function Home() {
         >
           ตรวจสอบและส่งข้อมูล
         </button>
+
+        <div className="text-center">
+          <Link href="/complaint" className="text-xs text-gray-400 hover:text-gray-600 underline underline-offset-2">
+            ร้องเรียนด้านการทำงานร่วมกัน
+          </Link>
+        </div>
       </div>
 
       {/* Confirmation Modal */}

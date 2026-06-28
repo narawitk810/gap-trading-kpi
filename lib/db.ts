@@ -57,6 +57,20 @@ export async function ensureSchema(): Promise<void> {
       approved_at TEXT
     )
   `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS complaints (
+      id              TEXT PRIMARY KEY,
+      nickname        TEXT NOT NULL,
+      department      TEXT NOT NULL,
+      description     TEXT NOT NULL,
+      attachment_data TEXT NOT NULL DEFAULT '',
+      attachment_type TEXT NOT NULL DEFAULT '',
+      status          TEXT NOT NULL DEFAULT 'new',
+      created_at      TEXT NOT NULL,
+      reviewed_at     TEXT
+    )
+  `)
   g.dbReady = true
 }
 

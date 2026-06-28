@@ -18,6 +18,18 @@ type ProductRequest = {
   approved_at: string | null
 }
 
+type Complaint = {
+  id: string
+  nickname: string
+  department: string
+  description: string
+  attachment_data: string
+  attachment_type: string
+  status: string
+  created_at: string
+  reviewed_at: string | null
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString('th-TH', {
@@ -181,7 +193,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints'>('kpi')
   const [entries, setEntries] = useState<KPIEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<KPIEntry | null>(null)
@@ -194,6 +206,9 @@ export default function AdminDashboard() {
   const [productRequests, setProductRequests] = useState<ProductRequest[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
   const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [complaints, setComplaints] = useState<Complaint[]>([])
+  const [loadingComplaints, setLoadingComplaints] = useState(false)
+  const [reviewingId, setReviewingId] = useState<string | null>(null)
 
   const fetchEntries = useCallback(async () => {
     setLoading(true)
@@ -247,12 +262,39 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchComplaints = useCallback(async () => {
+    setLoadingComplaints(true)
+    try {
+      const res = await fetch(`/api/complaints?key=${ADMIN_KEY}`)
+      if (res.ok) setComplaints(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingComplaints(false) }
+  }, [])
+
+  async function handleReview(id: string) {
+    setReviewingId(id)
+    try {
+      const res = await fetch(`/api/complaints?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) {
+        setComplaints((prev) =>
+          prev.map((c) => c.id === id ? { ...c, status: 'reviewed', reviewed_at: new Date().toISOString() } : c)
+        )
+      }
+    } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setReviewingId(null) }
+  }
+
   useEffect(() => {
     if (isAuthorized) {
       fetchEntries()
       fetchProductRequests()
+      fetchComplaints()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints])
 
   if (!isAuthorized) {
     return (
@@ -296,7 +338,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -329,8 +371,70 @@ export default function AdminDashboard() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('complaints')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+              activeTab === 'complaints'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            ร้องเรียน
+            {complaints.filter((c) => c.status === 'new').length > 0 && (
+              <span className="bg-[#DC2626] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {complaints.filter((c) => c.status === 'new').length}
+              </span>
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Complaints Tab */}
+      {activeTab === 'complaints' && (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {loadingComplaints ? (
+            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : complaints.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีเรื่องร้องเรียน</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {complaints.map((c) => (
+                <div key={c.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {c.attachment_data && c.attachment_type === 'image' && (
+                    <img src={c.attachment_data} alt="หลักฐาน" className="w-full h-48 object-cover" />
+                  )}
+                  {c.attachment_data && c.attachment_type === 'video' && (
+                    <video src={c.attachment_data} controls className="w-full max-h-48" />
+                  )}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-[#1E3A5F] text-sm">{c.nickname}</p>
+                        <p className="text-xs text-gray-400">{c.department} · {formatDateTime(c.created_at)}</p>
+                      </div>
+                      {c.status === 'reviewed' ? (
+                        <span className="shrink-0 text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-semibold">✅ รับเรื่องแล้ว</span>
+                      ) : (
+                        <span className="shrink-0 text-xs bg-red-50 text-[#DC2626] px-2 py-1 rounded-full font-semibold">🔴 ใหม่</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-[#374151]">{c.description}</p>
+                    {c.status === 'new' && (
+                      <button
+                        onClick={() => handleReview(c.id)}
+                        disabled={reviewingId === c.id}
+                        className="w-full mt-1 bg-[#374151] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1f2937] disabled:opacity-60 transition-colors"
+                      >
+                        {reviewingId === c.id ? 'กำลังบันทึก...' : 'รับเรื่องแล้ว'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Product Requests Tab */}
       {activeTab === 'requests' && (
