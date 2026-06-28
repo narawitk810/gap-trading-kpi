@@ -259,7 +259,10 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'codes'>('kpi')
+  const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
+  const [loadingCodes, setLoadingCodes] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
   const [loadingRestock, setLoadingRestock] = useState(false)
   const [notingId, setNotingId] = useState<string | null>(null)
@@ -370,6 +373,24 @@ export default function AdminDashboard() {
     finally { setLoadingComplaints(false) }
   }, [])
 
+  const fetchCodes = useCallback(async () => {
+    setLoadingCodes(true)
+    try {
+      const res = await fetch(`/api/dept-codes?key=${ADMIN_KEY}`)
+      if (res.ok) setDeptCodes(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingCodes(false) }
+  }, [])
+
+  async function handleRegen() {
+    setRegenerating(true)
+    try {
+      const res = await fetch(`/api/dept-codes?key=${ADMIN_KEY}`, { method: 'POST' })
+      if (res.ok) setDeptCodes(await res.json())
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setRegenerating(false) }
+  }
+
   const fetchRestock = useCallback(async () => {
     setLoadingRestock(true)
     try {
@@ -426,8 +447,9 @@ export default function AdminDashboard() {
       fetchComplaints()
       fetchTaxInvoices()
       fetchRestock()
+      fetchCodes()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchCodes])
 
   if (!isAuthorized) {
     return (
@@ -471,7 +493,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchCodes() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -553,6 +575,16 @@ export default function AdminDashboard() {
                 {restockRequests.filter((r) => r.status === 'pending').length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('codes')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              activeTab === 'codes'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            รหัสแผนก
           </button>
         </div>
       </div>
@@ -1192,6 +1224,57 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Codes Tab */}
+      {activeTab === 'codes' && (
+        <div className="max-w-6xl mx-auto px-4 pb-10">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-[#1E3A5F] text-base">รหัสผ่านแผนก</h2>
+                <p className="text-xs text-gray-400 mt-0.5">รหัสเปลี่ยนอัตโนมัติทุก 3 เดือน (รายไตรมาส)</p>
+              </div>
+              <button
+                onClick={handleRegen}
+                disabled={regenerating}
+                className="bg-[#DC2626] text-white px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
+              >
+                {regenerating ? 'กำลังออกรหัส...' : 'ออกรหัสใหม่ทันที'}
+              </button>
+            </div>
+            {loadingCodes ? (
+              <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : deptCodes.length === 0 ? (
+              <div className="py-16 text-center text-gray-400 text-sm">ยังไม่มีข้อมูลรหัส</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
+                    <th className="text-left px-5 py-3 font-semibold">แผนก</th>
+                    <th className="text-center px-5 py-3 font-semibold">รหัส 4 หลัก</th>
+                    <th className="text-center px-5 py-3 font-semibold">ไตรมาส</th>
+                    <th className="text-right px-5 py-3 font-semibold">วันที่ออกรหัส</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deptCodes.map((row, i) => (
+                    <tr key={row.department} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
+                      <td className="px-5 py-3 font-medium text-[#374151]">{row.department}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className="font-mono text-2xl font-bold text-[#1E3A5F] tracking-[0.3em]">{row.code}</span>
+                      </td>
+                      <td className="px-5 py-3 text-center text-gray-500">{row.quarter}</td>
+                      <td className="px-5 py-3 text-right text-gray-400 text-xs">
+                        {new Date(row.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       )}
 

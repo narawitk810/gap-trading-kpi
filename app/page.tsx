@@ -141,6 +141,29 @@ export default function Home() {
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Department access code
+  const [codeVerified, setCodeVerified] = useState(false)
+  const [codeInput, setCodeInput] = useState('')
+  const [codeError, setCodeError] = useState('')
+  const [verifying, setVerifying] = useState(false)
+
+  async function handleVerifyCode() {
+    if (codeInput.length !== 4) { setCodeError('กรุณากรอกรหัส 4 หลัก'); return }
+    setVerifying(true)
+    setCodeError('')
+    try {
+      const res = await fetch('/api/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ department: formData.department, code: codeInput }),
+      })
+      const data = await res.json()
+      if (data.valid) { setCodeVerified(true); setCodeInput(''); setCodeError('') }
+      else setCodeError('รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง')
+    } catch { setCodeError('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setVerifying(false) }
+  }
+
   function validate() {
     const e: Record<string, string> = {}
     if (!formData.department) e.department = 'กรุณาเลือกแผนก'
@@ -298,6 +321,9 @@ export default function Home() {
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
                   setErrors((prev) => ({ ...prev, department: '' }))
+                  setCodeVerified(false)
+                  setCodeInput('')
+                  setCodeError('')
                 }}
                 className={`py-2.5 px-1 text-xs rounded-xl border-2 font-semibold transition-all ${
                   formData.department === dept
@@ -655,6 +681,61 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      {/* Code Verification Modal */}
+      {formData.department && !codeVerified && pageState === 'form' && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden">
+            <div className="bg-[#1E3A5F] text-white px-5 py-4 text-center">
+              <div className="text-2xl mb-1">🔒</div>
+              <h3 className="font-bold text-base">ยืนยันตัวตน</h3>
+              <p className="text-xs opacity-70 mt-0.5">แผนก {formData.department}</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#374151] mb-2 text-center">
+                  กรอกรหัสผ่านแผนก (4 หลัก)
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={codeInput}
+                  onChange={(e) => {
+                    const v = e.target.value.slice(0, 4)
+                    setCodeInput(v)
+                    setCodeError('')
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleVerifyCode() }}
+                  placeholder="● ● ● ●"
+                  className="w-full border-2 border-[#E2E8F0] rounded-xl px-4 py-3 text-center text-2xl font-bold tracking-[0.5em] focus:outline-none focus:border-[#1E3A5F] text-[#1E3A5F]"
+                  autoFocus
+                />
+                {codeError && (
+                  <p className="text-[#DC2626] text-xs mt-2 text-center">{codeError}</p>
+                )}
+              </div>
+              <button
+                onClick={handleVerifyCode}
+                disabled={verifying || codeInput.length < 4}
+                className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+              >
+                {verifying ? 'กำลังตรวจสอบ...' : 'ยืนยัน'}
+              </button>
+              <button
+                onClick={() => {
+                  setFormData((prev) => ({ ...prev, department: '' }))
+                  setCodeInput('')
+                  setCodeError('')
+                }}
+                className="w-full text-gray-400 text-xs py-1 hover:text-gray-600"
+              >
+                เปลี่ยนแผนก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {(pageState === 'confirm' || pageState === 'submitting') && (
