@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body: KPIEntryCreate = await request.json()
 
-  const CHANNEL_DEPTS = ['ไลฟ์สด', 'การตลาด', 'Creative']
+  const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
   const needsChannel = CHANNEL_DEPTS.includes(body.department)
   if (!body.department || !body.date || !body.nickname?.trim() ||
       (needsChannel && !body.channel_name?.trim())) {

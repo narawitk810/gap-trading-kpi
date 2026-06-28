@@ -88,12 +88,18 @@ function InputField({
 const inputClass =
   'w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]'
 
-const CHANNEL_DEPTS = ['ไลฟ์สด', 'การตลาด', 'Creative']
+const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
+const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
     const payload: Record<string, unknown> = {}
     if (extra.liveHours.trim()) payload.live_hours = extra.liveHours.trim()
+    if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
+    return Object.keys(payload).length > 0 ? payload : undefined
+  }
+  if (dept === 'sale admin') {
+    const payload: Record<string, unknown> = {}
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
   }
@@ -404,8 +410,8 @@ export default function Home() {
 
         {/* ── Department-specific fields ── */}
 
-        {/* ไลฟ์สด — ลิงก์ขอสินค้า */}
-        {formData.department === 'ไลฟ์สด' && (
+        {/* ไลฟ์สด / sale admin — ลิงก์ขอสินค้า */}
+        {LIVE_DEPTS.includes(formData.department) && (
           <Link
             href="/request"
             className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
@@ -423,30 +429,32 @@ export default function Home() {
           </Link>
         )}
 
-        {/* ไลฟ์สด */}
-        {formData.department === 'ไลฟ์สด' && (
+        {/* ไลฟ์สด / sale admin */}
+        {LIVE_DEPTS.includes(formData.department) && (
           <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-            <p className="text-sm font-bold text-[#1E3A5F]">ข้อมูลไลฟ์สด</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-2">
-                  ชั่วโมงไลฟ์วันนี้
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    value={extra.liveHours}
-                    onChange={(e) => setExtra({ liveHours: e.target.value })}
-                    placeholder="0"
-                    className={inputClass + ' pr-16'}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    ชั่วโมง
-                  </span>
+            <p className="text-sm font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
+            <div className={formData.department === 'ไลฟ์สด' ? 'grid grid-cols-2 gap-3' : ''}>
+              {formData.department === 'ไลฟ์สด' && (
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-2">
+                    ชั่วโมงไลฟ์วันนี้
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={extra.liveHours}
+                      onChange={(e) => setExtra({ liveHours: e.target.value })}
+                      placeholder="0"
+                      className={inputClass + ' pr-16'}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      ชั่วโมง
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-2">
                   ยอดขายวันนี้
@@ -593,10 +601,10 @@ export default function Home() {
                 <ConfirmRow label="ช่องที่ดูแล" value={formData.channelName} />
               </div>
 
-              {/* Extra fields in confirm — ไลฟ์สด */}
-              {formData.department === 'ไลฟ์สด' && extraPayload && (
+              {/* Extra fields in confirm — ไลฟ์สด / sale admin */}
+              {LIVE_DEPTS.includes(formData.department) && extraPayload && (
                 <div className="grid grid-cols-2 gap-4 pt-1 border-t border-[#E2E8F0]">
-                  {extra.liveHours && (
+                  {formData.department === 'ไลฟ์สด' && extra.liveHours && (
                     <ConfirmRow label="ชั่วโมงไลฟ์" value={`${extra.liveHours} ชั่วโมง`} />
                   )}
                   {extra.salesAmount && (

@@ -13,7 +13,7 @@ const BASE_RATES: Record<string, number> = {
   'บัญชี': 600,
   'ธุรการ': 400,
   'บุคคล': 600,
-  'Stock': 500,
+  'สต๊อค&จัดซื้อ': 500,
   'แพค': 400,
   'ผู้จัดการ': 700,
   'Creative': 550,
@@ -77,6 +77,9 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
       'ชั่วโมงไลฟ์': ex.live_hours ? String(ex.live_hours) : '',
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
     }
+  }
+  if (entry.department === 'sale admin') {
+    return { 'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '' }
   }
   if (entry.department === 'Creative') {
     const links = (ex.clip_links as string[] | undefined) || []
@@ -146,12 +149,12 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
   const dept = entry.department
 
-  if (dept === 'ไลฟ์สด' && (ex.live_hours || ex.sales_amount)) {
+  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount)) {
     return (
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
-        <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลไลฟ์สด</p>
+        <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
         <div className="grid grid-cols-2 gap-3">
-          {!!ex.live_hours && (
+          {!!ex.live_hours && dept === 'ไลฟ์สด' && (
             <DetailRow label="ชั่วโมงไลฟ์" value={`${ex.live_hours} ชั่วโมง`} />
           )}
           {!!ex.sales_amount && (

@@ -1,11 +1,12 @@
 export const DEPARTMENTS = [
   'ไลฟ์สด',
+  'sale admin',
   'การตลาด',
   'Creative',
   'บัญชี',
   'ธุรการ',
   'บุคคล',
-  'Stock',
+  'สต๊อค&จัดซื้อ',
   'แพค',
   'ผู้จัดการ',
 ] as const
