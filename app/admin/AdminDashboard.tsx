@@ -92,6 +92,9 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
   if (entry.department === 'sale admin') {
     return { 'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '' }
   }
+  if (entry.department === 'แพค') {
+    return { 'จำนวนชิ้น': ex.pack_count ? Number(ex.pack_count) : '' }
+  }
   if (entry.department === 'Creative') {
     const links = (ex.clip_links as string[] | undefined) || []
     return { 'ลิ้งคลิป': links.join('\n') }
@@ -225,6 +228,15 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
             <DetailRow key={k} label={l} value={`${Number(ex[k]).toLocaleString()} บาท`} />
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (dept === 'แพค' && ex.pack_count) {
+    return (
+      <div className="bg-blue-50 rounded-xl p-3">
+        <p className="text-xs font-bold text-[#1E3A5F] mb-2">ยอดการแพควันนี้</p>
+        <DetailRow label="จำนวนชิ้นที่แพคได้" value={`${Number(ex.pack_count).toLocaleString()} ชิ้น`} />
       </div>
     )
   }

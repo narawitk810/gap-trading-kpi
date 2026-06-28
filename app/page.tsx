@@ -29,6 +29,8 @@ interface ExtraData {
   adsLazada: string
   adsTiktok: string
   adsFacebook: string
+  // แพค
+  packCount: string
 }
 
 const defaultExtraData: ExtraData = {
@@ -39,6 +41,7 @@ const defaultExtraData: ExtraData = {
   adsLazada: '',
   adsTiktok: '',
   adsFacebook: '',
+  packCount: '',
 }
 
 interface FormData {
@@ -103,6 +106,10 @@ function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, u
     const payload: Record<string, unknown> = {}
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
+  }
+  if (dept === 'แพค') {
+    if (extra.packCount.trim()) return { pack_count: extra.packCount.trim() }
+    return undefined
   }
   if (dept === 'Creative') {
     const validLinks = extra.clipLinks.filter((l) => l.trim())
@@ -574,6 +581,31 @@ export default function Home() {
           </div>
         )}
 
+        {/* แพค */}
+        {formData.department === 'แพค' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-bold text-[#1E3A5F] mb-3">ยอดการแพควันนี้</p>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">
+                จำนวนชิ้นที่แพคได้
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  value={extra.packCount}
+                  onChange={(e) => setExtra({ packCount: e.target.value })}
+                  placeholder="0"
+                  className={inputClass + ' pr-10'}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                  ชิ้น
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Obstacles */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <label className="block text-sm font-semibold text-[#374151] mb-2">
@@ -633,6 +665,13 @@ export default function Home() {
                       value={`${Number(extra.salesAmount).toLocaleString()} บาท`}
                     />
                   )}
+                </div>
+              )}
+
+              {/* Extra fields in confirm — แพค */}
+              {formData.department === 'แพค' && extra.packCount && (
+                <div className="grid grid-cols-2 gap-4 pt-1 border-t border-[#E2E8F0]">
+                  <ConfirmRow label="จำนวนชิ้นที่แพคได้" value={`${Number(extra.packCount).toLocaleString()} ชิ้น`} />
                 </div>
               )}
 
