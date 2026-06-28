@@ -18,6 +18,20 @@ function getCurrentTime() {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
+const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000
+
+function isCodeVerifiedLocally(department: string): boolean {
+  try {
+    const raw = localStorage.getItem(`code_verified_${department}`)
+    if (!raw) return false
+    return Date.now() - Number(raw) < TEN_DAYS_MS
+  } catch { return false }
+}
+
+function saveCodeVerified(department: string) {
+  try { localStorage.setItem(`code_verified_${department}`, String(Date.now())) } catch { /* */ }
+}
+
 interface ExtraData {
   // ไลฟ์สด
   liveHours: string
@@ -158,7 +172,7 @@ export default function Home() {
         body: JSON.stringify({ department: formData.department, code: codeInput }),
       })
       const data = await res.json()
-      if (data.valid) { setCodeVerified(true); setCodeInput(''); setCodeError('') }
+      if (data.valid) { saveCodeVerified(formData.department); setCodeVerified(true); setCodeInput(''); setCodeError('') }
       else setCodeError('รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง')
     } catch { setCodeError('เกิดข้อผิดพลาด กรุณาลองใหม่') }
     finally { setVerifying(false) }
@@ -321,7 +335,7 @@ export default function Home() {
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
                   setErrors((prev) => ({ ...prev, department: '' }))
-                  setCodeVerified(false)
+                  setCodeVerified(isCodeVerifiedLocally(dept))
                   setCodeInput('')
                   setCodeError('')
                 }}
