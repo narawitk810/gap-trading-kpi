@@ -88,6 +88,8 @@ function InputField({
 const inputClass =
   'w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]'
 
+const CHANNEL_DEPTS = ['ไลฟ์สด', 'การตลาด', 'Creative']
+
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
     const payload: Record<string, unknown> = {}
@@ -130,7 +132,7 @@ export default function Home() {
     if (!formData.department) e.department = 'กรุณาเลือกแผนก'
     if (!formData.date) e.date = 'กรุณาเลือกวันที่'
     if (!formData.nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
-    if (!formData.channelName.trim()) e.channelName = 'กรุณากรอกชื่อช่องที่ดูแล'
+    if (CHANNEL_DEPTS.includes(formData.department) && !formData.channelName.trim()) e.channelName = 'กรุณากรอกชื่อช่องที่ดูแล'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -337,18 +339,20 @@ export default function Home() {
               className={inputClass}
             />
           </InputField>
-          <InputField label="ชื่อช่องที่ดูแล" required error={errors.channelName}>
-            <input
-              type="text"
-              value={formData.channelName}
-              onChange={(e) => {
-                setFormData((prev) => ({ ...prev, channelName: e.target.value }))
-                setErrors((prev) => ({ ...prev, channelName: '' }))
-              }}
-              placeholder="ชื่อช่องที่คุณดูแล"
-              className={inputClass}
-            />
-          </InputField>
+          {CHANNEL_DEPTS.includes(formData.department) && (
+            <InputField label="ชื่อช่องที่ดูแล" required error={errors.channelName}>
+              <input
+                type="text"
+                value={formData.channelName}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, channelName: e.target.value }))
+                  setErrors((prev) => ({ ...prev, channelName: '' }))
+                }}
+                placeholder="ชื่อช่องที่คุณดูแล"
+                className={inputClass}
+              />
+            </InputField>
+          )}
         </div>
 
         {/* Tasks */}

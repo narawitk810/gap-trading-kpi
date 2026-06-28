@@ -59,7 +59,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body: KPIEntryCreate = await request.json()
 
-  if (!body.department || !body.date || !body.nickname?.trim() || !body.channel_name?.trim()) {
+  const CHANNEL_DEPTS = ['ไลฟ์สด', 'การตลาด', 'Creative']
+  const needsChannel = CHANNEL_DEPTS.includes(body.department)
+  if (!body.department || !body.date || !body.nickname?.trim() ||
+      (needsChannel && !body.channel_name?.trim())) {
     return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 })
   }
 
