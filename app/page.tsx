@@ -45,6 +45,10 @@ interface ExtraData {
   adsFacebook: string
   // แพค
   packCount: string
+  // Upselling
+  upsellingInitial: string
+  upsellingFreebie: string
+  upsellingFinal: string
 }
 
 const defaultExtraData: ExtraData = {
@@ -56,6 +60,9 @@ const defaultExtraData: ExtraData = {
   adsTiktok: '',
   adsFacebook: '',
   packCount: '',
+  upsellingInitial: '',
+  upsellingFreebie: '',
+  upsellingFinal: '',
 }
 
 interface FormData {
@@ -108,18 +115,31 @@ const inputClass =
 const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
 const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
-const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการ']
+const UPSELLING_DEPTS = ['ไลฟ์สด', 'sale admin', 'ผู้จัดการ']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
     const payload: Record<string, unknown> = {}
     if (extra.liveHours.trim()) payload.live_hours = extra.liveHours.trim()
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
+    if (extra.upsellingInitial.trim()) payload.upselling_initial = extra.upsellingInitial.trim()
+    if (extra.upsellingFreebie.trim()) payload.upselling_freebie = extra.upsellingFreebie.trim()
+    if (extra.upsellingFinal.trim()) payload.upselling_final = extra.upsellingFinal.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   if (dept === 'sale admin') {
     const payload: Record<string, unknown> = {}
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
+    if (extra.upsellingInitial.trim()) payload.upselling_initial = extra.upsellingInitial.trim()
+    if (extra.upsellingFreebie.trim()) payload.upselling_freebie = extra.upsellingFreebie.trim()
+    if (extra.upsellingFinal.trim()) payload.upselling_final = extra.upsellingFinal.trim()
+    return Object.keys(payload).length > 0 ? payload : undefined
+  }
+  if (dept === 'ผู้จัดการ') {
+    const payload: Record<string, unknown> = {}
+    if (extra.upsellingInitial.trim()) payload.upselling_initial = extra.upsellingInitial.trim()
+    if (extra.upsellingFreebie.trim()) payload.upselling_freebie = extra.upsellingFreebie.trim()
+    if (extra.upsellingFinal.trim()) payload.upselling_final = extra.upsellingFinal.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   if (dept === 'แพค') {
@@ -516,24 +536,6 @@ export default function Home() {
           </Link>
         )}
 
-        {VIP_BIRTHDAY_DEPTS.includes(formData.department) && (
-          <Link
-            href="/vip-birthday/index.html"
-            className="flex items-center gap-3 bg-[#534AB7]/5 border border-[#534AB7]/20 rounded-2xl p-4 hover:bg-[#534AB7]/10 transition-colors"
-          >
-            <div className="w-10 h-10 bg-[#534AB7] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
-              🎂
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#534AB7]">VIP Birthday</p>
-              <p className="text-xs text-gray-400 mt-0.5">จัดการข้อมูลวันเกิดลูกค้า VIP</p>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#534AB7] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
-
         {/* ไลฟ์สด / sale admin */}
         {LIVE_DEPTS.includes(formData.department) && (
           <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
@@ -579,6 +581,61 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Upselling */}
+        {UPSELLING_DEPTS.includes(formData.department) && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+            <p className="text-sm font-bold text-[#1E3A5F]">อัพเซลล์วันนี้</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-2">ยอดแรกที่ลูกค้าซื้อ</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    value={extra.upsellingInitial}
+                    onChange={(e) => setExtra({ upsellingInitial: e.target.value })}
+                    placeholder="0"
+                    className={inputClass + ' pr-10'}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-2">ยอดสุดท้ายที่ซื้อจริง</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    value={extra.upsellingFinal}
+                    onChange={(e) => setExtra({ upsellingFinal: e.target.value })}
+                    placeholder="0"
+                    className={inputClass + ' pr-10'}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">ของแถมที่เสนอ</label>
+              <input
+                type="text"
+                value={extra.upsellingFreebie}
+                onChange={(e) => setExtra({ upsellingFreebie: e.target.value })}
+                placeholder="เช่น แฟ้ม A4, กระเป๋า, ส่วนลด 10%"
+                className={inputClass}
+              />
+            </div>
+            {extra.upsellingInitial && extra.upsellingFinal && Number(extra.upsellingFinal) > Number(extra.upsellingInitial) && (
+              <div className="bg-[#16A34A]/10 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                <span className="text-[#16A34A] text-sm">📈</span>
+                <span className="text-sm font-bold text-[#16A34A]">
+                  ยอดเพิ่มขึ้น +{(Number(extra.upsellingFinal) - Number(extra.upsellingInitial)).toLocaleString()} บาท
+                </span>
+              </div>
+            )}
           </div>
         )}
 

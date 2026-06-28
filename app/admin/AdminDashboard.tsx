@@ -97,10 +97,28 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
     return {
       'ชั่วโมงไลฟ์': ex.live_hours ? String(ex.live_hours) : '',
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
+      'ยอดแรก Upsell (บาท)': ex.upselling_initial ? Number(ex.upselling_initial) : '',
+      'ของแถม': ex.upselling_freebie ? String(ex.upselling_freebie) : '',
+      'ยอดสุดท้าย Upsell (บาท)': ex.upselling_final ? Number(ex.upselling_final) : '',
+      'ยอดเพิ่ม (บาท)': (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : '',
     }
   }
   if (entry.department === 'sale admin') {
-    return { 'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '' }
+    return {
+      'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
+      'ยอดแรก Upsell (บาท)': ex.upselling_initial ? Number(ex.upselling_initial) : '',
+      'ของแถม': ex.upselling_freebie ? String(ex.upselling_freebie) : '',
+      'ยอดสุดท้าย Upsell (บาท)': ex.upselling_final ? Number(ex.upselling_final) : '',
+      'ยอดเพิ่ม (บาท)': (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : '',
+    }
+  }
+  if (entry.department === 'ผู้จัดการ') {
+    return {
+      'ยอดแรก Upsell (บาท)': ex.upselling_initial ? Number(ex.upselling_initial) : '',
+      'ของแถม': ex.upselling_freebie ? String(ex.upselling_freebie) : '',
+      'ยอดสุดท้าย Upsell (บาท)': ex.upselling_final ? Number(ex.upselling_final) : '',
+      'ยอดเพิ่ม (บาท)': (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : '',
+    }
   }
   if (entry.department === 'แพค') {
     return { 'จำนวนชิ้น': ex.pack_count ? Number(ex.pack_count) : '' }
@@ -173,7 +191,8 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
   const dept = entry.department
 
-  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount)) {
+  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount || ex.upselling_initial || ex.upselling_final)) {
+    const upDiff = (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : null
     return (
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
         <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
@@ -182,10 +201,42 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
             <DetailRow label="ชั่วโมงไลฟ์" value={`${ex.live_hours} ชั่วโมง`} />
           )}
           {!!ex.sales_amount && (
-            <DetailRow
-              label="ยอดขาย"
-              value={`${Number(ex.sales_amount).toLocaleString()} บาท`}
-            />
+            <DetailRow label="ยอดขาย" value={`${Number(ex.sales_amount).toLocaleString()} บาท`} />
+          )}
+          {!!ex.upselling_initial && (
+            <DetailRow label="ยอดแรก (Upsell)" value={`${Number(ex.upselling_initial).toLocaleString()} บาท`} />
+          )}
+          {!!ex.upselling_final && (
+            <DetailRow label="ยอดสุดท้าย (Upsell)" value={`${Number(ex.upselling_final).toLocaleString()} บาท`} />
+          )}
+          {!!ex.upselling_freebie && (
+            <DetailRow label="ของแถมที่เสนอ" value={String(ex.upselling_freebie)} />
+          )}
+          {upDiff !== null && upDiff > 0 && (
+            <DetailRow label="ยอดเพิ่มขึ้น" value={`+${upDiff.toLocaleString()} บาท`} />
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (dept === 'ผู้จัดการ' && (ex.upselling_initial || ex.upselling_final)) {
+    const upDiff = (ex.upselling_initial && ex.upselling_final) ? Number(ex.upselling_final) - Number(ex.upselling_initial) : null
+    return (
+      <div className="bg-blue-50 rounded-xl p-3 space-y-2">
+        <p className="text-xs font-bold text-[#1E3A5F]">อัพเซลล์</p>
+        <div className="grid grid-cols-2 gap-3">
+          {!!ex.upselling_initial && (
+            <DetailRow label="ยอดแรก" value={`${Number(ex.upselling_initial).toLocaleString()} บาท`} />
+          )}
+          {!!ex.upselling_final && (
+            <DetailRow label="ยอดสุดท้าย" value={`${Number(ex.upselling_final).toLocaleString()} บาท`} />
+          )}
+          {!!ex.upselling_freebie && (
+            <DetailRow label="ของแถมที่เสนอ" value={String(ex.upselling_freebie)} />
+          )}
+          {upDiff !== null && upDiff > 0 && (
+            <DetailRow label="ยอดเพิ่มขึ้น" value={`+${upDiff.toLocaleString()} บาท`} />
           )}
         </div>
       </div>
@@ -500,7 +551,7 @@ export default function AdminDashboard() {
           </button>
         </div>
         {/* Tabs */}
-        <div className="max-w-6xl mx-auto mt-4 flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="max-w-6xl mx-auto mt-4 flex flex-wrap gap-1">
           <button
             onClick={() => setActiveTab('kpi')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
