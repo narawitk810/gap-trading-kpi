@@ -8,6 +8,36 @@ import * as XLSX from 'xlsx'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
 
+const BASE_RATES: Record<string, number> = {
+  'การตลาด': 500,
+  'บัญชี': 600,
+  'ธุรการ': 400,
+  'บุคคล': 600,
+  'Stock': 500,
+  'แพค': 400,
+  'ผู้จัดการ': 700,
+  'Creative': 550,
+}
+
+function estimateWage(entry: KPIEntry): number {
+  const base = BASE_RATES[entry.department]
+  if (!base) return 0
+  const tasks = entry.tasks.filter((t) => t.trim())
+  const n = tasks.length
+  const mult = n <= 3 ? 0.7 : n <= 5 ? 0.85 : n <= 7 ? 1.0 : n <= 9 ? 1.15 : 1.3
+  let bonus = 0
+  if (entry.obstacles?.trim()) bonus += base * 0.05
+  const avgLen = tasks.reduce((s, t) => s + t.length, 0) / Math.max(n, 1)
+  if (avgLen > 20) bonus += base * 0.05
+  return Math.round(base * mult + bonus)
+}
+
+function wageColor(estimated: number, base: number): 'green' | 'yellow' | 'red' {
+  if (estimated > base) return 'green'
+  if (estimated >= base * 0.8) return 'yellow'
+  return 'red'
+}
+
 type ProductRequest = {
   id: string
   nickname: string
@@ -193,7 +223,8 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage'>('kpi')
+  const [wageFilters, setWageFilters] = useState({ department: '', dateFrom: '', dateTo: '', nickname: '' })
   const [entries, setEntries] = useState<KPIEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<KPIEntry | null>(null)
@@ -386,6 +417,16 @@ export default function AdminDashboard() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('wage')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              activeTab === 'wage'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            ค่าแรง
+          </button>
         </div>
       </div>
 
@@ -435,6 +476,155 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
+
+      {/* Wage Analysis Tab */}
+      {activeTab === 'wage' && (() => {
+        const wageDepts = Object.keys(BASE_RATES)
+        const wageEntries = entries.filter((e) => {
+          if (!wageDepts.includes(e.department)) return false
+          if (wageFilters.department && e.department !== wageFilters.department) return false
+          if (wageFilters.dateFrom && e.date < wageFilters.dateFrom) return false
+          if (wageFilters.dateTo && e.date > wageFilters.dateTo) return false
+          if (wageFilters.nickname && !e.nickname.toLowerCase().includes(wageFilters.nickname.toLowerCase())) return false
+          return true
+        })
+
+        // Summary by nickname
+        const summary: Record<string, { dept: string; days: number; totalEst: number; totalBase: number }> = {}
+        wageEntries.forEach((e) => {
+          const est = estimateWage(e)
+          const base = BASE_RATES[e.department] ?? 0
+          if (!summary[e.nickname]) summary[e.nickname] = { dept: e.department, days: 0, totalEst: 0, totalBase: 0 }
+          summary[e.nickname].days += 1
+          summary[e.nickname].totalEst += est
+          summary[e.nickname].totalBase += base
+        })
+
+        const colorClass = { green: 'bg-[#16A34A]/10 text-[#16A34A]', yellow: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-[#DC2626]' }
+        const colorLabel = { green: '▲ ดี', yellow: '~ ปกติ', red: '▼ ต่ำ' }
+
+        return (
+          <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+            {/* Filters */}
+            <div className="bg-white rounded-2xl shadow-sm p-5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">ตัวกรอง</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <select value={wageFilters.department}
+                  onChange={(e) => setWageFilters((p) => ({ ...p, department: e.target.value }))}
+                  className="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]">
+                  <option value="">ทุกแผนก</option>
+                  {wageDepts.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <div className="relative">
+                  <label className="absolute -top-2 left-3 text-[10px] text-gray-400 bg-white px-1">จากวันที่</label>
+                  <input type="date" value={wageFilters.dateFrom}
+                    onChange={(e) => setWageFilters((p) => ({ ...p, dateFrom: e.target.value }))}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                </div>
+                <div className="relative">
+                  <label className="absolute -top-2 left-3 text-[10px] text-gray-400 bg-white px-1">ถึงวันที่</label>
+                  <input type="date" value={wageFilters.dateTo}
+                    onChange={(e) => setWageFilters((p) => ({ ...p, dateTo: e.target.value }))}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                </div>
+                <input type="text" value={wageFilters.nickname} placeholder="ค้นหาชื่อเล่น..."
+                  onChange={(e) => setWageFilters((p) => ({ ...p, nickname: e.target.value }))}
+                  className="border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+            </div>
+
+            {/* Summary per person */}
+            {Object.keys(summary).length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm p-5">
+                <h3 className="font-bold text-[#1E3A5F] mb-4">สรุปค่าแรงต่อคน</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        <th className="text-left px-4 py-3">ชื่อเล่น</th>
+                        <th className="text-left px-4 py-3">แผนก</th>
+                        <th className="text-right px-4 py-3">วันที่ส่ง KPI</th>
+                        <th className="text-right px-4 py-3">ค่าแรงฐาน (รวม)</th>
+                        <th className="text-right px-4 py-3">ค่าแรงประเมิน (รวม)</th>
+                        <th className="text-center px-4 py-3">ผล</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(summary).map(([name, s]) => {
+                        const col = wageColor(s.totalEst, s.totalBase)
+                        return (
+                          <tr key={name} className="border-t border-[#E2E8F0]">
+                            <td className="px-4 py-3 font-semibold text-[#374151]">{name}</td>
+                            <td className="px-4 py-3 text-gray-500">{s.dept}</td>
+                            <td className="px-4 py-3 text-right text-gray-600">{s.days} วัน</td>
+                            <td className="px-4 py-3 text-right text-gray-600">{s.totalBase.toLocaleString()} บ.</td>
+                            <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">{s.totalEst.toLocaleString()} บ.</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${colorClass[col]}`}>
+                                {colorLabel[col]}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Detail per entry */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h3 className="font-bold text-[#1E3A5F]">รายการ KPI พร้อมค่าแรงประเมิน
+                  <span className="ml-2 text-sm font-normal text-gray-400">({wageEntries.length} รายการ)</span>
+                </h3>
+              </div>
+              {wageEntries.length === 0 ? (
+                <div className="py-16 text-center text-gray-400 text-sm">ไม่พบข้อมูล</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[700px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        <th className="text-left px-4 py-3">วันที่</th>
+                        <th className="text-left px-4 py-3">ชื่อเล่น</th>
+                        <th className="text-left px-4 py-3">แผนก</th>
+                        <th className="text-right px-4 py-3">งาน</th>
+                        <th className="text-right px-4 py-3">ค่าแรงฐาน</th>
+                        <th className="text-right px-4 py-3">ค่าแรงประเมิน</th>
+                        <th className="text-center px-4 py-3">ผล</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {wageEntries.map((e, idx) => {
+                        const est = estimateWage(e)
+                        const base = BASE_RATES[e.department] ?? 0
+                        const col = wageColor(est, base)
+                        return (
+                          <tr key={e.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(e.date)}</td>
+                            <td className="px-4 py-3 font-semibold text-[#374151]">{e.nickname}</td>
+                            <td className="px-4 py-3 text-gray-500">{e.department}</td>
+                            <td className="px-4 py-3 text-right text-gray-600">{e.tasks.filter(t => t.trim()).length} รายการ</td>
+                            <td className="px-4 py-3 text-right text-gray-500">{base.toLocaleString()} บ.</td>
+                            <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">{est.toLocaleString()} บ.</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${colorClass[col]}`}>
+                                {col === 'green' ? '▲' : col === 'yellow' ? '~' : '▼'}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Product Requests Tab */}
       {activeTab === 'requests' && (
