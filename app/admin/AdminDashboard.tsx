@@ -8,6 +8,24 @@ import * as XLSX from 'xlsx'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
 
+type ProductRequest = {
+  id: string
+  nickname: string
+  description: string
+  image_data: string
+  status: string
+  created_at: string
+  approved_at: string | null
+}
+
+function formatDateTime(iso: string) {
+  const d = new Date(iso)
+  return d.toLocaleDateString('th-TH', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
+
 function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
   if (!entry.extra_data) return {}
   let ex: Record<string, unknown> = {}
@@ -163,6 +181,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests'>('kpi')
   const [entries, setEntries] = useState<KPIEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<KPIEntry | null>(null)
@@ -172,6 +191,9 @@ export default function AdminDashboard() {
     dateTo: '',
     nickname: '',
   })
+  const [productRequests, setProductRequests] = useState<ProductRequest[]>([])
+  const [loadingRequests, setLoadingRequests] = useState(false)
+  const [approvingId, setApprovingId] = useState<string | null>(null)
 
   const fetchEntries = useCallback(async () => {
     setLoading(true)
@@ -188,9 +210,49 @@ export default function AdminDashboard() {
     }
   }, [])
 
+  const fetchProductRequests = useCallback(async () => {
+    setLoadingRequests(true)
+    try {
+      const res = await fetch(`/api/product-requests?key=${ADMIN_KEY}`)
+      if (res.ok) {
+        const data = await res.json()
+        setProductRequests(data)
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingRequests(false)
+    }
+  }, [])
+
+  async function handleApprove(id: string) {
+    setApprovingId(id)
+    try {
+      const res = await fetch(`/api/product-requests?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) {
+        setProductRequests((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, status: 'approved', approved_at: new Date().toISOString() } : r
+          )
+        )
+      }
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } finally {
+      setApprovingId(null)
+    }
+  }
+
   useEffect(() => {
-    if (isAuthorized) fetchEntries()
-  }, [isAuthorized, fetchEntries])
+    if (isAuthorized) {
+      fetchEntries()
+      fetchProductRequests()
+    }
+  }, [isAuthorized, fetchEntries, fetchProductRequests])
 
   if (!isAuthorized) {
     return (
@@ -234,14 +296,100 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={fetchEntries}
+            onClick={() => { fetchEntries(); fetchProductRequests() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
           </button>
         </div>
+        {/* Tabs */}
+        <div className="max-w-6xl mx-auto mt-4 flex gap-1">
+          <button
+            onClick={() => setActiveTab('kpi')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              activeTab === 'kpi'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            รายการ KPI
+          </button>
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+              activeTab === 'requests'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            คำขอสินค้า
+            {productRequests.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="bg-[#DC2626] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {productRequests.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
+      {/* Product Requests Tab */}
+      {activeTab === 'requests' && (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {loadingRequests ? (
+            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : productRequests.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">
+              ยังไม่มีคำขอสินค้า
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {productRequests.map((req) => (
+                <div key={req.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {req.image_data && (
+                    <img
+                      src={req.image_data}
+                      alt="สินค้า"
+                      className="w-full h-48 object-cover"
+                    />
+                  )}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-[#1E3A5F] text-sm">{req.nickname}</p>
+                        <p className="text-xs text-gray-400">{formatDateTime(req.created_at)}</p>
+                      </div>
+                      {req.status === 'approved' ? (
+                        <span className="shrink-0 inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2.5 py-1 rounded-full">
+                          ✅ อนุมัติแล้ว
+                        </span>
+                      ) : (
+                        <span className="shrink-0 inline-flex items-center gap-1 bg-amber-50 text-amber-600 text-xs font-bold px-2.5 py-1 rounded-full">
+                          🟡 รอดำเนินการ
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-[#374151]">{req.description}</p>
+                    {req.approved_at && (
+                      <p className="text-xs text-[#16A34A]">อนุมัติเมื่อ {formatDateTime(req.approved_at)}</p>
+                    )}
+                    {req.status === 'pending' && (
+                      <button
+                        onClick={() => handleApprove(req.id)}
+                        disabled={approvingId === req.id}
+                        className="w-full mt-1 bg-[#16A34A] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#15803d] disabled:opacity-60 transition-colors"
+                      >
+                        {approvingId === req.id ? 'กำลังอนุมัติ...' : 'อนุมัติ'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'kpi' && (
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         {/* Today Summary */}
         <div className="bg-white rounded-2xl shadow-sm p-5">
@@ -417,6 +565,7 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+      )}
 
       {/* Detail Modal */}
       {selectedEntry && (

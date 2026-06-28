@@ -45,6 +45,18 @@ export async function ensureSchema(): Promise<void> {
   try {
     await db.execute(`ALTER TABLE kpi_entries ADD COLUMN extra_data TEXT NOT NULL DEFAULT ''`)
   } catch { /* column already exists */ }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS product_requests (
+      id          TEXT PRIMARY KEY,
+      nickname    TEXT NOT NULL,
+      description TEXT NOT NULL,
+      image_data  TEXT NOT NULL,
+      status      TEXT NOT NULL DEFAULT 'pending',
+      created_at  TEXT NOT NULL,
+      approved_at TEXT
+    )
+  `)
   g.dbReady = true
 }
 

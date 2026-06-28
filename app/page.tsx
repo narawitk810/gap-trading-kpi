@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { DEPARTMENTS } from '@/types/kpi'
 
 function getTodayDate() {
@@ -398,6 +399,25 @@ export default function Home() {
         </div>
 
         {/* ── Department-specific fields ── */}
+
+        {/* ไลฟ์สด — ลิงก์ขอสินค้า */}
+        {formData.department === 'ไลฟ์สด' && (
+          <Link
+            href="/request"
+            className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              📦
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1E3A5F]">ขอสินค้าสำหรับไลฟ์</p>
+              <p className="text-xs text-gray-400 mt-0.5">แนบรูปสินค้าและรายละเอียด → Admin อนุมัติ</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
 
         {/* ไลฟ์สด */}
         {formData.department === 'ไลฟ์สด' && (
