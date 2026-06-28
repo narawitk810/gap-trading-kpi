@@ -500,10 +500,10 @@ export default function AdminDashboard() {
           </button>
         </div>
         {/* Tabs */}
-        <div className="max-w-6xl mx-auto mt-4 flex gap-1">
+        <div className="max-w-6xl mx-auto mt-4 flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
           <button
             onClick={() => setActiveTab('kpi')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'kpi'
                 ? 'bg-white text-[#1E3A5F]'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -543,7 +543,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('wage')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'wage'
                 ? 'bg-white text-[#1E3A5F]'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -553,7 +553,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('tax')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'tax'
                 ? 'bg-white text-[#1E3A5F]'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
@@ -578,7 +578,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('codes')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'codes'
                 ? 'bg-white text-[#1E3A5F]'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
