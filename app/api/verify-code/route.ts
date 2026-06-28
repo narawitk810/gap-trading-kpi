@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     sql: 'SELECT code, quarter FROM dept_codes WHERE department = ?',
     args: [department],
   })
-  const row = existing.rows[0] as { code: string; quarter: string } | undefined
+  const row = existing.rows[0] as unknown as { code: string; quarter: string } | undefined
 
   if (!row || row.quarter !== quarter) {
     // Rotate all departments
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       sql: 'SELECT code FROM dept_codes WHERE department = ?',
       args: [department],
     })
-    const newRow = refreshed.rows[0] as { code: string } | undefined
+    const newRow = refreshed.rows[0] as unknown as { code: string } | undefined
     return NextResponse.json({ valid: newRow?.code === code.trim() })
   }
 

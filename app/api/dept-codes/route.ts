@@ -23,7 +23,7 @@ async function ensureCodes(db: Awaited<ReturnType<typeof getDb>>, forceRegen = f
       sql: 'SELECT quarter FROM dept_codes WHERE department = ?',
       args: [dept],
     })
-    const row = existing.rows[0] as { quarter: string } | undefined
+    const row = existing.rows[0] as unknown as { quarter: string } | undefined
 
     if (!row || row.quarter !== quarter || forceRegen) {
       const code = randomCode()
