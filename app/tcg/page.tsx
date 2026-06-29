@@ -6,6 +6,18 @@ import QRCode from 'react-qr-code'
 const BRANCH = 'gap7card'
 const TOTAL_TABLES = 9
 const POLL_INTERVAL = 5000
+const STORE_LAT = 8.4459027
+const STORE_LNG = 99.9680231
+const CHECK_IN_RADIUS_M = 200
+const CHECK_IN_TTL_MS = 6 * 60 * 60 * 1000
+
+function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 
 interface TcgSession {
   id: string
@@ -57,6 +69,8 @@ export default function TcgPage() {
   const [confirmResult, setConfirmResult] = useState<'win' | 'lose' | 'draw' | null>(null)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+  const [checkedIn, setCheckedIn] = useState(false)
+  const [checkingIn, setCheckingIn] = useState(false)
   const [qrModal, setQrModal] = useState(false)
   const [pageUrl, setPageUrl] = useState('')
   const [muted, setMuted] = useState(false)
@@ -120,12 +134,20 @@ export default function TcgPage() {
     }
   }
 
-  // โหลด nickname + sessionId จาก localStorage
+  // โหลด nickname + sessionId + check-in จาก localStorage
   useEffect(() => {
     const saved = localStorage.getItem('tcg_nickname')
     if (saved) { setNickname(saved); setNicknameInput(saved) }
     const sid = localStorage.getItem('tcg_session_id')
     if (sid) setMySessionId(sid)
+    const ci = localStorage.getItem('tcg_checkin')
+    if (ci) {
+      try {
+        const { ts } = JSON.parse(ci)
+        if (Date.now() - ts < CHECK_IN_TTL_MS) setCheckedIn(true)
+        else localStorage.removeItem('tcg_checkin')
+      } catch { localStorage.removeItem('tcg_checkin') }
+    }
   }, [])
 
   const fetchSessions = useCallback(async () => {
@@ -185,6 +207,32 @@ export default function TcgPage() {
     setTimeout(() => setSuccessMsg(''), 4000)
   }
 
+  const checkIn = () => {
+    if (!('geolocation' in navigator)) {
+      showError('อุปกรณ์นี้ไม่รองรับ GPS')
+      return
+    }
+    setCheckingIn(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const dist = getDistanceMeters(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG)
+        if (dist <= CHECK_IN_RADIUS_M) {
+          localStorage.setItem('tcg_checkin', JSON.stringify({ ts: Date.now() }))
+          setCheckedIn(true)
+          showSuccess('เช็คอินสำเร็จ! ยินดีต้อนรับสู่ gap7card 🎉')
+        } else {
+          showError(`คุณอยู่ห่างจากร้าน ${Math.round(dist)} เมตร — ต้องอยู่ภายใน ${CHECK_IN_RADIUS_M} เมตร`)
+        }
+        setCheckingIn(false)
+      },
+      () => {
+        showError('ไม่สามารถรับตำแหน่ง GPS ได้ กรุณาอนุญาตสิทธิ์ตำแหน่ง')
+        setCheckingIn(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
   const saveNickname = () => {
     const n = nicknameInput.trim()
     if (!n) return
@@ -204,6 +252,7 @@ export default function TcgPage() {
   }
 
   const createSession = async (tableNumber: number) => {
+    if (!checkedIn) { showError('กรุณาเช็คอินก่อนเล่น'); return }
     if (!nickname) { showError('กรุณากรอกชื่อก่อน'); return }
     if (mySessionId) { showError('คุณมีโต๊ะอยู่แล้ว กรุณายกเลิกก่อน'); return }
     setSubmitting(true)
@@ -227,6 +276,7 @@ export default function TcgPage() {
   }
 
   const joinSession = async (sessionId: string) => {
+    if (!checkedIn) { showError('กรุณาเช็คอินก่อนเล่น'); return }
     if (!nickname) { showError('กรุณากรอกชื่อก่อน'); return }
     if (mySessionId) { showError('คุณมีโต๊ะอยู่แล้ว กรุณายกเลิกก่อน'); return }
     setSubmitting(true)
@@ -422,6 +472,27 @@ export default function TcgPage() {
 
       {tab === 'tables' && (
         <div className="px-4 mt-4 space-y-4">
+          {/* Check-in */}
+          {!checkedIn && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm text-center">
+              <p className="text-4xl mb-2">📍</p>
+              <p className="text-base font-bold text-[#1E3A5F] mb-1">เช็คอินก่อนเล่น</p>
+              <p className="text-xs text-gray-400 mb-4">ต้องอยู่ภายในร้าน gap7card เพื่อเล่น</p>
+              <button
+                onClick={checkIn}
+                disabled={checkingIn}
+                className="w-full py-3.5 bg-[#1E3A5F] text-white font-bold rounded-2xl text-sm disabled:opacity-50"
+              >
+                {checkingIn ? '⏳ กำลังตรวจสอบตำแหน่ง...' : '📍 เช็คอิน'}
+              </button>
+            </div>
+          )}
+          {checkedIn && (
+            <div className="flex items-center gap-2 bg-[#16A34A]/10 border border-[#16A34A]/30 rounded-2xl px-4 py-2.5">
+              <span className="text-[#16A34A] text-sm">✅</span>
+              <p className="text-xs font-semibold text-[#16A34A]">เช็คอินแล้ว — gap7card (ใช้ได้ 6 ชั่วโมง)</p>
+            </div>
+          )}
           {/* Nickname */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-semibold text-[#374151] mb-2">ชื่อผู้เล่น</p>
