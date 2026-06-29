@@ -162,7 +162,7 @@ export default function Home() {
     date: getTodayDate(),
     time: getCurrentTime(),
     nickname: '',
-    channelName: '',
+    channelName: [],
     tasks: [''],
     obstacles: '',
     extraData: { ...defaultExtraData, clipLinks: [''] },
