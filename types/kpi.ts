@@ -8,7 +8,8 @@ export const DEPARTMENTS = [
   'บุคคล',
   'สต๊อค&จัดซื้อ',
   'แพค',
-  'ผู้จัดการ',
+  'ผู้จัดการไลฟ์สด',
+  'ผู้จัดการหน้าร้าน',
 ] as const
 
 export type Department = (typeof DEPARTMENTS)[number]

@@ -130,7 +130,7 @@ const CHANNEL_LIST = [
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
 const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 const UPSELLING_DEPTS = ['ไลฟ์สด', 'sale admin']
-const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการ']
+const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
