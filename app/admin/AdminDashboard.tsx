@@ -104,6 +104,8 @@ function formatDateTime(iso: string) {
   })
 }
 
+const roundUp10 = (n: number) => Math.ceil(n / 10) * 10
+
 function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
   if (!entry.extra_data) return {}
   let ex: Record<string, unknown> = {}
@@ -465,10 +467,18 @@ export default function AdminDashboard() {
 
   function openPricingModal(r: StockArrival) {
     setPricingModal(r)
-    setPmMultiplier('')
-    setPmMsrpPrice('')
-    setPmRisk(0)
-    setPmCommission('')
+    if (r.pricing_data) {
+      const p = JSON.parse(r.pricing_data)
+      setPmMultiplier(p.multiplier)
+      setPmMsrpPrice(p.msrp_price || '')
+      setPmRisk(p.risk_amount)
+      setPmCommission(p.commission_tier)
+    } else {
+      setPmMultiplier('')
+      setPmMsrpPrice('')
+      setPmRisk(0)
+      setPmCommission('')
+    }
   }
 
   async function handlePricingSubmit() {
@@ -479,10 +489,11 @@ export default function AdminDashboard() {
 
     const cost = Number(pricingModal.cost) || 0
     const packs = Number(pricingModal.packs_per_box) || 1
-    const boxPriceSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
-    const boxPriceExternal = boxPriceSystem * 0.90 * 0.84
-    const packPriceSystem = (boxPriceSystem / packs) + pmRisk
-    const packPriceExternal = packPriceSystem * 0.90 * 0.84
+    const rawBoxSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
+    const boxPriceSystem = pmMultiplier === 'msrp' ? rawBoxSystem : roundUp10(rawBoxSystem)
+    const boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
+    const packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
+    const packPriceExternal = roundUp10(packPriceSystem * 0.90)
 
     const pricing = {
       multiplier: pmMultiplier,
@@ -1479,9 +1490,9 @@ export default function AdminDashboard() {
                             ) : r.pricing_data ? (
                               <button
                                 onClick={() => openPricingModal(r)}
-                                className="border border-[#E2E8F0] text-[#374151] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
+                                className="border border-[#1E3A5F] text-[#1E3A5F] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
                               >
-                                ดูราคา
+                                แก้ไขราคา
                               </button>
                             ) : null}
                           </td>
@@ -1497,7 +1508,6 @@ export default function AdminDashboard() {
             {pricingModal && (() => {
               const cost = Number(pricingModal.cost) || 0
               const packs = Number(pricingModal.packs_per_box) || 1
-              const isViewing = pricingModal.status === 'acknowledged' && !!pricingModal.pricing_data
 
               let boxPriceSystem = 0
               let boxPriceExternal = 0
@@ -1505,25 +1515,18 @@ export default function AdminDashboard() {
               let packPriceExternal = 0
               let calcReady = false
 
-              if (isViewing && pricingModal.pricing_data) {
-                const p = JSON.parse(pricingModal.pricing_data)
-                boxPriceSystem = p.box_price_system
-                boxPriceExternal = p.box_price_external
-                packPriceSystem = p.pack_price_system
-                packPriceExternal = p.pack_price_external
-                calcReady = true
-              } else if (pmMultiplier) {
+              if (pmMultiplier) {
                 if (pmMultiplier === 'msrp' && pmMsrpPrice) {
                   boxPriceSystem = Number(pmMsrpPrice)
                   calcReady = true
                 } else if (pmMultiplier !== 'msrp') {
-                  boxPriceSystem = cost * Number(pmMultiplier)
+                  boxPriceSystem = roundUp10(cost * Number(pmMultiplier))
                   calcReady = true
                 }
                 if (calcReady) {
-                  boxPriceExternal = boxPriceSystem * 0.90 * 0.84
-                  packPriceSystem = (boxPriceSystem / packs) + pmRisk
-                  packPriceExternal = packPriceSystem * 0.90 * 0.84
+                  boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
+                  packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
+                  packPriceExternal = roundUp10(packPriceSystem * 0.90)
                 }
               }
 
@@ -1540,15 +1543,14 @@ export default function AdminDashboard() {
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto">
                     {/* Header */}
                     <div className="bg-[#1E3A5F] text-white px-5 py-4 rounded-t-2xl">
-                      <p className="text-xs opacity-70 mb-0.5">{isViewing ? 'ข้อมูลราคา' : 'กำหนดราคา'}</p>
+                      <p className="text-xs opacity-70 mb-0.5">{pricingModal.pricing_data ? 'แก้ไขราคา' : 'กำหนดราคา'}</p>
                       <h2 className="font-bold text-base leading-tight">{pricingModal.product_name}</h2>
                       <p className="text-xs opacity-60 mt-0.5">ต้นทุน {Number(pricingModal.cost).toLocaleString()} บาท · {pricingModal.packs_per_box} ซอง/กล่อง</p>
                     </div>
 
                     <div className="p-5 space-y-4">
                       {/* Multiplier selection */}
-                      {!isViewing && (
-                        <>
+                      <>
                           <div>
                             <p className="text-xs font-semibold text-[#374151] mb-2">เลือกประเภทสินค้า <span className="text-[#DC2626]">*</span></p>
                             <div className="space-y-2">
@@ -1583,23 +1585,20 @@ export default function AdminDashboard() {
                           {/* Risk amount */}
                           <div>
                             <p className="text-xs font-semibold text-[#374151] mb-2">บวกความเสี่ยง (ราคาซอง)</p>
-                            <div className="flex gap-2 flex-wrap">
-                              {[0, 50, 100, 150, 200].map((v) => (
-                                <button
-                                  key={v}
-                                  type="button"
-                                  onClick={() => setPmRisk(v)}
-                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                                    pmRisk === v ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'border-[#E2E8F0] text-[#374151]'
-                                  }`}
-                                >
-                                  +{v} บาท
-                                </button>
-                              ))}
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="number"
+                                min={0}
+                                max={200}
+                                value={pmRisk}
+                                onChange={(e) => setPmRisk(Math.min(200, Math.max(0, Number(e.target.value) || 0)))}
+                                className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                                placeholder="0"
+                              />
+                              <span className="text-xs text-gray-400">บาท (0–200)</span>
                             </div>
                           </div>
                         </>
-                      )}
 
                       {/* Result */}
                       {calcReady && (
@@ -1617,7 +1616,7 @@ export default function AdminDashboard() {
                               <p className="text-xs text-gray-400">บาท</p>
                             </div>
                             <div className="bg-white rounded-lg p-3 shadow-sm">
-                              <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 && !isViewing ? ` +${pmRisk}฿` : ''}</p>
+                              <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
                               <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
                               <p className="text-xs text-gray-400">บาท/ซอง</p>
                             </div>
@@ -1631,8 +1630,7 @@ export default function AdminDashboard() {
                       )}
 
                       {/* Commission tier */}
-                      {!isViewing && (
-                        <div>
+                      <div>
                           <p className="text-xs font-semibold text-[#374151] mb-2">ค่าคอมมิชชั่น <span className="text-[#DC2626]">*</span></p>
                           <div className="flex gap-2">
                             {[{ key: 'P1', label: 'P(1)', pct: '1%' }, { key: 'P2', label: 'P(2)', pct: '2%' }, { key: 'P3', label: 'P(3)', pct: '3%' }].map((p) => (
@@ -1649,19 +1647,6 @@ export default function AdminDashboard() {
                             ))}
                           </div>
                         </div>
-                      )}
-
-                      {/* Viewing mode: show commission */}
-                      {isViewing && pricingModal.pricing_data && (() => {
-                        const p = JSON.parse(pricingModal.pricing_data)
-                        return (
-                          <div className="text-xs text-gray-500 space-y-1 border-t border-[#E2E8F0] pt-3">
-                            <p>ค่าคอมมิชชั่น: <span className="font-bold text-[#1E3A5F]">{p.commission_tier} ({p.commission_tier === 'P1' ? '1%' : p.commission_tier === 'P2' ? '2%' : '3%'})</span></p>
-                            <p>ประเภท: <span className="font-semibold">{p.multiplier === 'msrp' ? 'MSRP' : `× ${p.multiplier}`}</span></p>
-                            {p.risk_amount > 0 && <p>ความเสี่ยงซอง: <span className="font-semibold">+{p.risk_amount} บาท</span></p>}
-                          </div>
-                        )
-                      })()}
                     </div>
 
                     {/* Footer */}
@@ -1670,17 +1655,15 @@ export default function AdminDashboard() {
                         onClick={() => setPricingModal(null)}
                         className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm"
                       >
-                        {isViewing ? 'ปิด' : 'ยกเลิก'}
+                        ยกเลิก
                       </button>
-                      {!isViewing && (
-                        <button
-                          onClick={handlePricingSubmit}
-                          disabled={pmSubmitting}
-                          className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-60"
-                        >
-                          {pmSubmitting ? 'กำลังบันทึก...' : 'ดำเนินการแล้ว ✓'}
-                        </button>
-                      )}
+                      <button
+                        onClick={handlePricingSubmit}
+                        disabled={pmSubmitting}
+                        className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-60"
+                      >
+                        {pmSubmitting ? 'กำลังบันทึก...' : 'บันทึก ✓'}
+                      </button>
                     </div>
                   </div>
                 </div>
