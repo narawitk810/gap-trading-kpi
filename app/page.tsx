@@ -108,7 +108,7 @@ function InputField({
 const inputClass =
   'w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]'
 
-const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด']
+const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
 const CHANNEL_LIST = [
   'gap7cardbreak', 'pokedex', 'nanatoshop', 'jokercardshop',
   'ninjabearcardshop', 'rabbitcardshop', 'littleponycardshop', 'stadiumbreaks',
