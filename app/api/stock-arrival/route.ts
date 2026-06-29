@@ -42,8 +42,8 @@ export async function PATCH(request: NextRequest) {
   const db = getDb()
   const now = new Date().toISOString()
   await db.execute({
-    sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ? WHERE id = ?`,
-    args: [now, body.id],
+    sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ?, pricing_data = ? WHERE id = ?`,
+    args: [now, body.pricing ? JSON.stringify(body.pricing) : null, body.id],
   })
   return NextResponse.json({ ok: true })
 }

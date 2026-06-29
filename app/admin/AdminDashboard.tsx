@@ -82,6 +82,7 @@ type StockArrival = {
   status: string
   created_at: string
   acknowledged_at: string | null
+  pricing_data: string | null
 }
 
 type TaxInvoice = {
@@ -313,6 +314,12 @@ export default function AdminDashboard() {
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
   const [arrivalFilters, setArrivalFilters] = useState({ dateFrom: '', dateTo: '' })
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
+  const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
+  const [pmMultiplier, setPmMultiplier] = useState<string>('')
+  const [pmMsrpPrice, setPmMsrpPrice] = useState('')
+  const [pmRisk, setPmRisk] = useState(0)
+  const [pmCommission, setPmCommission] = useState('')
+  const [pmSubmitting, setPmSubmitting] = useState(false)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
   const [taxMonth, setTaxMonth] = useState('')
@@ -456,17 +463,54 @@ export default function AdminDashboard() {
     finally { setLoadingArrivals(false) }
   }, [])
 
-  async function handleAcknowledge(id: string) {
-    setAcknowledgingId(id)
+  function openPricingModal(r: StockArrival) {
+    setPricingModal(r)
+    setPmMultiplier('')
+    setPmMsrpPrice('')
+    setPmRisk(0)
+    setPmCommission('')
+  }
+
+  async function handlePricingSubmit() {
+    if (!pricingModal) return
+    if (!pmMultiplier) { alert('กรุณาเลือกประเภทสินค้า'); return }
+    if (pmMultiplier === 'msrp' && !pmMsrpPrice.trim()) { alert('กรุณาระบุราคา MSRP'); return }
+    if (!pmCommission) { alert('กรุณาเลือกค่าคอมมิชชั่น'); return }
+
+    const cost = Number(pricingModal.cost) || 0
+    const packs = Number(pricingModal.packs_per_box) || 1
+    const boxPriceSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
+    const boxPriceExternal = boxPriceSystem * 0.90 * 0.84
+    const packPriceSystem = (boxPriceSystem / packs) + pmRisk
+    const packPriceExternal = packPriceSystem * 0.90 * 0.84
+
+    const pricing = {
+      multiplier: pmMultiplier,
+      msrp_price: pmMsrpPrice || null,
+      risk_amount: pmRisk,
+      commission_tier: pmCommission,
+      box_price_system: boxPriceSystem,
+      box_price_external: boxPriceExternal,
+      pack_price_system: packPriceSystem,
+      pack_price_external: packPriceExternal,
+    }
+
+    setPmSubmitting(true)
     try {
       const res = await fetch(`/api/stock-arrival?key=${ADMIN_KEY}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: pricingModal.id, pricing }),
       })
-      if (res.ok) setStockArrivals((prev) => prev.map((r) => r.id === id ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString() } : r))
+      if (res.ok) {
+        setStockArrivals((prev) => prev.map((r) => r.id === pricingModal!.id
+          ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString(), pricing_data: JSON.stringify(pricing) }
+          : r
+        ))
+        setPricingModal(null)
+      } else { alert('เกิดข้อผิดพลาด') }
     } catch { alert('เกิดข้อผิดพลาด') }
-    finally { setAcknowledgingId(null) }
+    finally { setPmSubmitting(false) }
   }
 
   async function handleNoted(id: string) {
@@ -1389,7 +1433,7 @@ export default function AdminDashboard() {
                         <th className="text-right px-4 py-3">ต้นทุน (บาท)</th>
                         <th className="text-center px-4 py-3">สถานะ</th>
                         <th className="text-center px-4 py-3">รูป</th>
-                        <th className="text-center px-4 py-3">รับทราบ</th>
+                        <th className="text-center px-4 py-3">การดำเนินการ</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1407,9 +1451,11 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 text-right text-xs font-semibold text-[#374151]">{Number(r.cost).toLocaleString()}</td>
                           <td className="px-4 py-3 text-center">
                             <span className={`text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${
-                              r.status === 'pending' ? 'bg-red-50 text-[#DC2626]' : 'bg-[#16A34A]/10 text-[#16A34A]'
+                              r.status === 'pending'
+                                ? 'bg-yellow-50 text-yellow-700'
+                                : 'bg-[#16A34A]/10 text-[#16A34A]'
                             }`}>
-                              {r.status === 'pending' ? 'รอรับทราบ' : 'รับทราบแล้ว'}
+                              {r.status === 'pending' ? 'รอดำเนินการ' : 'ดำเนินการแล้ว'}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
@@ -1423,15 +1469,21 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            {r.status === 'pending' && (
+                            {r.status === 'pending' ? (
                               <button
-                                onClick={() => handleAcknowledge(r.id)}
-                                disabled={acknowledgingId === r.id}
-                                className="bg-[#16A34A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-60 whitespace-nowrap"
+                                onClick={() => openPricingModal(r)}
+                                className="bg-[#1E3A5F] text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap"
                               >
-                                {acknowledgingId === r.id ? '...' : 'รับทราบ'}
+                                กำหนดราคา
                               </button>
-                            )}
+                            ) : r.pricing_data ? (
+                              <button
+                                onClick={() => openPricingModal(r)}
+                                className="border border-[#E2E8F0] text-[#374151] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
+                              >
+                                ดูราคา
+                              </button>
+                            ) : null}
                           </td>
                         </tr>
                       ))}
@@ -1440,6 +1492,200 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+
+            {/* Pricing Modal */}
+            {pricingModal && (() => {
+              const cost = Number(pricingModal.cost) || 0
+              const packs = Number(pricingModal.packs_per_box) || 1
+              const isViewing = pricingModal.status === 'acknowledged' && !!pricingModal.pricing_data
+
+              let boxPriceSystem = 0
+              let boxPriceExternal = 0
+              let packPriceSystem = 0
+              let packPriceExternal = 0
+              let calcReady = false
+
+              if (isViewing && pricingModal.pricing_data) {
+                const p = JSON.parse(pricingModal.pricing_data)
+                boxPriceSystem = p.box_price_system
+                boxPriceExternal = p.box_price_external
+                packPriceSystem = p.pack_price_system
+                packPriceExternal = p.pack_price_external
+                calcReady = true
+              } else if (pmMultiplier) {
+                if (pmMultiplier === 'msrp' && pmMsrpPrice) {
+                  boxPriceSystem = Number(pmMsrpPrice)
+                  calcReady = true
+                } else if (pmMultiplier !== 'msrp') {
+                  boxPriceSystem = cost * Number(pmMultiplier)
+                  calcReady = true
+                }
+                if (calcReady) {
+                  boxPriceExternal = boxPriceSystem * 0.90 * 0.84
+                  packPriceSystem = (boxPriceSystem / packs) + pmRisk
+                  packPriceExternal = packPriceSystem * 0.90 * 0.84
+                }
+              }
+
+              const fmt = (n: number) => n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+              const MULTIPLIERS = [
+                { key: '2.4', label: 'ทั่วไป', value: 2.4 },
+                { key: '2.6', label: 'หายาก', value: 2.6 },
+                { key: '2.8', label: 'หายากมาก', value: 2.8 },
+                { key: '3', label: 'สั่งไม่ได้อีก', value: 3 },
+              ]
+
+              return (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setPricingModal(null) }}>
+                  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto">
+                    {/* Header */}
+                    <div className="bg-[#1E3A5F] text-white px-5 py-4 rounded-t-2xl">
+                      <p className="text-xs opacity-70 mb-0.5">{isViewing ? 'ข้อมูลราคา' : 'กำหนดราคา'}</p>
+                      <h2 className="font-bold text-base leading-tight">{pricingModal.product_name}</h2>
+                      <p className="text-xs opacity-60 mt-0.5">ต้นทุน {Number(pricingModal.cost).toLocaleString()} บาท · {pricingModal.packs_per_box} ซอง/กล่อง</p>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                      {/* Multiplier selection */}
+                      {!isViewing && (
+                        <>
+                          <div>
+                            <p className="text-xs font-semibold text-[#374151] mb-2">เลือกประเภทสินค้า <span className="text-[#DC2626]">*</span></p>
+                            <div className="space-y-2">
+                              {/* MSRP option */}
+                              <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${pmMultiplier === 'msrp' ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
+                                <input type="radio" name="multiplier" value="msrp" checked={pmMultiplier === 'msrp'} onChange={() => setPmMultiplier('msrp')} className="accent-[#1E3A5F]" />
+                                <span className="text-sm font-semibold text-[#374151]">MSRP</span>
+                                <span className="text-xs text-gray-400">(sleeve / playmat)</span>
+                                {pmMultiplier === 'msrp' && (
+                                  <input
+                                    type="number"
+                                    value={pmMsrpPrice}
+                                    onChange={(e) => setPmMsrpPrice(e.target.value)}
+                                    placeholder="ราคา MSRP (บาท)"
+                                    className="ml-auto border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                )}
+                              </label>
+                              {/* Multiplier options */}
+                              {MULTIPLIERS.map((m) => (
+                                <label key={m.key} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${pmMultiplier === m.key ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
+                                  <input type="radio" name="multiplier" value={m.key} checked={pmMultiplier === m.key} onChange={() => setPmMultiplier(m.key)} className="accent-[#1E3A5F]" />
+                                  <span className="text-sm font-semibold text-[#374151]">{m.label}</span>
+                                  <span className="text-xs text-gray-400">× {m.value}</span>
+                                  {cost > 0 && <span className="ml-auto text-sm font-bold text-[#1E3A5F]">{(cost * m.value).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿</span>}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Risk amount */}
+                          <div>
+                            <p className="text-xs font-semibold text-[#374151] mb-2">บวกความเสี่ยง (ราคาซอง)</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {[0, 50, 100, 150, 200].map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() => setPmRisk(v)}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                    pmRisk === v ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'border-[#E2E8F0] text-[#374151]'
+                                  }`}
+                                >
+                                  +{v} บาท
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Result */}
+                      {calcReady && (
+                        <div className="bg-[#F5F6F8] rounded-xl p-4 space-y-2">
+                          <p className="text-xs font-semibold text-gray-500 mb-3">ผลการคำนวณ</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                              <p className="text-xs text-gray-400 mb-1">ยกกล่อง (ในระบบ)</p>
+                              <p className="text-base font-bold text-[#1E3A5F]">{fmt(boxPriceSystem)}</p>
+                              <p className="text-xs text-gray-400">บาท</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                              <p className="text-xs text-gray-400 mb-1">ยกกล่อง (โยนนอก)</p>
+                              <p className="text-base font-bold text-[#374151]">{fmt(boxPriceExternal)}</p>
+                              <p className="text-xs text-gray-400">บาท</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                              <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 && !isViewing ? ` +${pmRisk}฿` : ''}</p>
+                              <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
+                              <p className="text-xs text-gray-400">บาท/ซอง</p>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 shadow-sm">
+                              <p className="text-xs text-gray-400 mb-1">แยกซอง (โยนนอก)</p>
+                              <p className="text-base font-bold text-[#374151]">{fmt(packPriceExternal)}</p>
+                              <p className="text-xs text-gray-400">บาท/ซอง</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Commission tier */}
+                      {!isViewing && (
+                        <div>
+                          <p className="text-xs font-semibold text-[#374151] mb-2">ค่าคอมมิชชั่น <span className="text-[#DC2626]">*</span></p>
+                          <div className="flex gap-2">
+                            {[{ key: 'P1', label: 'P(1)', pct: '1%' }, { key: 'P2', label: 'P(2)', pct: '2%' }, { key: 'P3', label: 'P(3)', pct: '3%' }].map((p) => (
+                              <button
+                                key={p.key}
+                                type="button"
+                                onClick={() => setPmCommission(p.key)}
+                                className={`flex-1 py-2 rounded-xl border text-sm font-bold transition-colors ${
+                                  pmCommission === p.key ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'border-[#E2E8F0] text-[#374151]'
+                                }`}
+                              >
+                                {p.label}<br/><span className="text-xs font-normal">{p.pct}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Viewing mode: show commission */}
+                      {isViewing && pricingModal.pricing_data && (() => {
+                        const p = JSON.parse(pricingModal.pricing_data)
+                        return (
+                          <div className="text-xs text-gray-500 space-y-1 border-t border-[#E2E8F0] pt-3">
+                            <p>ค่าคอมมิชชั่น: <span className="font-bold text-[#1E3A5F]">{p.commission_tier} ({p.commission_tier === 'P1' ? '1%' : p.commission_tier === 'P2' ? '2%' : '3%'})</span></p>
+                            <p>ประเภท: <span className="font-semibold">{p.multiplier === 'msrp' ? 'MSRP' : `× ${p.multiplier}`}</span></p>
+                            {p.risk_amount > 0 && <p>ความเสี่ยงซอง: <span className="font-semibold">+{p.risk_amount} บาท</span></p>}
+                          </div>
+                        )
+                      })()}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-5 pb-5 flex gap-3">
+                      <button
+                        onClick={() => setPricingModal(null)}
+                        className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm"
+                      >
+                        {isViewing ? 'ปิด' : 'ยกเลิก'}
+                      </button>
+                      {!isViewing && (
+                        <button
+                          onClick={handlePricingSubmit}
+                          disabled={pmSubmitting}
+                          className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-60"
+                        >
+                          {pmSubmitting ? 'กำลังบันทึก...' : 'ดำเนินการแล้ว ✓'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Image Modal */}
             {arrivalImageModal && (
