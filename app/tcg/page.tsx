@@ -251,40 +251,10 @@ export default function TcgPage() {
     })
   }
 
-  const verifyLocation = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const dist = getDistanceMeters(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG)
-          if (dist <= CHECK_IN_RADIUS_M) {
-            resolve(true)
-          } else {
-            localStorage.removeItem('tcg_checkin')
-            setCheckedIn(false)
-            showError(`ต้องอยู่ในร้าน — คุณอยู่ห่าง ${Math.round(dist)} เมตร`)
-            resolve(false)
-          }
-        },
-        () => {
-          localStorage.removeItem('tcg_checkin')
-          setCheckedIn(false)
-          showError('ไม่สามารถตรวจสอบตำแหน่งได้')
-          resolve(false)
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      )
-    })
-  }
-
   const createSession = async (tableNumber: number) => {
-    if (!checkedIn) { showError('กรุณาเช็คอินก่อนเล่น'); return }
     if (!nickname) { showError('กรุณากรอกชื่อก่อน'); return }
     if (mySessionId) { showError('คุณมีโต๊ะอยู่แล้ว กรุณายกเลิกก่อน'); return }
     setSubmitting(true)
-    if (matchType === 'ranking') {
-      const ok = await verifyLocation()
-      if (!ok) { setSubmitting(false); return }
-    }
     try {
       const res = await fetch('/api/tcg', {
         method: 'POST',
@@ -305,15 +275,9 @@ export default function TcgPage() {
   }
 
   const joinSession = async (sessionId: string) => {
-    if (!checkedIn) { showError('กรุณาเช็คอินก่อนเล่น'); return }
     if (!nickname) { showError('กรุณากรอกชื่อก่อน'); return }
     if (mySessionId) { showError('คุณมีโต๊ะอยู่แล้ว กรุณายกเลิกก่อน'); return }
     setSubmitting(true)
-    const targetSession = sessions.find((s) => s.id === sessionId)
-    if (targetSession?.match_type === 'ranking') {
-      const ok = await verifyLocation()
-      if (!ok) { setSubmitting(false); return }
-    }
     try {
       const res = await fetch('/api/tcg', {
         method: 'PATCH',
@@ -506,27 +470,6 @@ export default function TcgPage() {
 
       {tab === 'tables' && (
         <div className="px-4 mt-4 space-y-4">
-          {/* Check-in */}
-          {!checkedIn && (
-            <div className="bg-white rounded-2xl p-5 shadow-sm text-center">
-              <p className="text-4xl mb-2">📍</p>
-              <p className="text-base font-bold text-[#1E3A5F] mb-1">เช็คอินก่อนเล่น</p>
-              <p className="text-xs text-gray-400 mb-4">ต้องอยู่ภายในร้าน gap7card เพื่อเล่น</p>
-              <button
-                onClick={checkIn}
-                disabled={checkingIn}
-                className="w-full py-3.5 bg-[#1E3A5F] text-white font-bold rounded-2xl text-sm disabled:opacity-50"
-              >
-                {checkingIn ? '⏳ กำลังตรวจสอบตำแหน่ง...' : '📍 เช็คอิน'}
-              </button>
-            </div>
-          )}
-          {checkedIn && (
-            <div className="flex items-center gap-2 bg-[#16A34A]/10 border border-[#16A34A]/30 rounded-2xl px-4 py-2.5">
-              <span className="text-[#16A34A] text-sm">✅</span>
-              <p className="text-xs font-semibold text-[#16A34A]">เช็คอินแล้ว — gap7card (ใช้ได้ 6 ชั่วโมง)</p>
-            </div>
-          )}
           {/* Nickname */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-semibold text-[#374151] mb-2">ชื่อผู้เล่น</p>
@@ -595,12 +538,22 @@ export default function TcgPage() {
               </p>
               <div className="flex gap-2 mt-3">
                 {mySession.status === 'playing' && (
-                  <button
-                    onClick={() => setResultModal(true)}
-                    className="flex-1 py-2.5 bg-[#1E3A5F] text-white text-sm font-bold rounded-xl"
-                  >
-                    บันทึกผล
-                  </button>
+                  checkedIn ? (
+                    <button
+                      onClick={() => setResultModal(true)}
+                      className="flex-1 py-2.5 bg-[#1E3A5F] text-white text-sm font-bold rounded-xl"
+                    >
+                      บันทึกผล
+                    </button>
+                  ) : (
+                    <button
+                      onClick={checkIn}
+                      disabled={checkingIn}
+                      className="flex-1 py-2.5 bg-[#16A34A] text-white text-sm font-bold rounded-xl disabled:opacity-50"
+                    >
+                      {checkingIn ? '⏳ กำลังตรวจสอบ...' : '📍 เช็คอินเพื่อเล่น'}
+                    </button>
+                  )
                 )}
                 <button
                   onClick={cancelSession}
