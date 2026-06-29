@@ -99,10 +99,10 @@ export default function TcgPage() {
     }
   }, [mySession?.status, audioReady, muted])
 
-  const handleFirstInteract = () => {
-    if (audioReady || muted) return
+  const startAudio = () => {
+    if (audioReady) return
     setAudioReady(true)
-    lobbyAudio.current?.play().catch(() => {})
+    if (!muted) lobbyAudio.current?.play().catch(() => {})
   }
 
   const toggleMute = () => {
@@ -356,7 +356,7 @@ export default function TcgPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F6F8] pb-8" onClick={handleFirstInteract}>
+    <main className="min-h-screen bg-[#F5F6F8] pb-8">
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
         <div className="flex items-start justify-between">
@@ -393,6 +393,16 @@ export default function TcgPage() {
         <div className="mx-4 mt-3 bg-[#16A34A] text-white text-sm rounded-xl px-4 py-3 font-medium">
           {successMsg}
         </div>
+      )}
+
+      {/* Audio start banner */}
+      {!audioReady && !muted && (
+        <button
+          onClick={startAudio}
+          className="w-full mx-0 mt-3 py-3 bg-[#1E3A5F] text-white text-sm font-semibold flex items-center justify-center gap-2"
+        >
+          🔊 แตะที่นี่เพื่อเปิดเพลงพื้นหลัง
+        </button>
       )}
 
       {/* Tabs */}
