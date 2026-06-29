@@ -67,7 +67,7 @@ export default function StockArrivalPage() {
     if (!showChinaCalc) return
     const base = parseFloat(thbBasePrice)
     if (!isNaN(base) && base > 0) {
-      setCost((base * 1.10 * 1.07).toFixed(2))
+      setCost((base * 1.10 * 1.07 + 10).toFixed(2))
     } else {
       setCost('')
     }
@@ -268,14 +268,14 @@ export default function StockArrivalPage() {
               }`}>
                 {showChinaCalc ? '✓' : ''}
               </span>
-              คำนวณต้นทุนจาก Taobao (บวกภาษีอัตโนมัติ)
+              คำนวณต้นทุนสินค้าจากจีน (บวกภาษี + ค่าดำเนินการ)
             </button>
 
             {showChinaCalc && (
               <div className="mt-3 p-3 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0] space-y-2">
                 <div>
                   <label className="block text-xs font-semibold text-[#374151] mb-1">
-                    ราคาสินค้า (บาท) จาก Taobao
+                    ราคาสินค้าต่อกล่อง (บาท) จากจีน
                   </label>
                   <input
                     type="number"
@@ -289,11 +289,13 @@ export default function StockArrivalPage() {
                   const base = parseFloat(thbBasePrice)
                   const afterCard = base * 1.10
                   const afterVat = afterCard * 1.07
+                  const total = afterVat + 10
                   return (
                     <div className="text-xs text-[#374151] space-y-0.5 border-t border-[#BBF7D0] pt-2">
-                      <p>ราคา Taobao: <span className="font-semibold">{base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
+                      <p>ราคาต่อกล่อง: <span className="font-semibold">{base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
                       <p>+ภาษีการ์ด 10% → <span className="font-semibold">{afterCard.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
-                      <p>+VAT 7% → <span className="font-bold text-[#16A34A]">{afterVat.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
+                      <p>+VAT 7% → <span className="font-semibold">{afterVat.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
+                      <p>+ค่าดำเนินการ 10 บาท/กล่อง → <span className="font-bold text-[#16A34A]">{total.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
                     </div>
                   )
                 })()}
