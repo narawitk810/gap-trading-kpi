@@ -251,11 +251,40 @@ export default function TcgPage() {
     })
   }
 
+  const verifyLocation = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const dist = getDistanceMeters(pos.coords.latitude, pos.coords.longitude, STORE_LAT, STORE_LNG)
+          if (dist <= CHECK_IN_RADIUS_M) {
+            resolve(true)
+          } else {
+            localStorage.removeItem('tcg_checkin')
+            setCheckedIn(false)
+            showError(`ต้องอยู่ในร้าน — คุณอยู่ห่าง ${Math.round(dist)} เมตร`)
+            resolve(false)
+          }
+        },
+        () => {
+          localStorage.removeItem('tcg_checkin')
+          setCheckedIn(false)
+          showError('ไม่สามารถตรวจสอบตำแหน่งได้')
+          resolve(false)
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      )
+    })
+  }
+
   const createSession = async (tableNumber: number) => {
     if (!checkedIn) { showError('กรุณาเช็คอินก่อนเล่น'); return }
     if (!nickname) { showError('กรุณากรอกชื่อก่อน'); return }
     if (mySessionId) { showError('คุณมีโต๊ะอยู่แล้ว กรุณายกเลิกก่อน'); return }
     setSubmitting(true)
+    if (matchType === 'ranking') {
+      const ok = await verifyLocation()
+      if (!ok) { setSubmitting(false); return }
+    }
     try {
       const res = await fetch('/api/tcg', {
         method: 'POST',
@@ -280,6 +309,11 @@ export default function TcgPage() {
     if (!nickname) { showError('กรุณากรอกชื่อก่อน'); return }
     if (mySessionId) { showError('คุณมีโต๊ะอยู่แล้ว กรุณายกเลิกก่อน'); return }
     setSubmitting(true)
+    const targetSession = sessions.find((s) => s.id === sessionId)
+    if (targetSession?.match_type === 'ranking') {
+      const ok = await verifyLocation()
+      if (!ok) { setSubmitting(false); return }
+    }
     try {
       const res = await fetch('/api/tcg', {
         method: 'PATCH',
