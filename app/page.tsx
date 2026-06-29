@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DEPARTMENTS } from '@/types/kpi'
 
@@ -30,6 +30,17 @@ function isCodeVerifiedLocally(department: string): boolean {
 
 function saveCodeVerified(department: string) {
   try { localStorage.setItem(`code_verified_${department}`, String(Date.now())) } catch { /* */ }
+}
+
+const DRAFT_KEY = 'kpi_draft'
+function saveDraft(data: FormData) {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)) } catch { /* */ }
+}
+function loadDraft(): FormData | null {
+  try { const raw = localStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null } catch { return null }
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY) } catch { /* */ }
 }
 
 interface ExtraData {
@@ -171,6 +182,26 @@ export default function Home() {
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const [hasDraft, setHasDraft] = useState(false)
+  const [draftSaved, setDraftSaved] = useState(false)
+
+  useEffect(() => {
+    if (loadDraft()) setHasDraft(true)
+  }, [])
+
+  function handleSaveDraft() {
+    saveDraft(formData)
+    setDraftSaved(true)
+    setTimeout(() => setDraftSaved(false), 2000)
+  }
+  function handleRestoreDraft() {
+    const draft = loadDraft()
+    if (draft) { setFormData(draft); setHasDraft(false) }
+  }
+  function handleDiscardDraft() {
+    clearDraft(); setHasDraft(false)
+  }
+
   // Department access code
   const [codeVerified, setCodeVerified] = useState(false)
   const [codeInput, setCodeInput] = useState('')
@@ -231,6 +262,8 @@ export default function Home() {
       const data = await res.json()
       if (res.ok) {
         setSubmittedId(data.id)
+        clearDraft()
+        setHasDraft(false)
         setPageState('success')
       } else {
         alert(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง')
@@ -334,6 +367,27 @@ export default function Home() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-10">
+        {/* Draft banner */}
+        {hasDraft && pageState === 'form' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+            <span className="text-xl">📝</span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-700">มีข้อมูลที่บันทึกไว้</p>
+              <p className="text-xs text-amber-500 mt-0.5">กู้คืนต่อจากที่ค้างไว้</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={handleRestoreDraft}
+                className="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-lg font-semibold">
+                กู้คืน
+              </button>
+              <button onClick={handleDiscardDraft}
+                className="text-xs border border-amber-200 text-amber-600 px-3 py-1.5 rounded-lg">
+                ล้าง
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Department */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <label className="block text-sm font-semibold text-[#374151] mb-3">
@@ -822,6 +876,13 @@ export default function Home() {
         {/* Submit */}
         <button
           type="button"
+          onClick={handleSaveDraft}
+          className="w-full border-2 border-[#1E3A5F] text-[#1E3A5F] py-3.5 rounded-xl font-bold text-base active:opacity-80"
+        >
+          บันทึกชั่วคราว
+        </button>
+        <button
+          type="button"
           onClick={handleSubmitClick}
           className="w-full bg-[#1E3A5F] text-white py-4 rounded-xl font-bold text-base shadow-md active:opacity-90"
         >
@@ -834,6 +895,13 @@ export default function Home() {
           </Link>
         </div>
       </div>
+
+      {/* Draft saved toast */}
+      {draftSaved && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#1E3A5F] text-white text-sm font-semibold px-5 py-3 rounded-full shadow-lg z-50">
+          บันทึกแบบร่างแล้ว ✓
+        </div>
+      )}
 
       {/* Code Verification Modal */}
       {formData.department && !codeVerified && pageState === 'form' && (
