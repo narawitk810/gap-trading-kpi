@@ -299,6 +299,7 @@ export default function AdminDashboard() {
   const [taxMonth, setTaxMonth] = useState('')
   const [taxImageModal, setTaxImageModal] = useState<string | null>(null)
   const [wageFilters, setWageFilters] = useState({ department: '', dateFrom: '', dateTo: '', nickname: '' })
+  const [showBaseWage, setShowBaseWage] = useState(false)
   const [wageAnalysis, setWageAnalysis] = useState<Record<string, { score: number; estimated_wage: number; verdict: string; reason: string }>>({})
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
 
@@ -704,7 +705,15 @@ export default function AdminDashboard() {
           <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
             {/* Filters */}
             <div className="bg-white rounded-2xl shadow-sm p-5">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">ตัวกรอง</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">ตัวกรอง</p>
+                <button
+                  onClick={() => setShowBaseWage(p => !p)}
+                  className="text-xs border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-gray-500 hover:bg-[#F5F6F8]"
+                >
+                  {showBaseWage ? '🙈 ซ่อนค่าฐาน' : '👁 แสดงค่าฐาน'}
+                </button>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <select value={wageFilters.department}
                   onChange={(e) => setWageFilters((p) => ({ ...p, department: e.target.value }))}
@@ -754,7 +763,9 @@ export default function AdminDashboard() {
                             <td className="px-4 py-3 font-semibold text-[#374151]">{name}</td>
                             <td className="px-4 py-3 text-gray-500">{s.dept}</td>
                             <td className="px-4 py-3 text-right text-gray-600">{s.days} วัน</td>
-                            <td className="px-4 py-3 text-right text-gray-600">{s.totalBase.toLocaleString()} บ.</td>
+                            <td className="px-4 py-3 text-right text-gray-600">
+                              <span className={showBaseWage ? '' : 'blur-sm select-none'}>{s.totalBase.toLocaleString()} บ.</span>
+                            </td>
                             <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">{s.totalEst.toLocaleString()} บ.</td>
                             <td className="px-4 py-3 text-center">
                               <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${colorClass[col]}`}>
@@ -808,7 +819,9 @@ export default function AdminDashboard() {
                               <td className="px-4 py-3 font-semibold text-[#374151]">{e.nickname}</td>
                               <td className="px-4 py-3 text-gray-500">{e.department}</td>
                               <td className="px-4 py-3 text-right text-gray-600">{e.tasks.filter(t => t.trim()).length} รายการ</td>
-                              <td className="px-4 py-3 text-right text-gray-500">{base.toLocaleString()} บ.</td>
+                              <td className="px-4 py-3 text-right text-gray-500">
+                                <span className={showBaseWage ? '' : 'blur-sm select-none'}>{base.toLocaleString()} บ.</span>
+                              </td>
                               <td className="px-4 py-3 text-right font-bold text-[#1E3A5F]">{est.toLocaleString()} บ.</td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${colorClass[col]}`}>
