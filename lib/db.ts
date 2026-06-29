@@ -162,6 +162,52 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS swiss_tournaments (
+      id            TEXT PRIMARY KEY,
+      branch        TEXT NOT NULL DEFAULT 'gap7card',
+      name          TEXT NOT NULL,
+      status        TEXT NOT NULL DEFAULT 'registration',
+      current_round INTEGER NOT NULL DEFAULT 0,
+      total_rounds  INTEGER NOT NULL DEFAULT 0,
+      host          TEXT NOT NULL,
+      created_at    TEXT NOT NULL,
+      started_at    TEXT,
+      ended_at      TEXT
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS swiss_players (
+      id            TEXT PRIMARY KEY,
+      tournament_id TEXT NOT NULL,
+      nickname      TEXT NOT NULL,
+      points        INTEGER NOT NULL DEFAULT 0,
+      wins          INTEGER NOT NULL DEFAULT 0,
+      losses        INTEGER NOT NULL DEFAULT 0,
+      draws         INTEGER NOT NULL DEFAULT 0,
+      received_bye  INTEGER NOT NULL DEFAULT 0,
+      registered_at TEXT NOT NULL,
+      UNIQUE(tournament_id, nickname)
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS swiss_matches (
+      id              TEXT PRIMARY KEY,
+      tournament_id   TEXT NOT NULL,
+      round           INTEGER NOT NULL,
+      player1         TEXT NOT NULL,
+      player2         TEXT,
+      status          TEXT NOT NULL DEFAULT 'pending',
+      reported_winner TEXT,
+      reported_by     TEXT,
+      winner          TEXT,
+      created_at      TEXT NOT NULL,
+      ended_at        TEXT
+    )
+  `)
+
   g.dbReady = true
 }
 
