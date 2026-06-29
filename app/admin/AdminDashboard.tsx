@@ -311,6 +311,8 @@ export default function AdminDashboard() {
   const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
+  const [arrivalFilters, setArrivalFilters] = useState({ dateFrom: '', dateTo: '' })
+  const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
   const [taxMonth, setTaxMonth] = useState('')
@@ -1325,67 +1327,132 @@ export default function AdminDashboard() {
       )}
 
       {/* Stock Arrival Tab */}
-      {activeTab === 'stock-arrival' && (
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          {loadingArrivals ? (
-            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
-          ) : stockArrivals.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีการแจ้งสินค้าเข้า</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {stockArrivals.map((r) => (
-                <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  {r.image_data && (
-                    <img src={r.image_data} alt="สินค้า" className="w-full h-48 object-cover" />
-                  )}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-bold text-[#374151] text-sm">{r.nickname}</p>
-                        <p className="text-xs text-gray-400">{formatDateTime(r.created_at)}</p>
-                      </div>
-                      <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
-                        r.status === 'pending'
-                          ? 'bg-red-50 text-[#DC2626]'
-                          : 'bg-[#16A34A]/10 text-[#16A34A]'
-                      }`}>
-                        {r.status === 'pending' ? 'รอรับทราบ' : 'รับทราบแล้ว'}
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold text-[#1E3A5F]">{r.product_name}</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                      <div>
-                        <span className="text-gray-400">จำนวน: </span>
-                        <span className="font-semibold text-[#374151]">{r.quantity}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">ซอง/กล่อง: </span>
-                        <span className="font-semibold text-[#374151]">{r.packs_per_box}</span>
-                      </div>
-                    </div>
-                    <div className="text-xs">
-                      <span className="text-gray-400">ต้นทุน: </span>
-                      <span className="font-semibold text-[#374151]">{Number(r.cost).toLocaleString()} บาท</span>
-                    </div>
-                    {r.note && (
-                      <p className="text-xs text-gray-500 bg-[#F5F6F8] rounded-lg px-2 py-1.5">{r.note}</p>
-                    )}
-                    {r.status === 'pending' && (
-                      <button
-                        onClick={() => handleAcknowledge(r.id)}
-                        disabled={acknowledgingId === r.id}
-                        className="w-full mt-1 bg-[#16A34A] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
-                      >
-                        {acknowledgingId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+      {activeTab === 'stock-arrival' && (() => {
+        const filteredArrivals = stockArrivals.filter((r) => {
+          const d = r.created_at.slice(0, 10)
+          if (arrivalFilters.dateFrom && d < arrivalFilters.dateFrom) return false
+          if (arrivalFilters.dateTo && d > arrivalFilters.dateTo) return false
+          return true
+        })
+        const totalCost = filteredArrivals.reduce((sum, r) => sum + (Number(r.cost) || 0), 0)
+        return (
+          <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+            {/* Filters + Summary */}
+            <div className="bg-white rounded-2xl shadow-sm px-5 py-4 flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-[#374151]">
+                <span className="font-semibold text-xs text-gray-500">วันที่</span>
+                <input
+                  type="date"
+                  value={arrivalFilters.dateFrom}
+                  onChange={(e) => setArrivalFilters((p) => ({ ...p, dateFrom: e.target.value }))}
+                  className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
+                />
+                <span className="text-gray-400 text-xs">ถึง</span>
+                <input
+                  type="date"
+                  value={arrivalFilters.dateTo}
+                  onChange={(e) => setArrivalFilters((p) => ({ ...p, dateTo: e.target.value }))}
+                  className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
+                />
+                {(arrivalFilters.dateFrom || arrivalFilters.dateTo) && (
+                  <button
+                    onClick={() => setArrivalFilters({ dateFrom: '', dateTo: '' })}
+                    className="text-xs text-gray-400 hover:text-gray-600 underline"
+                  >
+                    ล้าง
+                  </button>
+                )}
+              </div>
+              <div className="ml-auto flex items-center gap-4 text-sm">
+                <span className="text-gray-500">{filteredArrivals.length} รายการ</span>
+                <span className="font-bold text-[#16A34A]">ต้นทุนรวม {totalCost.toLocaleString()} บาท</span>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Table */}
+            {loadingArrivals ? (
+              <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : filteredArrivals.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีการแจ้งสินค้าเข้า</div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[860px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        <th className="text-left px-4 py-3">วันที่</th>
+                        <th className="text-left px-4 py-3">เวลา</th>
+                        <th className="text-left px-4 py-3">ชื่อเล่น</th>
+                        <th className="text-left px-4 py-3">ชื่อสินค้า / LOT</th>
+                        <th className="text-center px-4 py-3">จำนวน</th>
+                        <th className="text-center px-4 py-3">ซอง/กล่อง</th>
+                        <th className="text-right px-4 py-3">ต้นทุน (บาท)</th>
+                        <th className="text-center px-4 py-3">สถานะ</th>
+                        <th className="text-center px-4 py-3">รูป</th>
+                        <th className="text-center px-4 py-3">รับทราบ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredArrivals.map((r, idx) => (
+                        <tr key={r.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                          <td className="px-4 py-3 whitespace-nowrap text-gray-600 text-xs">{formatDate(r.created_at.slice(0, 10))}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">{r.created_at.slice(11, 16)}</td>
+                          <td className="px-4 py-3 font-semibold text-[#374151] whitespace-nowrap text-xs">{r.nickname}</td>
+                          <td className="px-4 py-3 text-[#1E3A5F] font-semibold text-xs max-w-[180px]">
+                            <span className="block truncate">{r.product_name}</span>
+                            {r.note && <span className="block text-gray-400 font-normal truncate">{r.note}</span>}
+                          </td>
+                          <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.quantity}</td>
+                          <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.packs_per_box}</td>
+                          <td className="px-4 py-3 text-right text-xs font-semibold text-[#374151]">{Number(r.cost).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${
+                              r.status === 'pending' ? 'bg-red-50 text-[#DC2626]' : 'bg-[#16A34A]/10 text-[#16A34A]'
+                            }`}>
+                              {r.status === 'pending' ? 'รอรับทราบ' : 'รับทราบแล้ว'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {r.image_data && (
+                              <img
+                                src={r.image_data}
+                                alt="สินค้า"
+                                onClick={() => setArrivalImageModal(r.image_data)}
+                                className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                              />
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {r.status === 'pending' && (
+                              <button
+                                onClick={() => handleAcknowledge(r.id)}
+                                disabled={acknowledgingId === r.id}
+                                className="bg-[#16A34A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-60 whitespace-nowrap"
+                              >
+                                {acknowledgingId === r.id ? '...' : 'รับทราบ'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Image Modal */}
+            {arrivalImageModal && (
+              <div
+                className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+                onClick={() => setArrivalImageModal(null)}
+              >
+                <img src={arrivalImageModal} alt="สินค้า" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl" />
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Codes Tab */}
       {activeTab === 'codes' && (
