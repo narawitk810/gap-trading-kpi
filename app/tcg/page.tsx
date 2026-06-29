@@ -31,6 +31,8 @@ interface TcgSession {
   created_at: string
   started_at: string | null
   ended_at: string | null
+  reported_winner: string | null
+  reported_by: string | null
 }
 
 interface TcgRanking {
@@ -354,17 +356,56 @@ export default function TcgPage() {
       const res = await fetch('/api/tcg', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: mySessionId, action: 'result', winner, reporter: nickname }),
+        body: JSON.stringify({ id: mySessionId, action: 'report', winner, reporter: nickname }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showError(data.error || 'เกิดข้อผิดพลาด'); return }
+      setResultModal(false)
+      setConfirmResult(null)
+      showSuccess('ส่งผลแล้ว รอฝ่ายตรงข้ามยืนยัน...')
+      await fetchSessions()
+    } catch {
+      showError('เกิดข้อผิดพลาด')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const confirmResultFn = async () => {
+    if (!mySessionId || !mySession) return
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/tcg', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: mySessionId, action: 'confirm_result', confirmer: nickname }),
       })
       if (!res.ok) { showError('เกิดข้อผิดพลาด'); return }
       setMySessionId(null)
       setMySession(null)
-      setResultModal(false)
-      setConfirmResult(null)
       localStorage.removeItem('tcg_session_id')
-      showSuccess('บันทึกผลแล้ว!')
+      showSuccess('ยืนยันผลแล้ว!')
       await fetchSessions()
       if (mySession.match_type === 'ranking') await fetchRankings()
+    } catch {
+      showError('เกิดข้อผิดพลาด')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const rejectResultFn = async () => {
+    if (!mySessionId) return
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/tcg', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: mySessionId, action: 'reject_result' }),
+      })
+      if (!res.ok) { showError('เกิดข้อผิดพลาด'); return }
+      showSuccess('ปฏิเสธผลแล้ว — กดบันทึกผลใหม่ได้เลย')
+      await fetchSessions()
     } catch {
       showError('เกิดข้อผิดพลาด')
     } finally {
@@ -536,33 +577,83 @@ export default function TcgPage() {
                 โต๊ะ {mySession.table_number}
                 {mySession.status === 'playing' && opponent && ` — vs ${opponent}`}
               </p>
-              <div className="flex gap-2 mt-3">
-                {mySession.status === 'playing' && (
-                  checkedIn ? (
-                    <button
-                      onClick={() => setResultModal(true)}
-                      className="flex-1 py-2.5 bg-[#1E3A5F] text-white text-sm font-bold rounded-xl"
-                    >
-                      บันทึกผล
-                    </button>
-                  ) : (
-                    <button
-                      onClick={checkIn}
-                      disabled={checkingIn}
-                      className="flex-1 py-2.5 bg-[#16A34A] text-white text-sm font-bold rounded-xl disabled:opacity-50"
-                    >
-                      {checkingIn ? '⏳ กำลังตรวจสอบ...' : '📍 เช็คอินเพื่อเล่น'}
-                    </button>
+              {mySession.status === 'playing' && (() => {
+                const isPendingMine = mySession.reported_by === nickname
+                const isPendingOther = !!mySession.reported_winner && mySession.reported_by !== nickname
+                const pendingText =
+                  mySession.reported_winner === 'draw' ? 'เสมอ'
+                  : mySession.reported_winner === nickname ? '🏆 คุณชนะ'
+                  : '❌ คุณแพ้'
+
+                if (isPendingOther) {
+                  return (
+                    <div className="mt-3 bg-amber-50 border border-amber-400 rounded-xl p-3">
+                      <p className="text-xs text-amber-800 font-semibold mb-2">
+                        {mySession.reported_by} รายงานผล: {pendingText} — ถูกต้องหรือไม่?
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={confirmResultFn}
+                          disabled={submitting}
+                          className="flex-1 py-2 bg-[#16A34A] text-white text-sm font-bold rounded-xl disabled:opacity-50"
+                        >
+                          ✅ ถูกต้อง
+                        </button>
+                        <button
+                          onClick={rejectResultFn}
+                          disabled={submitting}
+                          className="flex-1 py-2 bg-[#DC2626] text-white text-sm font-bold rounded-xl disabled:opacity-50"
+                        >
+                          ❌ ไม่ถูกต้อง
+                        </button>
+                      </div>
+                    </div>
                   )
-                )}
-                <button
-                  onClick={cancelSession}
-                  disabled={submitting}
-                  className="flex-1 py-2.5 border border-[#DC2626] text-[#DC2626] text-sm font-semibold rounded-xl hover:bg-[#DC2626]/5"
-                >
-                  ยกเลิก
-                </button>
-              </div>
+                }
+
+                return (
+                  <div className="flex gap-2 mt-3">
+                    {isPendingMine ? (
+                      <div className="flex-1 py-2.5 bg-amber-100 text-amber-700 text-sm font-semibold rounded-xl text-center">
+                        ⏳ รอฝ่ายตรงข้ามยืนยัน...
+                      </div>
+                    ) : checkedIn ? (
+                      <button
+                        onClick={() => setResultModal(true)}
+                        className="flex-1 py-2.5 bg-[#1E3A5F] text-white text-sm font-bold rounded-xl"
+                      >
+                        บันทึกผล
+                      </button>
+                    ) : (
+                      <button
+                        onClick={checkIn}
+                        disabled={checkingIn}
+                        className="flex-1 py-2.5 bg-[#16A34A] text-white text-sm font-bold rounded-xl disabled:opacity-50"
+                      >
+                        {checkingIn ? '⏳ กำลังตรวจสอบ...' : '📍 เช็คอินเพื่อเล่น'}
+                      </button>
+                    )}
+                    <button
+                      onClick={cancelSession}
+                      disabled={submitting}
+                      className="flex-1 py-2.5 border border-[#DC2626] text-[#DC2626] text-sm font-semibold rounded-xl hover:bg-[#DC2626]/5"
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                )
+              })()}
+              {mySession.status === 'waiting' && (
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={cancelSession}
+                    disabled={submitting}
+                    className="flex-1 py-2.5 border border-[#DC2626] text-[#DC2626] text-sm font-semibold rounded-xl hover:bg-[#DC2626]/5"
+                  >
+                    ยกเลิก
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

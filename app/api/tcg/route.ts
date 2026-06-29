@@ -85,13 +85,35 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  if (action === 'result') {
+  if (action === 'report') {
     const { winner, reporter } = body
-    if (!winner) return NextResponse.json({ error: 'กรุณาระบุผล' }, { status: 400 })
+    if (!winner || !reporter) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
     if (session.status !== 'playing') return NextResponse.json({ error: 'แมตช์ยังไม่เริ่ม' }, { status: 409 })
-
+    if (session.player1 !== reporter && session.player2 !== reporter) {
+      return NextResponse.json({ error: 'คุณไม่ได้อยู่ในแมตช์นี้' }, { status: 403 })
+    }
+    if (session.reported_by) return NextResponse.json({ error: 'มีผลรอยืนยันอยู่แล้ว' }, { status: 409 })
     await db.execute({
-      sql: `UPDATE tcg_sessions SET winner = ?, status = 'completed', ended_at = ? WHERE id = ?`,
+      sql: `UPDATE tcg_sessions SET reported_winner = ?, reported_by = ? WHERE id = ?`,
+      args: [winner, reporter, id],
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'confirm_result') {
+    const { confirmer } = body
+    if (!confirmer) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
+    if (session.status !== 'playing') return NextResponse.json({ error: 'แมตช์ยังไม่เริ่ม' }, { status: 409 })
+    if (!session.reported_winner || !session.reported_by) {
+      return NextResponse.json({ error: 'ไม่มีผลรอยืนยัน' }, { status: 409 })
+    }
+    if (session.reported_by === confirmer) {
+      return NextResponse.json({ error: 'ไม่สามารถยืนยันผลของตัวเองได้' }, { status: 403 })
+    }
+
+    const winner = session.reported_winner as string
+    await db.execute({
+      sql: `UPDATE tcg_sessions SET winner = ?, status = 'completed', ended_at = ?, reported_winner = NULL, reported_by = NULL WHERE id = ?`,
       args: [winner, now, id],
     })
 
@@ -131,6 +153,15 @@ export async function PATCH(request: NextRequest) {
         })
       }
     }
+    return NextResponse.json({ ok: true })
+  }
+
+  if (action === 'reject_result') {
+    if (!session.reported_by) return NextResponse.json({ error: 'ไม่มีผลรอยืนยัน' }, { status: 409 })
+    await db.execute({
+      sql: `UPDATE tcg_sessions SET reported_winner = NULL, reported_by = NULL WHERE id = ?`,
+      args: [id],
+    })
     return NextResponse.json({ ok: true })
   }
 

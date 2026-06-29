@@ -141,6 +141,13 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  try {
+    await db.execute(`ALTER TABLE tcg_sessions ADD COLUMN reported_winner TEXT`)
+  } catch { /* column already exists */ }
+  try {
+    await db.execute(`ALTER TABLE tcg_sessions ADD COLUMN reported_by TEXT`)
+  } catch { /* column already exists */ }
+
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tcg_rankings (
       id         TEXT PRIMARY KEY,
