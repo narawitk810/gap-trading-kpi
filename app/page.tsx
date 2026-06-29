@@ -922,8 +922,8 @@ export default function Home() {
 
       {/* Code Verification Modal */}
       {formData.department && !codeVerified && pageState === 'form' && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-xs shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="bg-[#1E3A5F] text-white px-5 py-4 text-center">
               <div className="text-2xl mb-1">🔒</div>
               <h3 className="font-bold text-base">ยืนยันตัวตน</h3>
