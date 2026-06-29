@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import QRCode from 'react-qr-code'
 
 const BRANCH = 'gap7card'
 const TOTAL_TABLES = 9
@@ -56,6 +57,12 @@ export default function TcgPage() {
   const [confirmResult, setConfirmResult] = useState<'win' | 'lose' | 'draw' | null>(null)
   const [error, setError] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+  const [qrModal, setQrModal] = useState(false)
+  const [pageUrl, setPageUrl] = useState('')
+
+  useEffect(() => {
+    setPageUrl(window.location.origin + '/tcg')
+  }, [])
 
   // โหลด nickname + sessionId จาก localStorage
   useEffect(() => {
@@ -296,9 +303,19 @@ export default function TcgPage() {
     <main className="min-h-screen bg-[#F5F6F8] pb-8">
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
-        <p className="text-xs opacity-60 mb-1">{BRANCH}</p>
-        <h1 className="text-xl font-bold">♟ Match Making TCG</h1>
-        <p className="text-xs opacity-70 mt-1">จับคู่เกมการ์ด — {TOTAL_TABLES} โต๊ะ</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs opacity-60 mb-1">{BRANCH}</p>
+            <h1 className="text-xl font-bold">♟ Match Making TCG</h1>
+            <p className="text-xs opacity-70 mt-1">จับคู่เกมการ์ด — {TOTAL_TABLES} โต๊ะ</p>
+          </div>
+          <button
+            onClick={() => setQrModal(true)}
+            className="mt-1 px-3 py-1.5 bg-white/15 rounded-xl text-xs font-semibold hover:bg-white/25 transition-colors"
+          >
+            📱 QR Code
+          </button>
+        </div>
       </div>
 
       {/* Toast */}
@@ -631,6 +648,26 @@ export default function TcgPage() {
               className="w-full py-3 text-gray-400 text-sm mt-1"
             >
               ยกเลิก
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* QR Modal */}
+      {qrModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-3xl w-full max-w-xs p-6 text-center">
+            <h2 className="text-base font-bold text-[#1E3A5F] mb-1">QR Code — Match Making TCG</h2>
+            <p className="text-xs text-gray-400 mb-5">{BRANCH}</p>
+            <div className="flex justify-center bg-white p-4 rounded-2xl border border-[#E2E8F0]">
+              {pageUrl && <QRCode value={pageUrl} size={200} />}
+            </div>
+            <p className="text-xs text-gray-400 mt-3 break-all">{pageUrl}</p>
+            <button
+              onClick={() => setQrModal(false)}
+              className="mt-5 w-full py-3 bg-[#1E3A5F] text-white font-semibold rounded-2xl text-sm"
+            >
+              ปิด
             </button>
           </div>
         </div>
