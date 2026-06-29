@@ -43,8 +43,7 @@ export default function StockArrivalPage() {
   const [packsPerBox, setPacksPerBox] = useState('')
   const [cost, setCost] = useState('')
   const [showChinaCalc, setShowChinaCalc] = useState(false)
-  const [yuanPrice, setYuanPrice] = useState('')
-  const [exchangeRate, setExchangeRate] = useState('')
+  const [thbBasePrice, setThbBasePrice] = useState('')
   const [note, setNote] = useState('')
   const [imageData, setImageData] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -66,14 +65,13 @@ export default function StockArrivalPage() {
 
   useEffect(() => {
     if (!showChinaCalc) return
-    const yuan = parseFloat(yuanPrice)
-    const rate = parseFloat(exchangeRate)
-    if (!isNaN(yuan) && !isNaN(rate) && yuan > 0 && rate > 0) {
-      setCost((yuan * rate * 1.10 * 1.07).toFixed(2))
+    const base = parseFloat(thbBasePrice)
+    if (!isNaN(base) && base > 0) {
+      setCost((base * 1.10 * 1.07).toFixed(2))
     } else {
       setCost('')
     }
-  }, [yuanPrice, exchangeRate, showChinaCalc])
+  }, [thbBasePrice, showChinaCalc])
 
   function validate() {
     const e: Record<string, string> = {}
@@ -81,12 +79,7 @@ export default function StockArrivalPage() {
     if (!productName.trim()) e.productName = 'กรุณาระบุชื่อสินค้า'
     if (!quantity.trim()) e.quantity = 'กรุณาระบุจำนวน'
     if (!packsPerBox.trim()) e.packsPerBox = 'กรุณาระบุจำนวนซองต่อกล่อง'
-    if (showChinaCalc) {
-      if (!yuanPrice.trim() || parseFloat(yuanPrice) <= 0) e.yuanPrice = 'กรุณาระบุราคาหยวน'
-      if (!exchangeRate.trim() || parseFloat(exchangeRate) <= 0) e.exchangeRate = 'กรุณาระบุอัตราแลกเปลี่ยน'
-    } else {
-      if (!cost.trim()) e.cost = 'กรุณาระบุต้นทุนสินค้า'
-    }
+    if (!cost.trim()) e.cost = 'กรุณาระบุต้นทุนสินค้า'
     if (!imageData) e.image = 'กรุณาแนบรูปสินค้า'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -255,15 +248,14 @@ export default function StockArrivalPage() {
             </div>
           </div>
 
-          {/* toggle คำนวณจากจีน */}
+          {/* toggle คำนวณต้นทุนจากจีน */}
           <div>
             <button
               type="button"
               onClick={() => {
                 const next = !showChinaCalc
                 setShowChinaCalc(next)
-                if (!next) { setYuanPrice(''); setExchangeRate(''); setCost('') }
-                setErrors((p) => ({ ...p, yuanPrice: '', exchangeRate: '', cost: '' }))
+                if (!next) { setThbBasePrice(''); setCost('') }
               }}
               className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
                 showChinaCalc
@@ -276,47 +268,30 @@ export default function StockArrivalPage() {
               }`}>
                 {showChinaCalc ? '✓' : ''}
               </span>
-              คำนวณต้นทุนจากราคาหยวน (สินค้าจากจีน)
+              คำนวณต้นทุนจาก Taobao (บวกภาษีอัตโนมัติ)
             </button>
 
             {showChinaCalc && (
-              <div className="mt-3 space-y-3 p-3 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0]">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#374151] mb-1">
-                      ราคา (หยวน) <span className="text-[#DC2626]">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={yuanPrice}
-                      onChange={(e) => { setYuanPrice(e.target.value); setErrors((p) => ({ ...p, yuanPrice: '' })) }}
-                      placeholder="เช่น 500"
-                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
-                    />
-                    {errors.yuanPrice && <p className="text-[#DC2626] text-xs mt-1">{errors.yuanPrice}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#374151] mb-1">
-                      อัตราแลก (หยวน/บาท) <span className="text-[#DC2626]">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={exchangeRate}
-                      onChange={(e) => { setExchangeRate(e.target.value); setErrors((p) => ({ ...p, exchangeRate: '' })) }}
-                      placeholder="เช่น 5.20"
-                      step="0.01"
-                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
-                    />
-                    {errors.exchangeRate && <p className="text-[#DC2626] text-xs mt-1">{errors.exchangeRate}</p>}
-                  </div>
+              <div className="mt-3 p-3 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0] space-y-2">
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1">
+                    ราคาสินค้า (บาท) จาก Taobao
+                  </label>
+                  <input
+                    type="number"
+                    value={thbBasePrice}
+                    onChange={(e) => setThbBasePrice(e.target.value)}
+                    placeholder="กรอกราคาบาทที่เห็นในแอป"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
+                  />
                 </div>
-                {yuanPrice && exchangeRate && parseFloat(yuanPrice) > 0 && parseFloat(exchangeRate) > 0 && (() => {
-                  const base = parseFloat(yuanPrice) * parseFloat(exchangeRate)
+                {thbBasePrice && parseFloat(thbBasePrice) > 0 && (() => {
+                  const base = parseFloat(thbBasePrice)
                   const afterCard = base * 1.10
                   const afterVat = afterCard * 1.07
                   return (
                     <div className="text-xs text-[#374151] space-y-0.5 border-t border-[#BBF7D0] pt-2">
-                      <p>{parseFloat(yuanPrice).toLocaleString()} หยวน × {parseFloat(exchangeRate)} = <span className="font-semibold">{base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
+                      <p>ราคา Taobao: <span className="font-semibold">{base.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
                       <p>+ภาษีการ์ด 10% → <span className="font-semibold">{afterCard.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
                       <p>+VAT 7% → <span className="font-bold text-[#16A34A]">{afterVat.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท</span></p>
                     </div>
@@ -330,19 +305,11 @@ export default function StockArrivalPage() {
             <label className="block text-sm font-semibold text-[#374151] mb-1.5">
               ต้นทุนสินค้า (บาท) <span className="text-[#DC2626]">*</span>
             </label>
-            {showChinaCalc ? (
-              <div className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-[#374151]">
-                {cost ? `${parseFloat(cost).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} บาท` : <span className="text-gray-400">รอกรอกราคาหยวนและอัตราแลก</span>}
-              </div>
-            ) : (
-              <>
-                <input type="number" value={cost}
-                  onChange={(e) => { setCost(e.target.value); setErrors((p) => ({ ...p, cost: '' })) }}
-                  placeholder="เช่น 15000"
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#16A34A]" />
-                {errors.cost && <p className="text-[#DC2626] text-xs mt-1">{errors.cost}</p>}
-              </>
-            )}
+            <input type="number" value={cost}
+              onChange={(e) => { setCost(e.target.value); setErrors((p) => ({ ...p, cost: '' })) }}
+              placeholder="เช่น 15000"
+              className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#16A34A]" />
+            {errors.cost && <p className="text-[#DC2626] text-xs mt-1">{errors.cost}</p>}
           </div>
 
           <div>
