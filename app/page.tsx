@@ -66,7 +66,7 @@ interface FormData {
   date: string
   time: string
   nickname: string
-  channelName: string
+  channelName: string[]
   tasks: string[]
   obstacles: string
   extraData: ExtraData
@@ -108,7 +108,14 @@ function InputField({
 const inputClass =
   'w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]'
 
-const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
+const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด']
+const CHANNEL_LIST = [
+  'gap7cardbreak', 'pokedex', 'nanatoshop', 'jokercardshop',
+  'ninjabearcardshop', 'rabbitcardshop', 'littleponycardshop', 'stadiumbreaks',
+  'crazycardshop', 'catramencardshop', 'dekocardshop', 'phoenixcardshop',
+  'pandacollectorshop', 'huskkycardshop', 'kingdomcardshop',
+  'corgi card TCG', 'mojiko card TCG',
+]
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
 const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 const UPSELLING_DEPTS = ['ไลฟ์สด', 'sale admin']
@@ -192,7 +199,7 @@ export default function Home() {
     if (!formData.department) e.department = 'กรุณาเลือกแผนก'
     if (!formData.date) e.date = 'กรุณาเลือกวันที่'
     if (!formData.nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
-    if (CHANNEL_DEPTS.includes(formData.department) && !formData.channelName.trim()) e.channelName = 'กรุณากรอกชื่อช่องที่ดูแล'
+    if (CHANNEL_DEPTS.includes(formData.department) && formData.channelName.length === 0) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -215,7 +222,7 @@ export default function Home() {
           date: formData.date,
           time: formData.time,
           nickname: formData.nickname.trim(),
-          channel_name: formData.channelName.trim(),
+          channel_name: formData.channelName.join(', '),
           tasks: validTasks,
           obstacles: formData.obstacles.trim(),
           extra_data,
@@ -283,7 +290,7 @@ export default function Home() {
       date: getTodayDate(),
       time: getCurrentTime(),
       nickname: '',
-      channelName: '',
+      channelName: [],
       tasks: [''],
       obstacles: '',
       extraData: { ...defaultExtraData, clipLinks: [''] },
@@ -403,17 +410,34 @@ export default function Home() {
             />
           </InputField>
           {CHANNEL_DEPTS.includes(formData.department) && (
-            <InputField label="ชื่อช่องที่ดูแล" required error={errors.channelName}>
-              <input
-                type="text"
-                value={formData.channelName}
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, channelName: e.target.value }))
-                  setErrors((prev) => ({ ...prev, channelName: '' }))
-                }}
-                placeholder="ชื่อช่องที่คุณดูแล"
-                className={inputClass}
-              />
+            <InputField label="ช่องที่ดูแล" required error={errors.channelName}>
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {CHANNEL_LIST.map((ch) => {
+                  const selected = formData.channelName.includes(ch)
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          channelName: selected
+                            ? prev.channelName.filter((c) => c !== ch)
+                            : [...prev.channelName, ch],
+                        }))
+                        setErrors((prev) => ({ ...prev, channelName: '' }))
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                        selected
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {ch}
+                    </button>
+                  )
+                })}
+              </div>
             </InputField>
           )}
         </div>
@@ -879,7 +903,9 @@ export default function Home() {
                 <ConfirmRow label="แผนก" value={formData.department} />
                 <ConfirmRow label="วันที่ / เวลา" value={`${formData.date}  ${formData.time} น.`} />
                 <ConfirmRow label="ชื่อเล่น" value={formData.nickname} />
-                <ConfirmRow label="ช่องที่ดูแล" value={formData.channelName} />
+                {formData.channelName.length > 0 && (
+                  <ConfirmRow label="ช่องที่ดูแล" value={formData.channelName.join(', ')} />
+                )}
               </div>
 
               {/* Extra fields in confirm — ไลฟ์สด / sale admin */}
