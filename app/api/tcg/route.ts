@@ -8,6 +8,16 @@ export async function GET(request: NextRequest) {
   const branch = searchParams.get('branch') || 'gap7card'
   await ensureSchema()
   const db = getDb()
+
+  // ล้าง session ที่ค้างเกิน 4 ชั่วโมงอัตโนมัติ
+  const now = new Date().toISOString()
+  const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+  await db.execute({
+    sql: `UPDATE tcg_sessions SET status = 'cancelled', ended_at = ?
+          WHERE branch = ? AND status IN ('waiting', 'playing') AND created_at < ?`,
+    args: [now, branch, cutoff],
+  })
+
   const result = await db.execute({
     sql: `SELECT * FROM tcg_sessions WHERE branch = ? AND status IN ('waiting', 'playing') ORDER BY table_number ASC`,
     args: [branch],
