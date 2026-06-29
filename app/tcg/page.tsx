@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import QRCode from 'react-qr-code'
 
 const BRANCH = 'gap7card'
@@ -59,10 +59,66 @@ export default function TcgPage() {
   const [successMsg, setSuccessMsg] = useState('')
   const [qrModal, setQrModal] = useState(false)
   const [pageUrl, setPageUrl] = useState('')
+  const [muted, setMuted] = useState(false)
+  const [audioReady, setAudioReady] = useState(false)
+  const lobbyAudio = useRef<HTMLAudioElement | null>(null)
+  const battleAudio = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     setPageUrl(window.location.origin + '/tcg')
   }, [])
+
+  // init audio objects
+  useEffect(() => {
+    const lobby = new Audio('/music/lobby.mp3')
+    lobby.loop = true
+    lobby.volume = 0.4
+    const battle = new Audio('/music/battle.mp3')
+    battle.loop = true
+    battle.volume = 0.5
+    lobbyAudio.current = lobby
+    battleAudio.current = battle
+    const savedMute = localStorage.getItem('tcg_muted') === 'true'
+    setMuted(savedMute)
+    return () => { lobby.pause(); battle.pause() }
+  }, [])
+
+  // switch เพลงตาม session status
+  useEffect(() => {
+    if (!audioReady || muted) return
+    const isPlaying = mySession?.status === 'playing'
+    if (isPlaying) {
+      lobbyAudio.current?.pause()
+      if (battleAudio.current) {
+        battleAudio.current.currentTime = 0
+        battleAudio.current.play().catch(() => {})
+      }
+    } else {
+      battleAudio.current?.pause()
+      lobbyAudio.current?.play().catch(() => {})
+    }
+  }, [mySession?.status, audioReady, muted])
+
+  const handleFirstInteract = () => {
+    if (audioReady || muted) return
+    setAudioReady(true)
+    lobbyAudio.current?.play().catch(() => {})
+  }
+
+  const toggleMute = () => {
+    const next = !muted
+    setMuted(next)
+    localStorage.setItem('tcg_muted', String(next))
+    if (next) {
+      lobbyAudio.current?.pause()
+      battleAudio.current?.pause()
+    } else {
+      setAudioReady(true)
+      const isPlaying = mySession?.status === 'playing'
+      if (isPlaying) battleAudio.current?.play().catch(() => {})
+      else lobbyAudio.current?.play().catch(() => {})
+    }
+  }
 
   // โหลด nickname + sessionId จาก localStorage
   useEffect(() => {
@@ -300,7 +356,7 @@ export default function TcgPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F6F8] pb-8">
+    <main className="min-h-screen bg-[#F5F6F8] pb-8" onClick={handleFirstInteract}>
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
         <div className="flex items-start justify-between">
@@ -309,12 +365,21 @@ export default function TcgPage() {
             <h1 className="text-xl font-bold">♟ Match Making TCG</h1>
             <p className="text-xs opacity-70 mt-1">จับคู่เกมการ์ด — {TOTAL_TABLES} โต๊ะ</p>
           </div>
-          <button
-            onClick={() => setQrModal(true)}
-            className="mt-1 px-3 py-1.5 bg-white/15 rounded-xl text-xs font-semibold hover:bg-white/25 transition-colors"
-          >
-            📱 QR Code
-          </button>
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleMute() }}
+              className="px-3 py-1.5 bg-white/15 rounded-xl text-xs font-semibold hover:bg-white/25 transition-colors"
+              title={muted ? 'เปิดเสียง' : 'ปิดเสียง'}
+            >
+              {muted ? '🔇' : '🔊'}
+            </button>
+            <button
+              onClick={() => setQrModal(true)}
+              className="px-3 py-1.5 bg-white/15 rounded-xl text-xs font-semibold hover:bg-white/25 transition-colors"
+            >
+              📱 QR Code
+            </button>
+          </div>
         </div>
       </div>
 
