@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 type PricingData = {
@@ -39,14 +39,21 @@ export default function StockPricesPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [imageModal, setImageModal] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
       .then((r) => r.json())
-      .then((data) => setItems(data))
+      .then((data) => { setItems(data); setLastUpdated(new Date()) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchData])
 
   const filtered = items.filter((r) => {
     const d = (r.acknowledged_at || r.created_at).slice(0, 10)
@@ -65,12 +72,17 @@ export default function StockPricesPage() {
             <h1 className="text-base font-bold">ราคาขายสินค้า</h1>
             <p className="text-xs opacity-70 mt-0.5">รายการสินค้าที่กำหนดราคาแล้ว</p>
           </div>
-          <button
-            onClick={() => { setLoading(true); fetch('/api/stock-prices').then((r) => r.json()).then(setItems).finally(() => setLoading(false)) }}
-            className="ml-auto text-white/70 hover:text-white text-sm px-3 py-1.5 border border-white/30 rounded-lg"
-          >
-            รีเฟรช
-          </button>
+          <div className="ml-auto flex flex-col items-end gap-1">
+            <button
+              onClick={() => { setLoading(true); fetchData() }}
+              className="text-white/70 hover:text-white text-sm px-3 py-1.5 border border-white/30 rounded-lg"
+            >
+              รีเฟรช
+            </button>
+            <span className="text-[10px] text-white/50">
+              {lastUpdated ? `ล่าสุด ${lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : 'อัพเดททุก 30 วิ'}
+            </span>
+          </div>
         </div>
       </div>
 
