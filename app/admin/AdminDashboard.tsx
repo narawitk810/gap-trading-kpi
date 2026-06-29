@@ -70,6 +70,20 @@ type RestockRequest = {
   noted_at: string | null
 }
 
+type StockArrival = {
+  id: string
+  nickname: string
+  product_name: string
+  quantity: string
+  packs_per_box: string
+  cost: string
+  note: string | null
+  image_data: string
+  status: string
+  created_at: string
+  acknowledged_at: string | null
+}
+
 type TaxInvoice = {
   id: string
   nickname: string
@@ -287,13 +301,16 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'codes' | 'upsell'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'upsell'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
   const [loadingRestock, setLoadingRestock] = useState(false)
   const [notingId, setNotingId] = useState<string | null>(null)
+  const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
+  const [loadingArrivals, setLoadingArrivals] = useState(false)
+  const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
   const [taxMonth, setTaxMonth] = useState('')
@@ -428,6 +445,28 @@ export default function AdminDashboard() {
     finally { setLoadingRestock(false) }
   }, [])
 
+  const fetchStockArrivals = useCallback(async () => {
+    setLoadingArrivals(true)
+    try {
+      const res = await fetch(`/api/stock-arrival?key=${ADMIN_KEY}`)
+      if (res.ok) setStockArrivals(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingArrivals(false) }
+  }, [])
+
+  async function handleAcknowledge(id: string) {
+    setAcknowledgingId(id)
+    try {
+      const res = await fetch(`/api/stock-arrival?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) setStockArrivals((prev) => prev.map((r) => r.id === id ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString() } : r))
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setAcknowledgingId(null) }
+  }
+
   async function handleNoted(id: string) {
     setNotingId(id)
     try {
@@ -475,9 +514,10 @@ export default function AdminDashboard() {
       fetchComplaints()
       fetchTaxInvoices()
       fetchRestock()
+      fetchStockArrivals()
       fetchCodes()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchCodes])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes])
 
   if (!isAuthorized) {
     return (
@@ -521,7 +561,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchCodes() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -601,6 +641,21 @@ export default function AdminDashboard() {
             {restockRequests.filter((r) => r.status === 'pending').length > 0 && (
               <span className="bg-[#DC2626] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {restockRequests.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('stock-arrival')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'stock-arrival'
+                ? 'bg-white text-[#16A34A]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            สินค้าเข้า
+            {stockArrivals.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="bg-[#16A34A] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {stockArrivals.filter((r) => r.status === 'pending').length}
               </span>
             )}
           </button>
@@ -1259,6 +1314,69 @@ export default function AdminDashboard() {
                         className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
                       >
                         {notingId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Stock Arrival Tab */}
+      {activeTab === 'stock-arrival' && (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {loadingArrivals ? (
+            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : stockArrivals.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีการแจ้งสินค้าเข้า</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stockArrivals.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {r.image_data && (
+                    <img src={r.image_data} alt="สินค้า" className="w-full h-48 object-cover" />
+                  )}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-[#374151] text-sm">{r.nickname}</p>
+                        <p className="text-xs text-gray-400">{formatDateTime(r.created_at)}</p>
+                      </div>
+                      <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
+                        r.status === 'pending'
+                          ? 'bg-red-50 text-[#DC2626]'
+                          : 'bg-[#16A34A]/10 text-[#16A34A]'
+                      }`}>
+                        {r.status === 'pending' ? 'รอรับทราบ' : 'รับทราบแล้ว'}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1E3A5F]">{r.product_name}</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                      <div>
+                        <span className="text-gray-400">จำนวน: </span>
+                        <span className="font-semibold text-[#374151]">{r.quantity}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">ซอง/กล่อง: </span>
+                        <span className="font-semibold text-[#374151]">{r.packs_per_box}</span>
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <span className="text-gray-400">ต้นทุน: </span>
+                      <span className="font-semibold text-[#374151]">{Number(r.cost).toLocaleString()} บาท</span>
+                    </div>
+                    {r.note && (
+                      <p className="text-xs text-gray-500 bg-[#F5F6F8] rounded-lg px-2 py-1.5">{r.note}</p>
+                    )}
+                    {r.status === 'pending' && (
+                      <button
+                        onClick={() => handleAcknowledge(r.id)}
+                        disabled={acknowledgingId === r.id}
+                        className="w-full mt-1 bg-[#16A34A] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                      >
+                        {acknowledgingId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
                       </button>
                     )}
                   </div>

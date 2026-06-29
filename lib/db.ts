@@ -93,6 +93,22 @@ export async function ensureSchema(): Promise<void> {
   `)
 
   await db.execute(`
+    CREATE TABLE IF NOT EXISTS stock_arrivals (
+      id               TEXT PRIMARY KEY,
+      nickname         TEXT NOT NULL,
+      product_name     TEXT NOT NULL,
+      quantity         TEXT NOT NULL,
+      packs_per_box    TEXT NOT NULL,
+      cost             TEXT NOT NULL,
+      note             TEXT,
+      image_data       TEXT NOT NULL,
+      status           TEXT NOT NULL DEFAULT 'pending',
+      created_at       TEXT NOT NULL,
+      acknowledged_at  TEXT
+    )
+  `)
+
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS tax_invoices (
       id           TEXT PRIMARY KEY,
       nickname     TEXT NOT NULL,
