@@ -970,6 +970,33 @@ export default function Home() {
               >
                 เปลี่ยนแผนก
               </button>
+
+              {/* Quick links สำหรับ สต๊อค&จัดซื้อ */}
+              {formData.department === 'สต๊อค&จัดซื้อ' && (
+                <div className="pt-1 border-t border-[#E2E8F0] space-y-2">
+                  <p className="text-xs text-gray-400 text-center">หรือไปที่</p>
+                  <Link
+                    href="/restock"
+                    className="flex items-center gap-2 bg-[#DC2626]/5 border border-[#DC2626]/20 rounded-xl px-3 py-2.5 hover:bg-[#DC2626]/10 transition-colors"
+                  >
+                    <span className="text-base">⚠️</span>
+                    <p className="text-xs font-bold text-[#DC2626]">แจ้งสินค้าต้อง Restock</p>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-[#DC2626] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                  <Link
+                    href="/stock-arrival"
+                    className="flex items-center gap-2 bg-[#16A34A]/5 border border-[#16A34A]/20 rounded-xl px-3 py-2.5 hover:bg-[#16A34A]/10 transition-colors"
+                  >
+                    <span className="text-base">📦</span>
+                    <p className="text-xs font-bold text-[#16A34A]">แจ้งสินค้าเข้า</p>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
