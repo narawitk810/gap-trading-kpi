@@ -124,6 +124,37 @@ export async function ensureSchema(): Promise<void> {
       created_at   TEXT NOT NULL
     )
   `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tcg_sessions (
+      id           TEXT PRIMARY KEY,
+      branch       TEXT NOT NULL DEFAULT 'gap7card',
+      table_number INTEGER NOT NULL,
+      match_type   TEXT NOT NULL,
+      player1      TEXT NOT NULL,
+      player2      TEXT,
+      status       TEXT NOT NULL DEFAULT 'waiting',
+      winner       TEXT,
+      created_at   TEXT NOT NULL,
+      started_at   TEXT,
+      ended_at     TEXT
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tcg_rankings (
+      id         TEXT PRIMARY KEY,
+      branch     TEXT NOT NULL DEFAULT 'gap7card',
+      nickname   TEXT NOT NULL,
+      wins       INTEGER NOT NULL DEFAULT 0,
+      losses     INTEGER NOT NULL DEFAULT 0,
+      draws      INTEGER NOT NULL DEFAULT 0,
+      points     INTEGER NOT NULL DEFAULT 1000,
+      updated_at TEXT NOT NULL,
+      UNIQUE(branch, nickname)
+    )
+  `)
+
   g.dbReady = true
 }
 
