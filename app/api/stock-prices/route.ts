@@ -5,10 +5,10 @@ export async function GET() {
   await ensureSchema()
   const db = getDb()
   const result = await db.execute(
-    `SELECT id, product_name, quantity, packs_per_box, cost, note, image_data, created_at, acknowledged_at, pricing_data, old_pricing_data
+    `SELECT id, product_name, quantity, packs_per_box, cost, note, image_data, created_at, acknowledged_at, pricing_data, old_pricing_data, status
      FROM stock_arrivals
-     WHERE status = 'acknowledged' AND pricing_data IS NOT NULL
-     ORDER BY acknowledged_at DESC`
+     WHERE status IN ('pending', 'acknowledged')
+     ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, COALESCE(acknowledged_at, created_at) DESC`
   )
   return NextResponse.json(result.rows)
 }

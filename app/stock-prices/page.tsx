@@ -23,9 +23,10 @@ type StockPrice = {
   note: string | null
   image_data: string
   created_at: string
-  acknowledged_at: string
-  pricing_data: string
+  acknowledged_at: string | null
+  pricing_data: string | null
   old_pricing_data: string | null
+  status: string
 }
 
 function formatDate(iso: string) {
@@ -72,6 +73,7 @@ export default function StockPricesPage() {
   }, [fetchData])
 
   function openPricingModal(r: StockPrice) {
+    if (!r.pricing_data) return
     setPricingModal(r)
     const p: PricingData = JSON.parse(r.pricing_data)
     setPmMultiplier(p.multiplier)
@@ -161,7 +163,7 @@ export default function StockPricesPage() {
           <button onClick={() => router.back()} className="text-white/70 hover:text-white text-lg w-8">←</button>
           <div>
             <h1 className="text-base font-bold">ราคาขายสินค้า</h1>
-            <p className="text-xs opacity-70 mt-0.5">รายการสินค้าที่กำหนดราคาแล้ว</p>
+            <p className="text-xs opacity-70 mt-0.5">รายการสินค้าเข้า และสถานะการตั้งราคา</p>
           </div>
           <div className="ml-auto flex flex-col items-end gap-1">
             <button
@@ -206,7 +208,7 @@ export default function StockPricesPage() {
         {loading ? (
           <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีรายการที่กำหนดราคา</div>
+          <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีรายการสินค้าเข้า</div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
@@ -223,13 +225,44 @@ export default function StockPricesPage() {
                     <th className="text-right px-3 py-3">แยกซอง<br/>(โยนนอก)</th>
                     <th className="text-center px-3 py-3">Comm.</th>
                     <th className="text-center px-3 py-3">รูป</th>
-                    <th className="text-center px-3 py-3">แก้ไข</th>
+                    <th className="text-center px-3 py-3">สถานะ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((r, idx) => {
+                    if (r.status === 'pending' || !r.pricing_data) {
+                      return (
+                        <tr key={r.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                          <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
+                            {formatDate(r.created_at)}
+                          </td>
+                          <td className="px-4 py-3 text-xs max-w-[180px]">
+                            <p className="font-semibold text-[#1E3A5F] truncate">{r.product_name}</p>
+                            {r.note && <p className="text-gray-400 truncate">{r.note}</p>}
+                          </td>
+                          <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.quantity}</td>
+                          <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.packs_per_box}</td>
+                          <td className="px-3 py-3 text-center text-xs text-gray-300" colSpan={5}>ยังไม่ได้ตั้งราคา</td>
+                          <td className="px-3 py-3 text-center">
+                            {r.image_data && (
+                              <img
+                                src={r.image_data}
+                                alt="สินค้า"
+                                onClick={() => setImageModal(r.image_data)}
+                                className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                              />
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className="text-xs font-bold bg-[#DC2626]/10 text-[#DC2626] px-2 py-0.5 rounded-full whitespace-nowrap">
+                              รอดำเนินการ
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    }
                     const p: PricingData = JSON.parse(r.pricing_data)
-                    const multiplierLabel = p.multiplier === 'msrp' ? 'MSRP' : `×${p.multiplier}`
+                    const multiplierLabel = p.multiplier === 'msrp' ? 'MSRP' : p.multiplier === 'old' ? 'ราคาเดิม' : `×${p.multiplier}`
                     return (
                       <tr key={r.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
                         <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
