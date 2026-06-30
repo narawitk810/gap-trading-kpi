@@ -44,6 +44,11 @@ export default function StockArrivalPage() {
   const [cost, setCost] = useState('')
   const [showChinaCalc, setShowChinaCalc] = useState(false)
   const [thbBasePrice, setThbBasePrice] = useState('')
+  const [showOldPricing, setShowOldPricing] = useState(false)
+  const [oldBoxSystem, setOldBoxSystem] = useState('')
+  const [oldBoxExternal, setOldBoxExternal] = useState('')
+  const [oldPackSystem, setOldPackSystem] = useState('')
+  const [oldPackExternal, setOldPackExternal] = useState('')
   const [note, setNote] = useState('')
   const [imageData, setImageData] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -73,6 +78,15 @@ export default function StockArrivalPage() {
     }
   }, [thbBasePrice, showChinaCalc])
 
+  function buildOldPricingData(): Record<string, string> | null {
+    const d: Record<string, string> = {}
+    if (oldBoxSystem.trim()) d.box_price_system = oldBoxSystem.trim()
+    if (oldBoxExternal.trim()) d.box_price_external = oldBoxExternal.trim()
+    if (oldPackSystem.trim()) d.pack_price_system = oldPackSystem.trim()
+    if (oldPackExternal.trim()) d.pack_price_external = oldPackExternal.trim()
+    return Object.keys(d).length > 0 ? d : null
+  }
+
   function validate() {
     const e: Record<string, string> = {}
     if (!nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
@@ -100,6 +114,7 @@ export default function StockArrivalPage() {
           cost: cost.trim(),
           note: note.trim(),
           image_data: imageData,
+          old_pricing_data: buildOldPricingData(),
         }),
       })
       const data = await res.json()
@@ -161,6 +176,17 @@ export default function StockArrivalPage() {
               <p className="text-xs text-gray-500 mb-0.5">ต้นทุนสินค้า</p>
               <p className="text-sm font-semibold text-[#374151]">{cost} บาท</p>
             </div>
+            {(oldBoxSystem || oldBoxExternal || oldPackSystem || oldPackExternal) && (
+              <div>
+                <p className="text-xs text-gray-500 mb-1">ราคาเดิม</p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-[#374151]">
+                  {oldBoxSystem && <p>ยกกล่อง(ในระบบ): <span className="font-semibold">{oldBoxSystem}</span></p>}
+                  {oldBoxExternal && <p>ยกกล่อง(โยนนอก): <span className="font-semibold">{oldBoxExternal}</span></p>}
+                  {oldPackSystem && <p>แยกซอง(ในระบบ): <span className="font-semibold">{oldPackSystem}</span></p>}
+                  {oldPackExternal && <p>แยกซอง(โยนนอก): <span className="font-semibold">{oldPackExternal}</span></p>}
+                </div>
+              </div>
+            )}
             {note && (
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">หมายเหตุ</p>
@@ -299,6 +325,65 @@ export default function StockArrivalPage() {
                     </div>
                   )
                 })()}
+              </div>
+            )}
+          </div>
+
+          {/* toggle ราคาเดิม */}
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showOldPricing
+                setShowOldPricing(next)
+                if (!next) {
+                  setOldBoxSystem(''); setOldBoxExternal('')
+                  setOldPackSystem(''); setOldPackExternal('')
+                }
+              }}
+              className={`w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
+                showOldPricing
+                  ? 'border-[#1E3A5F] bg-blue-50 text-[#1E3A5F]'
+                  : 'border-[#E2E8F0] bg-[#F5F6F8] text-[#374151]'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-xs flex-shrink-0 ${
+                showOldPricing ? 'border-[#1E3A5F] bg-[#1E3A5F] text-white' : 'border-[#CBD5E1]'
+              }`}>
+                {showOldPricing ? '✓' : ''}
+              </span>
+              ราคาเดิม (ถ้ามี)
+            </button>
+
+            {showOldPricing && (
+              <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-[#BFDBFE] space-y-2">
+                <p className="text-xs text-gray-500">กรอกเฉพาะที่ทราบ ไม่บังคับครบทุกช่อง</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1">ยกกล่อง (ในระบบ)</label>
+                    <input type="number" value={oldBoxSystem} onChange={(e) => setOldBoxSystem(e.target.value)}
+                      placeholder="บาท"
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1">ยกกล่อง (โยนนอก)</label>
+                    <input type="number" value={oldBoxExternal} onChange={(e) => setOldBoxExternal(e.target.value)}
+                      placeholder="บาท"
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1">แยกซอง (ในระบบ)</label>
+                    <input type="number" value={oldPackSystem} onChange={(e) => setOldPackSystem(e.target.value)}
+                      placeholder="บาท"
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1">แยกซอง (โยนนอก)</label>
+                    <input type="number" value={oldPackExternal} onChange={(e) => setOldPackExternal(e.target.value)}
+                      placeholder="บาท"
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                  </div>
+                </div>
               </div>
             )}
           </div>

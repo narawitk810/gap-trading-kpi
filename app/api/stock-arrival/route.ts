@@ -23,10 +23,13 @@ export async function POST(request: NextRequest) {
   const db = getDb()
   const id = generateId()
   const now = new Date().toISOString()
+  const oldPricing = body.old_pricing_data && Object.keys(body.old_pricing_data).length > 0
+    ? JSON.stringify(body.old_pricing_data)
+    : null
   await db.execute({
-    sql: `INSERT INTO stock_arrivals (id, nickname, product_name, quantity, packs_per_box, cost, note, image_data, status, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-    args: [id, body.nickname.trim(), body.product_name.trim(), body.quantity.trim(), body.packs_per_box.trim(), body.cost.trim(), body.note?.trim() || null, body.image_data, now],
+    sql: `INSERT INTO stock_arrivals (id, nickname, product_name, quantity, packs_per_box, cost, note, image_data, status, created_at, old_pricing_data)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
+    args: [id, body.nickname.trim(), body.product_name.trim(), body.quantity.trim(), body.packs_per_box.trim(), body.cost.trim(), body.note?.trim() || null, body.image_data, now, oldPricing],
   })
   return NextResponse.json({ id }, { status: 201 })
 }

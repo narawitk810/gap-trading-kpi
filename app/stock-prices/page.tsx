@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 type PricingData = {
   multiplier: string
   msrp_price: string | null
+  old_msrp_price: string | null
   risk_amount: number
   commission_tier: string
   box_price_system: number
@@ -25,6 +26,7 @@ type StockPrice = {
   created_at: string
   acknowledged_at: string
   pricing_data: string
+  old_pricing_data: string | null
 }
 
 function formatDate(iso: string) {
@@ -52,6 +54,7 @@ export default function StockPricesPage() {
   const [pricingModal, setPricingModal] = useState<StockPrice | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState('')
   const [pmMsrpPrice, setPmMsrpPrice] = useState('')
+  const [pmOldMsrpPrice, setPmOldMsrpPrice] = useState('')
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
   const [pmSubmitting, setPmSubmitting] = useState(false)
@@ -75,6 +78,7 @@ export default function StockPricesPage() {
     const p: PricingData = JSON.parse(r.pricing_data)
     setPmMultiplier(p.multiplier)
     setPmMsrpPrice(p.msrp_price || '')
+    setPmOldMsrpPrice(p.old_msrp_price || '')
     setPmRisk(p.risk_amount)
     setPmCommission(p.commission_tier)
   }
@@ -96,6 +100,7 @@ export default function StockPricesPage() {
     const pricing = {
       multiplier: pmMultiplier,
       msrp_price: pmMsrpPrice || null,
+      old_msrp_price: pmOldMsrpPrice || null,
       risk_amount: pmRisk,
       commission_tier: pmCommission,
       box_price_system: boxPriceSystem,
@@ -269,6 +274,10 @@ export default function StockPricesPage() {
             packPriceExternal = roundUp10(packPriceSystem * 0.90)
           }
         }
+        let oldPricing: Record<string, string> | null = null
+        try {
+          oldPricing = pricingModal.old_pricing_data ? JSON.parse(pricingModal.old_pricing_data) : null
+        } catch { oldPricing = null }
         return (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setPricingModal(null) }}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto">
@@ -287,9 +296,12 @@ export default function StockPricesPage() {
                       <span className="text-sm font-semibold text-[#374151]">MSRP</span>
                       <span className="text-xs text-gray-400">(sleeve / playmat)</span>
                       {pmMultiplier === 'msrp' && (
-                        <input type="number" value={pmMsrpPrice} onChange={(e) => setPmMsrpPrice(e.target.value)} placeholder="ราคา MSRP (บาท)"
-                          className="ml-auto border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
-                          onClick={(e) => e.stopPropagation()} />
+                        <div className="ml-auto flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
+                          <input type="number" value={pmMsrpPrice} onChange={(e) => setPmMsrpPrice(e.target.value)} placeholder="ราคา MSRP (บาท)"
+                            className="border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#16A34A]" />
+                          <input type="number" value={pmOldMsrpPrice} onChange={(e) => setPmOldMsrpPrice(e.target.value)} placeholder="ราคาเดิม (ถ้ามี)"
+                            className="border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#16A34A] text-gray-500" />
+                        </div>
                       )}
                     </label>
                     {MULTIPLIERS.map((m) => (
@@ -321,21 +333,36 @@ export default function StockPricesPage() {
                         <p className="text-xs text-gray-400 mb-1">ยกกล่อง (ในระบบ)</p>
                         <p className="text-base font-bold text-[#1E3A5F]">{fmt(boxPriceSystem)}</p>
                         <p className="text-xs text-gray-400">บาท</p>
+                        {oldPricing?.box_price_system && (
+                          <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_system} บาท</p>
+                        )}
+                        {pmMultiplier === 'msrp' && pmOldMsrpPrice && (
+                          <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม (MSRP): {pmOldMsrpPrice} บาท</p>
+                        )}
                       </div>
                       <div className="bg-white rounded-lg p-3 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">ยกกล่อง (โยนนอก)</p>
                         <p className="text-base font-bold text-[#374151]">{fmt(boxPriceExternal)}</p>
                         <p className="text-xs text-gray-400">บาท</p>
+                        {oldPricing?.box_price_external && (
+                          <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_external} บาท</p>
+                        )}
                       </div>
                       <div className="bg-white rounded-lg p-3 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
                         <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
                         <p className="text-xs text-gray-400">บาท/ซอง</p>
+                        {oldPricing?.pack_price_system && (
+                          <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.pack_price_system} บาท</p>
+                        )}
                       </div>
                       <div className="bg-white rounded-lg p-3 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">แยกซอง (โยนนอก)</p>
                         <p className="text-base font-bold text-[#374151]">{fmt(packPriceExternal)}</p>
                         <p className="text-xs text-gray-400">บาท/ซอง</p>
+                        {oldPricing?.pack_price_external && (
+                          <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.pack_price_external} บาท</p>
+                        )}
                       </div>
                     </div>
                   </div>

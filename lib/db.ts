@@ -112,6 +112,10 @@ export async function ensureSchema(): Promise<void> {
     await db.execute('ALTER TABLE stock_arrivals ADD COLUMN pricing_data TEXT')
   } catch { /* column already exists */ }
 
+  try {
+    await db.execute('ALTER TABLE stock_arrivals ADD COLUMN old_pricing_data TEXT')
+  } catch { /* column already exists */ }
+
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tax_invoices (
       id           TEXT PRIMARY KEY,
