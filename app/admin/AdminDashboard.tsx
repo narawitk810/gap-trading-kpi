@@ -126,25 +126,16 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
   if (!entry.extra_data) return {}
   let ex: Record<string, unknown> = {}
   try { ex = JSON.parse(entry.extra_data) } catch { return {} }
-  const upOrders = (ex.upselling_orders as { initial: string; freebie: string; final: string }[] | undefined) || []
-  const upTotalDiff = upOrders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
-  const upSummary = upOrders.map((o, i) => `#${i+1} ${o.initial||'?'}→${o.final||'?'} บาท${o.freebie ? ` (แถม:${o.freebie})` : ''}`).join(', ')
 
   if (entry.department === 'ไลฟ์สด') {
     return {
       'ชั่วโมงไลฟ์': ex.live_hours ? String(ex.live_hours) : '',
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
-      'จำนวน Upsell Order': upOrders.length || '',
-      'ยอดเพิ่มรวม Upsell (บาท)': upTotalDiff > 0 ? upTotalDiff : '',
-      'รายละเอียด Upsell': upSummary,
     }
   }
   if (entry.department === 'sale admin') {
     return {
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
-      'จำนวน Upsell Order': upOrders.length || '',
-      'ยอดเพิ่มรวม Upsell (บาท)': upTotalDiff > 0 ? upTotalDiff : '',
-      'รายละเอียด Upsell': upSummary,
     }
   }
   if (entry.department === 'แพค') {
@@ -218,9 +209,7 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
   const dept = entry.department
 
-  const upOrders = (ex.upselling_orders as { initial: string; freebie: string; final: string }[] | undefined) || []
-  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount || upOrders.length > 0)) {
-    const totalDiff = upOrders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
+  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount)) {
     return (
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
         <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
@@ -232,22 +221,6 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
             <DetailRow label="ยอดขาย" value={`${Number(ex.sales_amount).toLocaleString()} บาท`} />
           )}
         </div>
-        {upOrders.length > 0 && (
-          <div className="pt-1 space-y-1.5">
-            <p className="text-xs font-semibold text-[#1E3A5F]">อัพเซลล์ ({upOrders.length} order{totalDiff > 0 ? ` · +${totalDiff.toLocaleString()} บาทรวม` : ''})</p>
-            {upOrders.map((o, i) => {
-              const diff = Number(o.final || 0) - Number(o.initial || 0)
-              return (
-                <div key={i} className="text-xs text-[#374151] bg-white rounded-lg px-2.5 py-1.5 flex gap-2 flex-wrap">
-                  <span className="text-gray-400">#{i+1}</span>
-                  {o.initial && <span>{Number(o.initial).toLocaleString()} → {o.final ? Number(o.final).toLocaleString() : '?'} บาท</span>}
-                  {o.freebie && <span className="text-[#1E3A5F]">· แถม: {o.freebie}</span>}
-                  {diff > 0 && <span className="text-[#16A34A] font-semibold">+{diff.toLocaleString()}</span>}
-                </div>
-              )
-            })}
-          </div>
-        )}
       </div>
     )
   }
@@ -320,7 +293,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'upsell' | 'promo'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -805,16 +778,6 @@ export default function AdminDashboard() {
             }`}
           >
             รหัสแผนก
-          </button>
-          <button
-            onClick={() => setActiveTab('upsell')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
-              activeTab === 'upsell'
-                ? 'bg-white text-[#1E3A5F]'
-                : 'text-white/70 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            อัพเซลล์
           </button>
         </div>
       </div>
@@ -1911,130 +1874,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-      {/* Upsell Tab */}
-      {activeTab === 'upsell' && (() => {
-        type UpsellOrder = { initial: string; freebie: string; final: string }
-        const upsellEntries = entries.flatMap((e) => {
-          if (!e.extra_data) return []
-          try {
-            const ex = JSON.parse(e.extra_data) as Record<string, unknown>
-            const orders = (ex.upselling_orders as UpsellOrder[] | undefined) || []
-            if (orders.length === 0) return []
-            return [{ entry: e, orders }]
-          } catch { return [] }
-        })
-
-        const totalOrders = upsellEntries.reduce((s, u) => s + u.orders.length, 0)
-        const totalDiff = upsellEntries.reduce((s, u) =>
-          s + u.orders.reduce((ss, o) => ss + (Number(o.final || 0) - Number(o.initial || 0)), 0), 0)
-
-        const byDept: Record<string, { count: number; diff: number }> = {}
-        for (const u of upsellEntries) {
-          const dept = u.entry.department
-          if (!byDept[dept]) byDept[dept] = { count: 0, diff: 0 }
-          byDept[dept].count += u.orders.length
-          byDept[dept].diff += u.orders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
-        }
-
-        return (
-          <div className="max-w-6xl mx-auto px-4 pb-10 space-y-4">
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                <p className="text-2xl font-bold text-[#1E3A5F]">{upsellEntries.length}</p>
-                <p className="text-xs text-gray-400 mt-1">วันที่มีการอัพเซลล์</p>
-              </div>
-              <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
-                <p className="text-2xl font-bold text-[#1E3A5F]">{totalOrders}</p>
-                <p className="text-xs text-gray-400 mt-1">จำนวน Order ทั้งหมด</p>
-              </div>
-              <div className="bg-white rounded-2xl p-4 shadow-sm text-center col-span-2">
-                <p className="text-2xl font-bold text-[#16A34A]">+{totalDiff.toLocaleString()} บาท</p>
-                <p className="text-xs text-gray-400 mt-1">ยอดเพิ่มรวมทั้งหมด</p>
-              </div>
-            </div>
-
-            {/* By dept */}
-            {Object.keys(byDept).length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-5 py-3 border-b border-[#E2E8F0]">
-                  <h3 className="font-bold text-[#1E3A5F] text-sm">สรุปตามแผนก</h3>
-                </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
-                      <th className="text-left px-5 py-2.5 font-semibold">แผนก</th>
-                      <th className="text-center px-5 py-2.5 font-semibold">Order</th>
-                      <th className="text-right px-5 py-2.5 font-semibold">ยอดเพิ่มรวม (บาท)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(byDept).map(([dept, stat], i) => (
-                      <tr key={dept} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                        <td className="px-5 py-2.5 font-medium text-[#374151]">{dept}</td>
-                        <td className="px-5 py-2.5 text-center text-[#1E3A5F]">{stat.count}</td>
-                        <td className="px-5 py-2.5 text-right font-semibold text-[#16A34A]">+{stat.diff.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Detail table */}
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              <div className="px-5 py-3 border-b border-[#E2E8F0]">
-                <h3 className="font-bold text-[#1E3A5F] text-sm">รายการทั้งหมด</h3>
-              </div>
-              {upsellEntries.length === 0 ? (
-                <div className="py-16 text-center text-gray-400 text-sm">ยังไม่มีข้อมูลอัพเซลล์</div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[640px]">
-                    <thead>
-                      <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
-                        <th className="text-left px-4 py-2.5 font-semibold">วันที่</th>
-                        <th className="text-left px-4 py-2.5 font-semibold">แผนก</th>
-                        <th className="text-left px-4 py-2.5 font-semibold">ชื่อ</th>
-                        <th className="text-center px-4 py-2.5 font-semibold">Order</th>
-                        <th className="text-right px-4 py-2.5 font-semibold">ยอดเพิ่มรวม</th>
-                        <th className="text-left px-4 py-2.5 font-semibold">รายละเอียด</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {upsellEntries.map(({ entry, orders }, i) => {
-                        const diff = orders.reduce((s, o) => s + (Number(o.final || 0) - Number(o.initial || 0)), 0)
-                        return (
-                          <tr key={entry.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                            <td className="px-4 py-2.5 text-gray-500 text-xs">{entry.date}</td>
-                            <td className="px-4 py-2.5 font-medium text-[#374151]">{entry.department}</td>
-                            <td className="px-4 py-2.5 text-[#374151]">{entry.nickname}</td>
-                            <td className="px-4 py-2.5 text-center text-[#1E3A5F] font-semibold">{orders.length}</td>
-                            <td className="px-4 py-2.5 text-right font-bold text-[#16A34A]">
-                              {diff > 0 ? `+${diff.toLocaleString()}` : '-'}
-                            </td>
-                            <td className="px-4 py-2.5 text-xs text-gray-500 max-w-[220px]">
-                              {orders.map((o, j) => {
-                                const d = Number(o.final || 0) - Number(o.initial || 0)
-                                return (
-                                  <div key={j} className="truncate">
-                                    #{j+1} {o.initial ? `${Number(o.initial).toLocaleString()}→${o.final ? Number(o.final).toLocaleString() : '?'}` : ''}{o.freebie ? ` (${o.freebie})` : ''}{d > 0 ? ` +${d.toLocaleString()}` : ''}
-                                  </div>
-                                )
-                              })}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Tax image modal */}
       {taxImageModal && (
