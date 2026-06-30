@@ -1,5 +1,11 @@
 import { Suspense } from 'react'
+import type { Metadata } from 'next'
 import AdminDashboard from './AdminDashboard'
+
+export const metadata: Metadata = {
+  title: 'G ADMIN — GAP TRADING',
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'G ADMIN' },
+}
 
 export default function AdminPage() {
   return (
