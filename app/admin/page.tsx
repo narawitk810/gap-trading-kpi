@@ -5,6 +5,7 @@ import AdminDashboard from './AdminDashboard'
 export const metadata: Metadata = {
   title: 'G ADMIN — GAP TRADING',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'G ADMIN' },
+  manifest: '/api/admin-manifest',
 }
 
 export default function AdminPage() {
