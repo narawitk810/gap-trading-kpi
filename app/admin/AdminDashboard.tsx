@@ -87,6 +87,20 @@ type StockArrival = {
   old_pricing_data: string | null
 }
 
+type PromoThreshold = {
+  id: string
+  nickname: string
+  product_name: string
+  threshold_amount: string
+  start_month: string
+  end_month: string
+  note: string | null
+  image_data: string
+  status: string
+  created_at: string
+  acknowledged_at: string | null
+}
+
 type TaxInvoice = {
   id: string
   nickname: string
@@ -306,13 +320,16 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'upsell'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'upsell' | 'promo'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
   const [loadingRestock, setLoadingRestock] = useState(false)
   const [notingId, setNotingId] = useState<string | null>(null)
+  const [promoThresholds, setPromoThresholds] = useState<PromoThreshold[]>([])
+  const [loadingPromo, setLoadingPromo] = useState(false)
+  const [ackingPromoId, setAckingPromoId] = useState<string | null>(null)
   const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
@@ -458,6 +475,15 @@ export default function AdminDashboard() {
     finally { setLoadingRestock(false) }
   }, [])
 
+  const fetchPromoThresholds = useCallback(async () => {
+    setLoadingPromo(true)
+    try {
+      const res = await fetch(`/api/promo-threshold?key=${ADMIN_KEY}`)
+      if (res.ok) setPromoThresholds(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingPromo(false) }
+  }, [])
+
   const fetchStockArrivals = useCallback(async () => {
     setLoadingArrivals(true)
     try {
@@ -562,6 +588,19 @@ export default function AdminDashboard() {
     finally { setNotingId(null) }
   }
 
+  async function handleAcknowledgePromo(id: string) {
+    setAckingPromoId(id)
+    try {
+      const res = await fetch(`/api/promo-threshold?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) setPromoThresholds((prev) => prev.map((r) => r.id === id ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString() } : r))
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setAckingPromoId(null) }
+  }
+
   const fetchTaxInvoices = useCallback(async (month?: string) => {
     setLoadingTax(true)
     try {
@@ -598,8 +637,9 @@ export default function AdminDashboard() {
       fetchRestock()
       fetchStockArrivals()
       fetchCodes()
+      fetchPromoThresholds()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds])
 
   if (!isAuthorized) {
     return (
@@ -643,7 +683,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -738,6 +778,21 @@ export default function AdminDashboard() {
             {stockArrivals.filter((r) => r.status === 'pending').length > 0 && (
               <span className="bg-[#16A34A] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {stockArrivals.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('promo')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'promo'
+                ? 'bg-white text-[#16A34A]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            โปรซื้อครบ
+            {promoThresholds.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="bg-[#16A34A] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {promoThresholds.filter((r) => r.status === 'pending').length}
               </span>
             )}
           </button>
@@ -1405,6 +1460,62 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
+
+      {activeTab === 'promo' && (() => {
+        const promoMonthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+        const formatPromoMonth = (m: string) => {
+          if (!m) return ''
+          const [y, mo] = m.split('-')
+          return `${promoMonthNames[parseInt(mo) - 1]} ${parseInt(y) + 543}`
+        }
+        return (
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            {loadingPromo ? (
+              <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : promoThresholds.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีการแจ้งโปรซื้อครบ</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {promoThresholds.map((r) => (
+                  <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    {r.image_data && (
+                      <img src={r.image_data} alt="สินค้า" className="w-full h-48 object-cover" />
+                    )}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-[#374151] text-sm">{r.nickname}</p>
+                          <p className="text-xs text-gray-400">{formatDateTime(r.created_at)}</p>
+                        </div>
+                        <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
+                          r.status === 'pending'
+                            ? 'bg-red-50 text-[#DC2626]'
+                            : 'bg-[#16A34A]/10 text-[#16A34A]'
+                        }`}>
+                          {r.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-[#374151]">{r.product_name}</p>
+                      <p className="text-sm text-[#374151]">ซื้อครบ <span className="font-bold">{r.threshold_amount}</span> บาท</p>
+                      <p className="text-xs text-gray-400">{formatPromoMonth(r.start_month)} – {formatPromoMonth(r.end_month)}</p>
+                      {r.note && <p className="text-xs text-gray-400">{r.note}</p>}
+                      {r.status === 'pending' && (
+                        <button
+                          onClick={() => handleAcknowledgePromo(r.id)}
+                          disabled={ackingPromoId === r.id}
+                          className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                        >
+                          {ackingPromoId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Stock Arrival Tab */}
       {activeTab === 'stock-arrival' && (() => {

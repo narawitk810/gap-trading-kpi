@@ -132,6 +132,8 @@ const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื�
 const UPSELLING_DEPTS = ['ไลฟ์สด', 'sale admin']
 const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน']
 const TCG_DEPTS = ['ผู้จัดการหน้าร้าน']
+const PROMO_THRESHOLD_DEPTS = ['การตลาด']
+const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 
 function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
@@ -629,6 +631,42 @@ export default function Home() {
               <p className="text-xs text-gray-400 mt-0.5">จัดการข้อมูลวันเกิดลูกค้า VIP</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#534AB7] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
+        {PROMO_THRESHOLD_DEPTS.includes(formData.department) && (
+          <Link
+            href="/promo-threshold"
+            className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              🎁
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1E3A5F]">โปรซื้อครบ</p>
+              <p className="text-xs text-gray-400 mt-0.5">แจ้งโปรซื้อครบสินค้า พร้อมรูปและช่วงเดือน</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
+        {PROMO_LIST_DEPTS.includes(formData.department) && (
+          <Link
+            href="/promo-list"
+            className="flex items-center gap-3 bg-[#16A34A]/5 border border-[#16A34A]/20 rounded-2xl p-4 hover:bg-[#16A34A]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#16A34A] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              📋
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#16A34A]">รายการโปรซื้อครบ</p>
+              <p className="text-xs text-gray-400 mt-0.5">ดูโปรที่ Admin อนุมัติแล้ว</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>

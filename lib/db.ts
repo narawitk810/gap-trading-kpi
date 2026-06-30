@@ -117,6 +117,22 @@ export async function ensureSchema(): Promise<void> {
   } catch { /* column already exists */ }
 
   await db.execute(`
+    CREATE TABLE IF NOT EXISTS promo_thresholds (
+      id               TEXT PRIMARY KEY,
+      nickname         TEXT NOT NULL,
+      product_name     TEXT NOT NULL,
+      threshold_amount TEXT NOT NULL,
+      start_month      TEXT NOT NULL,
+      end_month        TEXT NOT NULL,
+      note             TEXT,
+      image_data       TEXT NOT NULL,
+      status           TEXT NOT NULL DEFAULT 'pending',
+      created_at       TEXT NOT NULL,
+      acknowledged_at  TEXT
+    )
+  `)
+
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS tax_invoices (
       id           TEXT PRIMARY KEY,
       nickname     TEXT NOT NULL,
