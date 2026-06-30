@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 type PricingData = {
   multiplier: string
   msrp_price: string | null
-  old_msrp_price: string | null
   risk_amount: number
   commission_tier: string
   box_price_system: number
@@ -54,7 +53,6 @@ export default function StockPricesPage() {
   const [pricingModal, setPricingModal] = useState<StockPrice | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState('')
   const [pmMsrpPrice, setPmMsrpPrice] = useState('')
-  const [pmOldMsrpPrice, setPmOldMsrpPrice] = useState('')
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
   const [pmSubmitting, setPmSubmitting] = useState(false)
@@ -78,7 +76,6 @@ export default function StockPricesPage() {
     const p: PricingData = JSON.parse(r.pricing_data)
     setPmMultiplier(p.multiplier)
     setPmMsrpPrice(p.msrp_price || '')
-    setPmOldMsrpPrice(p.old_msrp_price || '')
     setPmRisk(p.risk_amount)
     setPmCommission(p.commission_tier)
   }
@@ -89,18 +86,40 @@ export default function StockPricesPage() {
     if (pmMultiplier === 'msrp' && !pmMsrpPrice.trim()) { alert('กรุณาระบุราคา MSRP'); return }
     if (!pmCommission) { alert('กรุณาเลือกค่าคอมมิชชั่น'); return }
 
+    let oldPricing: Record<string, string> | null = null
+    try {
+      oldPricing = pricingModal.old_pricing_data ? JSON.parse(pricingModal.old_pricing_data) : null
+    } catch { oldPricing = null }
+
+    if (pmMultiplier === 'old' && !oldPricing?.box_price_system) {
+      alert('ไม่มีราคาเดิม (ยกกล่อง) สำหรับสินค้านี้ กรุณาเลือกวิธีอื่น')
+      return
+    }
+
     const cost = Number(pricingModal.cost) || 0
     const packs = Number(pricingModal.packs_per_box) || 1
-    const rawBox = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
-    const boxPriceSystem = pmMultiplier === 'msrp' ? rawBox : roundUp10(rawBox)
-    const boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
-    const packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
-    const packPriceExternal = roundUp10(packPriceSystem * 0.90)
+
+    let boxPriceSystem: number
+    let boxPriceExternal: number
+    let packPriceSystem: number
+    let packPriceExternal: number
+
+    if (pmMultiplier === 'old') {
+      boxPriceSystem = Number(oldPricing!.box_price_system)
+      boxPriceExternal = oldPricing!.box_price_external ? Number(oldPricing!.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
+      packPriceSystem = oldPricing!.pack_price_system ? Number(oldPricing!.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
+      packPriceExternal = oldPricing!.pack_price_external ? Number(oldPricing!.pack_price_external) : roundUp10(packPriceSystem * 0.90)
+    } else {
+      const rawBox = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
+      boxPriceSystem = pmMultiplier === 'msrp' ? rawBox : roundUp10(rawBox)
+      boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
+      packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
+      packPriceExternal = roundUp10(packPriceSystem * 0.90)
+    }
 
     const pricing = {
       multiplier: pmMultiplier,
       msrp_price: pmMsrpPrice || null,
-      old_msrp_price: pmOldMsrpPrice || null,
       risk_amount: pmRisk,
       commission_tier: pmCommission,
       box_price_system: boxPriceSystem,
@@ -265,19 +284,26 @@ export default function StockPricesPage() {
         const cost = Number(pricingModal.cost) || 0
         const packs = Number(pricingModal.packs_per_box) || 1
         let boxPriceSystem = 0, boxPriceExternal = 0, packPriceSystem = 0, packPriceExternal = 0, calcReady = false
+        let oldPricing: Record<string, string> | null = null
+        try {
+          oldPricing = pricingModal.old_pricing_data ? JSON.parse(pricingModal.old_pricing_data) : null
+        } catch { oldPricing = null }
         if (pmMultiplier) {
           if (pmMultiplier === 'msrp' && pmMsrpPrice) { boxPriceSystem = Number(pmMsrpPrice); calcReady = true }
-          else if (pmMultiplier !== 'msrp') { boxPriceSystem = roundUp10(cost * Number(pmMultiplier)); calcReady = true }
-          if (calcReady) {
+          else if (pmMultiplier === 'old' && oldPricing?.box_price_system) {
+            boxPriceSystem = Number(oldPricing.box_price_system)
+            boxPriceExternal = oldPricing.box_price_external ? Number(oldPricing.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
+            packPriceSystem = oldPricing.pack_price_system ? Number(oldPricing.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
+            packPriceExternal = oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90)
+            calcReady = true
+          }
+          else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') { boxPriceSystem = roundUp10(cost * Number(pmMultiplier)); calcReady = true }
+          if (calcReady && pmMultiplier !== 'old') {
             boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
             packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
             packPriceExternal = roundUp10(packPriceSystem * 0.90)
           }
         }
-        let oldPricing: Record<string, string> | null = null
-        try {
-          oldPricing = pricingModal.old_pricing_data ? JSON.parse(pricingModal.old_pricing_data) : null
-        } catch { oldPricing = null }
         return (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setPricingModal(null) }}>
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[92vh] overflow-y-auto">
@@ -296,12 +322,28 @@ export default function StockPricesPage() {
                       <span className="text-sm font-semibold text-[#374151]">MSRP</span>
                       <span className="text-xs text-gray-400">(sleeve / playmat)</span>
                       {pmMultiplier === 'msrp' && (
-                        <div className="ml-auto flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
-                          <input type="number" value={pmMsrpPrice} onChange={(e) => setPmMsrpPrice(e.target.value)} placeholder="ราคา MSRP (บาท)"
-                            className="border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#16A34A]" />
-                          <input type="number" value={pmOldMsrpPrice} onChange={(e) => setPmOldMsrpPrice(e.target.value)} placeholder="ราคาเดิม (ถ้ามี)"
-                            className="border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#16A34A] text-gray-500" />
-                        </div>
+                        <input type="number" value={pmMsrpPrice} onChange={(e) => setPmMsrpPrice(e.target.value)} placeholder="ราคา MSRP (บาท)"
+                          className="ml-auto border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-32 focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
+                          onClick={(e) => e.stopPropagation()} />
+                      )}
+                    </label>
+                    {/* Old price option */}
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${oldPricing?.box_price_system ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'} ${pmMultiplier === 'old' ? 'border-[#16A34A] bg-green-50' : 'border-[#E2E8F0]'}`}>
+                      <input
+                        type="radio"
+                        name="spm"
+                        value="old"
+                        checked={pmMultiplier === 'old'}
+                        disabled={!oldPricing?.box_price_system}
+                        onChange={() => setPmMultiplier('old')}
+                        className="accent-[#16A34A]"
+                      />
+                      <span className="text-sm font-semibold text-[#374151]">ราคาเดิม</span>
+                      <span className="text-xs text-gray-400">(ตามที่ Stock แจ้ง)</span>
+                      {oldPricing?.box_price_system ? (
+                        <span className="ml-auto text-sm font-bold text-[#16A34A]">{oldPricing.box_price_system} ฿</span>
+                      ) : (
+                        <span className="ml-auto text-xs text-gray-400">ไม่มีข้อมูล</span>
                       )}
                     </label>
                     {MULTIPLIERS.map((m) => (
@@ -333,18 +375,15 @@ export default function StockPricesPage() {
                         <p className="text-xs text-gray-400 mb-1">ยกกล่อง (ในระบบ)</p>
                         <p className="text-base font-bold text-[#1E3A5F]">{fmt(boxPriceSystem)}</p>
                         <p className="text-xs text-gray-400">บาท</p>
-                        {oldPricing?.box_price_system && (
+                        {pmMultiplier !== 'old' && oldPricing?.box_price_system && (
                           <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_system} บาท</p>
-                        )}
-                        {pmMultiplier === 'msrp' && pmOldMsrpPrice && (
-                          <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม (MSRP): {pmOldMsrpPrice} บาท</p>
                         )}
                       </div>
                       <div className="bg-white rounded-lg p-3 shadow-sm">
                         <p className="text-xs text-gray-400 mb-1">ยกกล่อง (โยนนอก)</p>
                         <p className="text-base font-bold text-[#374151]">{fmt(boxPriceExternal)}</p>
                         <p className="text-xs text-gray-400">บาท</p>
-                        {oldPricing?.box_price_external && (
+                        {pmMultiplier !== 'old' && oldPricing?.box_price_external && (
                           <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_external} บาท</p>
                         )}
                       </div>
@@ -352,7 +391,7 @@ export default function StockPricesPage() {
                         <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
                         <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
                         <p className="text-xs text-gray-400">บาท/ซอง</p>
-                        {oldPricing?.pack_price_system && (
+                        {pmMultiplier !== 'old' && oldPricing?.pack_price_system && (
                           <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.pack_price_system} บาท</p>
                         )}
                       </div>
@@ -360,7 +399,7 @@ export default function StockPricesPage() {
                         <p className="text-xs text-gray-400 mb-1">แยกซอง (โยนนอก)</p>
                         <p className="text-base font-bold text-[#374151]">{fmt(packPriceExternal)}</p>
                         <p className="text-xs text-gray-400">บาท/ซอง</p>
-                        {oldPricing?.pack_price_external && (
+                        {pmMultiplier !== 'old' && oldPricing?.pack_price_external && (
                           <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.pack_price_external} บาท</p>
                         )}
                       </div>
