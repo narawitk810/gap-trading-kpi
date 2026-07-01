@@ -191,12 +191,12 @@ export default function StockArrivalPage() {
               </div>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-0.5">ต้นทุนสินค้า</p>
+              <p className="text-xs text-gray-500 mb-0.5">ต้นทุนสินค้า ต่อ 1 กล่อง</p>
               <p className="text-sm font-semibold text-[#374151]">{cost} บาท</p>
             </div>
             {(oldBoxSystem || oldBoxExternal || oldPackSystem || oldPackExternal) && (
               <div>
-                <p className="text-xs text-gray-500 mb-1">ราคาเดิม</p>
+                <p className="text-xs text-gray-500 mb-1">ราคาเดิม (ถ้าไม่มีใส่ 0)</p>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs text-[#374151]">
                   {oldBoxSystem && <p>ยกกล่อง(ในระบบ): <span className="font-semibold">{oldBoxSystem}</span></p>}
                   {oldBoxExternal && <p>ยกกล่อง(โยนนอก): <span className="font-semibold">{oldBoxExternal}</span></p>}
@@ -370,7 +370,7 @@ export default function StockArrivalPage() {
               }`}>
                 {showOldPricing ? '✓' : ''}
               </span>
-              ราคาเดิม (ถ้ามี)
+              ราคาเดิม (ถ้าไม่มีใส่ 0)
             </button>
 
             {showOldPricing && (
@@ -408,7 +408,7 @@ export default function StockArrivalPage() {
 
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-              ต้นทุนสินค้า (บาท) <span className="text-[#DC2626]">*</span>
+              ต้นทุนสินค้า ต่อ 1 กล่อง (บาท) <span className="text-[#DC2626]">*</span>
             </label>
             <input type="number" value={cost}
               onChange={(e) => { setCost(e.target.value); setErrors((p) => ({ ...p, cost: '' })) }}
