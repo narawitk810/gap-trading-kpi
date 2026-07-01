@@ -25,7 +25,7 @@ function promoState(startMonth: string, endMonth: string) {
   const current = new Date().toISOString().slice(0, 7)
   if (current < startMonth) return { label: 'ยังไม่เริ่ม', className: 'bg-gray-100 text-gray-500' }
   if (current > endMonth) return { label: 'หมดโปรแล้ว', className: 'bg-gray-100 text-gray-400' }
-  return { label: 'กำลังจัดโปร', className: 'bg-[#16A34A]/10 text-[#16A34A]' }
+  return { label: 'กำลังจัดโปร', className: 'bg-[#0369A1]/10 text-[#0369A1]' }
 }
 
 export default function PromoListPage() {
@@ -50,13 +50,14 @@ export default function PromoListPage() {
   }, [fetchData])
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8]">
-      <div className="bg-[#16A34A] text-white px-4 py-5 shadow-md">
+    <div className="min-h-screen bg-[#F0F9FF]">
+      <div className="bg-[#0369A1] text-white px-4 py-5 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="text-white/70 hover:text-white text-lg w-8">←</button>
           <div>
             <h1 className="text-base font-bold">รายการโปรซื้อครบ</h1>
             <p className="text-xs opacity-70 mt-0.5">โปรโมชั่นที่ Admin อนุมัติแล้ว</p>
+            <p className="text-xs opacity-60 mt-0.5">🗓 อัพเดทราวๆ ทุก 1 เดือน</p>
           </div>
           <div className="ml-auto flex flex-col items-end gap-1">
             <button
@@ -98,7 +99,7 @@ export default function PromoListPage() {
                         {state.label}
                       </span>
                     </div>
-                    <p className="text-sm text-[#374151]">ซื้อครบ <span className="font-bold text-[#16A34A]">{item.threshold_amount}</span> บาท</p>
+                    <p className="text-sm text-[#374151]">ซื้อครบ <span className="font-bold text-[#0369A1]">{item.threshold_amount}</span> บาท</p>
                     <p className="text-xs text-gray-400">{formatMonthThai(item.start_month)} – {formatMonthThai(item.end_month)}</p>
                     {item.note && <p className="text-xs text-gray-400 pt-1 border-t border-[#E2E8F0]">{item.note}</p>}
                   </div>
