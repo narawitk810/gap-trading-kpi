@@ -57,6 +57,7 @@ export default function StockPricesPage() {
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
   const [pmSubmitting, setPmSubmitting] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
@@ -71,6 +72,25 @@ export default function StockPricesPage() {
     const interval = setInterval(fetchData, 30_000)
     return () => clearInterval(interval)
   }, [fetchData])
+
+  async function handleDelete(id: string) {
+    if (!confirm('ยืนยันลบรายการนี้?')) return
+    setDeletingId(id)
+    try {
+      const res = await fetch('/api/stock-arrival', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) {
+        setItems((prev) => prev.filter((r) => r.id !== id))
+      } else {
+        const data = await res.json()
+        alert(data.error || 'ไม่สามารถลบได้')
+      }
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setDeletingId(null) }
+  }
 
   function openPricingModal(r: StockPrice) {
     if (!r.pricing_data) return
@@ -254,9 +274,18 @@ export default function StockPricesPage() {
                             )}
                           </td>
                           <td className="px-3 py-3 text-center">
-                            <span className="text-xs font-bold bg-[#DC2626]/10 text-[#DC2626] px-2 py-0.5 rounded-full whitespace-nowrap">
-                              รอดำเนินการ
-                            </span>
+                            <div className="flex flex-col items-center gap-1.5">
+                              <span className="text-xs font-bold bg-[#DC2626]/10 text-[#DC2626] px-2 py-0.5 rounded-full whitespace-nowrap">
+                                รอดำเนินการ
+                              </span>
+                              <button
+                                onClick={() => handleDelete(r.id)}
+                                disabled={deletingId === r.id}
+                                className="text-xs text-[#DC2626] bg-red-50 px-2 py-0.5 rounded-full hover:bg-red-100 disabled:opacity-60"
+                              >
+                                {deletingId === r.id ? '...' : 'ลบ'}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
