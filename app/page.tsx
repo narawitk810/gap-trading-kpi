@@ -49,16 +49,6 @@ interface ExtraData {
   salesAmount: string
   // Creative
   clipLinks: string[]
-  // การตลาด — ใหม่
-  timeFrom: string
-  timeTo: string
-  adsCost: string
-  grossRevenue: string
-  roi: string
-  costPerOrder: string
-  costPer10SecView: string
-  avgViewDuration: string
-  newFollowers: string
   // การตลาด — เดิม (backward compat)
   adsShopee: string
   adsLazada: string
@@ -72,15 +62,6 @@ const defaultExtraData: ExtraData = {
   liveHours: '',
   salesAmount: '',
   clipLinks: [''],
-  timeFrom: '',
-  timeTo: '',
-  adsCost: '',
-  grossRevenue: '',
-  roi: '',
-  costPerOrder: '',
-  costPer10SecView: '',
-  avgViewDuration: '',
-  newFollowers: '',
   adsShopee: '',
   adsLazada: '',
   adsTiktok: '',
@@ -150,7 +131,39 @@ const TCG_DEPTS = ['ผู้จัดการหน้าร้าน']
 const PROMO_THRESHOLD_DEPTS = ['การตลาด']
 const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 
-function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, unknown> | undefined {
+interface ChannelEntry {
+  liveStaffName: string
+  adsCost: string
+  grossRevenue: string
+  roi: string
+  costPerOrder: string
+  costPer10SecView: string
+  avgViewDuration: string
+  newFollowers: string
+}
+
+const MARKETING_METRICS: { field: keyof ChannelEntry; label: string; unit: string }[] = [
+  { field: 'adsCost', label: 'ต้นทุน ads', unit: 'บาท' },
+  { field: 'grossRevenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
+  { field: 'roi', label: 'ROI', unit: 'บาท' },
+  { field: 'costPerOrder', label: 'ต้นทุนต่อคำสั่งซื้อ', unit: 'บาท' },
+  { field: 'costPer10SecView', label: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', unit: 'บาท' },
+  { field: 'avgViewDuration', label: 'ระยะการดู live โดยเฉลี่ย', unit: 'วินาที' },
+  { field: 'newFollowers', label: 'ยอดติดตามจาก live', unit: 'user' },
+]
+
+const emptyChannelEntry: ChannelEntry = {
+  liveStaffName: '',
+  adsCost: '',
+  grossRevenue: '',
+  roi: '',
+  costPerOrder: '',
+  costPer10SecView: '',
+  avgViewDuration: '',
+  newFollowers: '',
+}
+
+function buildExtraDataPayload(dept: string, extra: ExtraData, channelEntries: Record<string, ChannelEntry> = {}): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
     const payload: Record<string, unknown> = {}
     if (extra.liveHours.trim()) payload.live_hours = extra.liveHours.trim()
@@ -171,17 +184,18 @@ function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, u
     return validLinks.length > 0 ? { clip_links: validLinks } : undefined
   }
   if (dept === 'การตลาด') {
-    const payload: Record<string, unknown> = {}
-    if (extra.timeFrom.trim()) payload.time_from = extra.timeFrom.trim()
-    if (extra.timeTo.trim()) payload.time_to = extra.timeTo.trim()
-    if (extra.adsCost.trim()) payload.ads_cost = extra.adsCost.trim()
-    if (extra.grossRevenue.trim()) payload.gross_revenue = extra.grossRevenue.trim()
-    if (extra.roi.trim()) payload.roi = extra.roi.trim()
-    if (extra.costPerOrder.trim()) payload.cost_per_order = extra.costPerOrder.trim()
-    if (extra.costPer10SecView.trim()) payload.cost_per_10sec_view = extra.costPer10SecView.trim()
-    if (extra.avgViewDuration.trim()) payload.avg_view_duration = extra.avgViewDuration.trim()
-    if (extra.newFollowers.trim()) payload.new_followers = extra.newFollowers.trim()
-    return Object.keys(payload).length > 0 ? payload : undefined
+    const channels = Object.entries(channelEntries).map(([ch, e]) => ({
+      channel: ch,
+      ...(e.liveStaffName && { live_staff_name: e.liveStaffName }),
+      ...(e.adsCost && { ads_cost: e.adsCost }),
+      ...(e.grossRevenue && { gross_revenue: e.grossRevenue }),
+      ...(e.roi && { roi: e.roi }),
+      ...(e.costPerOrder && { cost_per_order: e.costPerOrder }),
+      ...(e.costPer10SecView && { cost_per_10sec_view: e.costPer10SecView }),
+      ...(e.avgViewDuration && { avg_view_duration: e.avgViewDuration }),
+      ...(e.newFollowers && { new_followers: e.newFollowers }),
+    }))
+    return channels.length > 0 ? { channels } : undefined
   }
   return undefined
 }
@@ -200,6 +214,7 @@ export default function Home() {
   const [pageState, setPageState] = useState<PageState>('form')
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [channelEntries, setChannelEntries] = useState<Record<string, ChannelEntry>>({})
 
   const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
@@ -262,7 +277,7 @@ export default function Home() {
   async function handleConfirm() {
     setPageState('submitting')
     const validTasks = formData.tasks.filter((t) => t.trim())
-    const extra_data = buildExtraDataPayload(formData.department, formData.extraData)
+    const extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelEntries)
     try {
       const res = await fetch('/api/kpi', {
         method: 'POST',
@@ -347,6 +362,7 @@ export default function Home() {
       obstacles: '',
       extraData: { ...defaultExtraData, clipLinks: [''] },
     })
+    setChannelEntries({})
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -373,7 +389,7 @@ export default function Home() {
 
   const validTaskCount = formData.tasks.filter((t) => t.trim()).length
   const extra = formData.extraData
-  const extraPayload = buildExtraDataPayload(formData.department, extra)
+  const extraPayload = buildExtraDataPayload(formData.department, extra, channelEntries)
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
@@ -421,8 +437,10 @@ export default function Home() {
                   setFormData((prev) => ({
                     ...prev,
                     department: dept,
+                    channelName: [],
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
+                  setChannelEntries({})
                   setErrors((prev) => ({ ...prev, department: '' }))
                   setCodeVerified(isCodeVerifiedLocally(dept))
                   setCodeInput('')
@@ -537,16 +555,19 @@ export default function Home() {
             <InputField label="ช่องที่ ROI ต่ำกว่า 15" required error={errors.channelName}>
               <div className="flex flex-wrap gap-2 pt-0.5">
                 {CHANNEL_LIST.map((ch) => {
-                  const selected = formData.channelName[0] === ch
+                  const selected = formData.channelName.includes(ch)
                   return (
                     <button
                       key={ch}
                       type="button"
                       onClick={() => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          channelName: selected ? [] : [ch],
-                        }))
+                        if (selected) {
+                          setFormData((prev) => ({ ...prev, channelName: prev.channelName.filter((c) => c !== ch) }))
+                          setChannelEntries((prev) => { const n = { ...prev }; delete n[ch]; return n })
+                        } else {
+                          setFormData((prev) => ({ ...prev, channelName: [...prev.channelName, ch] }))
+                          setChannelEntries((prev) => ({ ...prev, [ch]: { ...emptyChannelEntry } }))
+                        }
                         setErrors((prev) => ({ ...prev, channelName: '' }))
                       }}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
@@ -868,54 +889,44 @@ export default function Home() {
         )}
 
         {/* การตลาด */}
-        {formData.department === 'การตลาด' && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-            <p className="text-sm font-bold text-[#1E3A5F]">ช่วงเวลา</p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="0.00"
-                value={extra.timeFrom}
-                onChange={(e) => setExtra({ timeFrom: e.target.value })}
-                className={inputClass + ' text-center'}
-              />
-              <span className="text-sm text-gray-400 shrink-0">ถึง</span>
-              <input
-                type="text"
-                placeholder="24.00"
-                value={extra.timeTo}
-                onChange={(e) => setExtra({ timeTo: e.target.value })}
-                className={inputClass + ' text-center'}
-              />
-              <span className="text-xs text-gray-400 shrink-0">น.</span>
-            </div>
-            <p className="text-sm font-bold text-[#1E3A5F] pt-1">ข้อมูลโฆษณา</p>
-            {(
-              [
-                { key: 'adsCost', label: 'ต้นทุน ads', unit: 'บาท' },
-                { key: 'grossRevenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
-                { key: 'roi', label: 'ROI', unit: 'บาท' },
-                { key: 'costPerOrder', label: 'ต้นทุนต่อคำสั่งซื้อ', unit: 'บาท' },
-                { key: 'costPer10SecView', label: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', unit: 'บาท' },
-                { key: 'avgViewDuration', label: 'ระยะการดู live โดยเฉลี่ย', unit: 'วินาที' },
-                { key: 'newFollowers', label: 'ยอดติดตามจาก live', unit: 'user' },
-              ] as { key: keyof ExtraData; label: string; unit: string }[]
-            ).map(({ key, label, unit }) => (
-              <div key={key} className="flex items-center gap-3">
-                <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
-                <div className="relative w-36">
-                  <input
-                    type="number"
-                    min="0"
-                    value={extra[key] as string}
-                    onChange={(e) => setExtra({ [key]: e.target.value } as Partial<ExtraData>)}
-                    placeholder="0"
-                    className={inputClass + ' pr-14'}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
+        {formData.department === 'การตลาด' && formData.channelName.length > 0 && (
+          <div className="space-y-4">
+            {formData.channelName.map((ch) => {
+              const entry = channelEntries[ch] || emptyChannelEntry
+              const updateEntry = (field: keyof ChannelEntry, value: string) =>
+                setChannelEntries((prev) => ({ ...prev, [ch]: { ...(prev[ch] || emptyChannelEntry), [field]: value } }))
+              return (
+                <div key={ch} className="bg-white rounded-2xl p-4 shadow-sm space-y-3 border-l-4 border-[#1E3A5F]">
+                  <p className="text-sm font-bold text-[#1E3A5F]">{ch}</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-[#374151] font-medium w-28 shrink-0">พนักงานไลฟ์</span>
+                    <input
+                      type="text"
+                      placeholder="ชื่อพนักงาน"
+                      value={entry.liveStaffName}
+                      onChange={(e) => updateEntry('liveStaffName', e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  {MARKETING_METRICS.map(({ field, label, unit }) => (
+                    <div key={field} className="flex items-center gap-3">
+                      <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
+                      <div className="relative w-36">
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={entry[field]}
+                          onChange={(e) => updateEntry(field, e.target.value)}
+                          className={inputClass + ' pr-14'}
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -1095,7 +1106,7 @@ export default function Home() {
                 <ConfirmRow label="วันที่ / เวลา" value={`${formData.date}  ${formData.time} น.`} />
                 <ConfirmRow label="ชื่อเล่น" value={formData.nickname} />
                 {formData.channelName.length > 0 && (
-                  <ConfirmRow label="ช่องที่ดูแล" value={formData.channelName.join(', ')} />
+                  <ConfirmRow label={formData.department === 'การตลาด' ? 'ช่องที่ ROI ต่ำกว่า 15' : 'ช่องที่ดูแล'} value={formData.channelName.join(', ')} />
                 )}
               </div>
 
@@ -1139,24 +1150,18 @@ export default function Home() {
                 )}
 
               {/* Extra fields in confirm — การตลาด */}
-              {formData.department === 'การตลาด' && extraPayload && (
+              {formData.department === 'การตลาด' && formData.channelName.length > 0 && (
                 <div className="pt-1 border-t border-[#E2E8F0]">
-                  <p className="text-xs text-gray-500 mb-2">ค่า Ads วันนี้</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { k: 'adsShopee', l: 'Shopee' },
-                      { k: 'adsLazada', l: 'Lazada' },
-                      { k: 'adsTiktok', l: 'TikTok' },
-                      { k: 'adsFacebook', l: 'Facebook' },
-                    ]
-                      .filter(({ k }) => extra[k as keyof ExtraData])
-                      .map(({ k, l }) => (
-                        <ConfirmRow
-                          key={k}
-                          label={l}
-                          value={`${Number(extra[k as keyof ExtraData]).toLocaleString()} บาท`}
-                        />
-                      ))}
+                  <p className="text-xs text-gray-500 mb-2">ข้อมูลช่อง ({formData.channelName.length} ช่อง)</p>
+                  <div className="space-y-2">
+                    {formData.channelName.map((ch) => (
+                      <div key={ch} className="bg-[#F5F6F8] rounded-xl p-2.5">
+                        <p className="text-xs font-bold text-[#1E3A5F]">{ch}</p>
+                        {channelEntries[ch]?.liveStaffName && (
+                          <p className="text-xs text-gray-500 mt-0.5">พนักงานไลฟ์: {channelEntries[ch].liveStaffName}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

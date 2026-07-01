@@ -123,7 +123,7 @@ function formatDateTime(iso: string) {
 
 const roundUp10 = (n: number) => Math.ceil(n / 10) * 10
 
-function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
+function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> | Record<string, string | number>[] {
   if (!entry.extra_data) return {}
   let ex: Record<string, unknown> = {}
   try { ex = JSON.parse(entry.extra_data) } catch { return {} }
@@ -147,6 +147,19 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
     return { 'ลิ้งคลิป': links.join('\n') }
   }
   if (entry.department === 'การตลาด') {
+    if (Array.isArray(ex.channels)) {
+      return (ex.channels as Record<string, unknown>[]).map((c) => ({
+        'ช่อง': String(c.channel || ''),
+        'พนักงานไลฟ์': String(c.live_staff_name || ''),
+        'ต้นทุน ads (บาท)': c.ads_cost ? Number(c.ads_cost) : '',
+        'รายได้ขั้นต้น (บาท)': c.gross_revenue ? Number(c.gross_revenue) : '',
+        'ROI (บาท)': c.roi ? Number(c.roi) : '',
+        'ต้นทุนต่อคำสั่งซื้อ (บาท)': c.cost_per_order ? Number(c.cost_per_order) : '',
+        'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ (บาท)': c.cost_per_10sec_view ? Number(c.cost_per_10sec_view) : '',
+        'ระยะการดู live โดยเฉลี่ย (วินาที)': c.avg_view_duration ? Number(c.avg_view_duration) : '',
+        'ยอดติดตามจาก live (user)': c.new_followers ? Number(c.new_followers) : '',
+      }))
+    }
     return {
       'ช่วงเวลา': ex.time_from && ex.time_to ? `${ex.time_from} – ${ex.time_to} น.` : '',
       'ต้นทุน ads (บาท)': ex.ads_cost ? Number(ex.ads_cost) : '',
@@ -166,17 +179,21 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
 }
 
 function exportToExcel(entries: KPIEntry[], dateFrom: string, dateTo: string) {
-  const rows = entries.map((e) => ({
-    'รหัส': e.id,
-    'วันที่': formatDate(e.date),
-    'เวลา': e.time,
-    'แผนก': e.department,
-    'ชื่อเล่น': e.nickname,
-    'ช่องที่ดูแล': e.channel_name,
-    'งานที่ทำ': e.tasks.join('\n'),
-    'อุปสรรค': e.obstacles || '',
-    ...parseExtraForExcel(e),
-  }))
+  const rows = entries.flatMap((e) => {
+    const base = {
+      'รหัส': e.id,
+      'วันที่': formatDate(e.date),
+      'เวลา': e.time,
+      'แผนก': e.department,
+      'ชื่อเล่น': e.nickname,
+      'ช่องที่ดูแล': e.channel_name,
+      'งานที่ทำ': e.tasks.join('\n'),
+      'อุปสรรค': e.obstacles || '',
+    }
+    const extra = parseExtraForExcel(e)
+    if (Array.isArray(extra)) return extra.map((ex) => ({ ...base, ...ex }))
+    return [{ ...base, ...extra }]
+  })
   const ws = XLSX.utils.json_to_sheet(rows)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'KPI')
@@ -263,7 +280,7 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
 
   if (dept === 'การตลาด') {
-    const metrics = [
+    const metricDefs = [
       { k: 'ads_cost', l: 'ต้นทุน ads', u: 'บาท' },
       { k: 'gross_revenue', l: 'รายได้ขั้นต้น', u: 'บาท' },
       { k: 'roi', l: 'ROI', u: 'บาท' },
@@ -271,7 +288,32 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
       { k: 'cost_per_10sec_view', l: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', u: 'บาท' },
       { k: 'avg_view_duration', l: 'ระยะการดู live โดยเฉลี่ย', u: 'วินาที' },
       { k: 'new_followers', l: 'ยอดติดตามจาก live', u: 'user' },
-    ].filter(({ k }) => ex[k])
+    ]
+    if (Array.isArray(ex.channels)) {
+      const channelsData = ex.channels as Record<string, unknown>[]
+      if (channelsData.length === 0) return null
+      return (
+        <div className="space-y-3">
+          {channelsData.map((c, i) => {
+            const metrics = metricDefs.filter(({ k }) => c[k])
+            return (
+              <div key={i} className="bg-blue-50 rounded-xl p-3 space-y-2">
+                <p className="text-xs font-bold text-[#1E3A5F]">{String(c.channel || '')}</p>
+                {!!c.live_staff_name && <DetailRow label="พนักงานไลฟ์" value={String(c.live_staff_name)} />}
+                {metrics.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {metrics.map(({ k, l, u }) => (
+                      <DetailRow key={k} label={l} value={`${Number(c[k]).toLocaleString()} ${u}`} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+    const metrics = metricDefs.filter(({ k }) => ex[k])
     const oldAds = [
       { k: 'ads_shopee', l: 'Shopee' }, { k: 'ads_lazada', l: 'Lazada' },
       { k: 'ads_tiktok', l: 'TikTok' }, { k: 'ads_facebook', l: 'Facebook' },
