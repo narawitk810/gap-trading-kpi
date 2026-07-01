@@ -37,6 +37,9 @@ type EvidenceRow = {
   id: string
   employee_name: string
   incident: string
+  incident_date: string
+  time_start: string
+  time_end: string
   evidence_data: string
   created_by: string
   created_dept: string
@@ -54,6 +57,9 @@ function formatThaiDateTime(iso: string) {
 export default function EvidencePage() {
   const [employeeName, setEmployeeName] = useState('')
   const [incident, setIncident] = useState('')
+  const [incidentDate, setIncidentDate] = useState('')
+  const [timeStart, setTimeStart] = useState('')
+  const [timeEnd, setTimeEnd] = useState('')
   const [createdBy, setCreatedBy] = useState('')
   const [createdDept, setCreatedDept] = useState('')
   const [files, setFiles] = useState<EvidenceFile[]>([])
@@ -78,6 +84,14 @@ export default function EvidencePage() {
   }, [])
 
   useEffect(() => { fetchRows() }, [fetchRows])
+
+  useEffect(() => {
+    const now = new Date()
+    setIncidentDate(now.toLocaleDateString('sv-SE'))
+    const hhmm = now.toTimeString().slice(0, 5)
+    setTimeStart(hhmm)
+    setTimeEnd(hhmm)
+  }, [])
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files || [])
@@ -142,6 +156,9 @@ export default function EvidencePage() {
         body: JSON.stringify({
           employee_name: employeeName.trim(),
           incident: incident.trim(),
+          incident_date: incidentDate,
+          time_start: timeStart,
+          time_end: timeEnd,
           created_by: createdBy.trim(),
           created_dept: createdDept,
           evidence_data: files,
@@ -151,6 +168,11 @@ export default function EvidencePage() {
       if (res.ok) {
         setEmployeeName('')
         setIncident('')
+        const now2 = new Date()
+        setIncidentDate(now2.toLocaleDateString('sv-SE'))
+        const hhmm2 = now2.toTimeString().slice(0, 5)
+        setTimeStart(hhmm2)
+        setTimeEnd(hhmm2)
         setCreatedBy('')
         setCreatedDept('')
         setFiles([])
@@ -246,6 +268,37 @@ export default function EvidencePage() {
               className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
             />
             {errors.incident && <p className="text-[#DC2626] text-xs mt-1">{errors.incident}</p>}
+          </div>
+
+          {/* วันที่ / เวลา */}
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="block text-sm font-semibold text-[#374151] mb-1.5">วันที่เกิดเหตุ</label>
+              <input
+                type="date"
+                value={incidentDate}
+                onChange={(e) => setIncidentDate(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-xl px-2.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-[#374151] mb-1.5">เวลาเริ่ม</label>
+              <input
+                type="time"
+                value={timeStart}
+                onChange={(e) => setTimeStart(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-xl px-2.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-[#374151] mb-1.5">เวลาสิ้นสุด</label>
+              <input
+                type="time"
+                value={timeEnd}
+                onChange={(e) => setTimeEnd(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-xl px-2.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+              />
+            </div>
           </div>
 
           {/* หลักฐาน */}
@@ -380,6 +433,11 @@ export default function EvidencePage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-[#374151] text-sm">{r.employee_name}</p>
+                        {r.incident_date && (
+                          <p className="text-xs text-[#1E3A5F] font-semibold mt-0.5">
+                            {r.incident_date}{r.time_start ? ` · ${r.time_start}${r.time_end && r.time_end !== r.time_start ? `–${r.time_end}` : ''}` : ''}
+                          </p>
+                        )}
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{r.incident}</p>
                       </div>
                       <div className="text-right shrink-0">
@@ -431,6 +489,10 @@ export default function EvidencePage() {
               <div>
                 <p className="text-xs text-gray-500">ชื่อพนักงาน</p>
                 <p className="font-semibold text-[#374151]">{employeeName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">วันที่/เวลาเกิดเหตุ</p>
+                <p className="font-semibold text-[#374151]">{incidentDate} · {timeStart}{timeEnd && timeEnd !== timeStart ? `–${timeEnd}` : ''}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">เหตุการณ์</p>

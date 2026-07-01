@@ -5,7 +5,7 @@ export async function GET() {
   await ensureSchema()
   const db = getDb()
   const result = await db.execute(
-    'SELECT id, employee_name, incident, evidence_data, created_by, created_dept, created_at FROM disciplinary_evidence ORDER BY created_at DESC'
+    'SELECT id, employee_name, incident, incident_date, time_start, time_end, evidence_data, created_by, created_dept, created_at FROM disciplinary_evidence ORDER BY created_at DESC'
   )
   return NextResponse.json(result.rows)
 }
@@ -28,11 +28,14 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString()
 
   await db.execute({
-    sql: `INSERT INTO disciplinary_evidence (id, employee_name, incident, evidence_data, created_by, created_dept, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    sql: `INSERT INTO disciplinary_evidence (id, employee_name, incident, incident_date, time_start, time_end, evidence_data, created_by, created_dept, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       id,
       body.employee_name.trim(),
       body.incident.trim(),
+      body.incident_date?.trim() || '',
+      body.time_start?.trim() || '',
+      body.time_end?.trim() || '',
       JSON.stringify(body.evidence_data),
       body.created_by.trim(),
       body.created_dept.trim(),

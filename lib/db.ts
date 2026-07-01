@@ -239,6 +239,9 @@ export async function ensureSchema(): Promise<void> {
       created_at    TEXT NOT NULL
     )
   `)
+  try { await db.execute(`ALTER TABLE disciplinary_evidence ADD COLUMN incident_date TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE disciplinary_evidence ADD COLUMN time_start TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE disciplinary_evidence ADD COLUMN time_end TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   g.dbReady = true
 }
