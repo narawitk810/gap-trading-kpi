@@ -8,6 +8,7 @@ type PricingData = {
   msrp_price: string | null
   risk_amount: number
   commission_tier: string
+  box_system_enabled?: boolean
   box_price_system: number
   box_price_external: number
   pack_price_system: number
@@ -304,7 +305,9 @@ export default function StockPricesPage() {
                         </td>
                         <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.quantity}</td>
                         <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.packs_per_box}</td>
-                        <td className="px-3 py-3 text-right text-xs font-bold text-[#1E3A5F] whitespace-nowrap">{fmt(p.box_price_system)}</td>
+                        <td className="px-3 py-3 text-right text-xs font-bold text-[#1E3A5F] whitespace-nowrap">
+                          {p.box_system_enabled === false ? <span className="text-gray-300 font-normal">-</span> : fmt(p.box_price_system)}
+                        </td>
                         <td className="px-3 py-3 text-right text-xs text-[#374151] whitespace-nowrap">{fmt(p.box_price_external)}</td>
                         <td className="px-3 py-3 text-right text-xs font-bold text-[#16A34A] whitespace-nowrap">{fmt(p.pack_price_system)}</td>
                         <td className="px-3 py-3 text-right text-xs text-[#374151] whitespace-nowrap">{fmt(p.pack_price_external)}</td>

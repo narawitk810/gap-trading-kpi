@@ -315,6 +315,7 @@ export default function AdminDashboard() {
   const [pmMsrpPrice, setPmMsrpPrice] = useState('')
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
+  const [pmBoxSystemEnabled, setPmBoxSystemEnabled] = useState(true)
   const [pmSubmitting, setPmSubmitting] = useState(false)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
@@ -476,11 +477,13 @@ export default function AdminDashboard() {
       setPmMsrpPrice(p.msrp_price || '')
       setPmRisk(p.risk_amount)
       setPmCommission(p.commission_tier)
+      setPmBoxSystemEnabled(p.box_system_enabled !== false)
     } else {
       setPmMultiplier('')
       setPmMsrpPrice('')
       setPmRisk(0)
       setPmCommission('')
+      setPmBoxSystemEnabled(true)
     }
   }
 
@@ -526,6 +529,7 @@ export default function AdminDashboard() {
       msrp_price: pmMsrpPrice || null,
       risk_amount: pmRisk,
       commission_tier: pmCommission,
+      box_system_enabled: pmBoxSystemEnabled,
       box_price_system: boxPriceSystem,
       box_price_external: boxPriceExternal,
       pack_price_system: packPriceSystem,
@@ -1784,7 +1788,20 @@ export default function AdminDashboard() {
                           <p className="text-xs font-semibold text-gray-500 mb-3">ผลการคำนวณ</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="bg-white rounded-lg p-3 shadow-sm">
-                              <p className="text-xs text-gray-400 mb-1">ยกกล่อง (ในระบบ)</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-xs text-gray-400">ยกกล่อง (ในระบบ)</p>
+                                <label className="flex items-center gap-1 text-xs cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={pmBoxSystemEnabled}
+                                    onChange={(e) => setPmBoxSystemEnabled(e.target.checked)}
+                                    className="w-3.5 h-3.5"
+                                  />
+                                  <span className={pmBoxSystemEnabled ? 'text-[#16A34A] font-bold' : 'text-gray-400'}>
+                                    {pmBoxSystemEnabled ? 'ลงระบบ' : 'ไม่ลงระบบ'}
+                                  </span>
+                                </label>
+                              </div>
                               <p className="text-base font-bold text-[#1E3A5F]">{fmt(boxPriceSystem)}</p>
                               <p className="text-xs text-gray-400">บาท</p>
                               {pmMultiplier !== 'old' && oldPricing?.box_price_system && (
