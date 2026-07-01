@@ -23,6 +23,7 @@ type LiveRow = {
   channels: string[]
   live_hours: string
   sales_amount: string
+  obstacles: string
 }
 
 function formatThaiDate(dateStr: string) {
@@ -247,11 +248,12 @@ export default function ManagerPage() {
                         <th className="text-left px-4 py-3">เวลา</th>
                         <th className="text-right px-4 py-3">ชั่วโมงไลฟ์</th>
                         <th className="text-right px-4 py-3">ยอดขาย (บาท)</th>
+                        <th className="text-left px-4 py-3">ปัญหา/อุปสรรค</th>
                       </tr>
                     </thead>
                     <tbody>
                       {liveRows.map((row, i) => (
-                        <tr key={i} className="border-t border-[#E2E8F0] bg-white">
+                        <tr key={i} className={`border-t border-[#E2E8F0] ${row.obstacles ? 'bg-amber-50' : 'bg-white'}`}>
                           <td className="px-4 py-3 text-[#1E3A5F] font-semibold">
                             {row.channels.length > 0 ? row.channels.join(', ') : '—'}
                           </td>
@@ -259,6 +261,13 @@ export default function ManagerPage() {
                           <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.time || '—'}</td>
                           <td className="px-4 py-3 text-right text-[#374151]">{fmt(row.live_hours)}</td>
                           <td className="px-4 py-3 text-right text-[#374151] font-semibold">{fmt(row.sales_amount)}</td>
+                          <td className="px-4 py-3 text-sm text-[#374151] max-w-[240px]">
+                            {row.obstacles ? (
+                              <span className="text-amber-700">{row.obstacles}</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

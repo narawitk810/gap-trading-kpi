@@ -5,6 +5,7 @@ type RawRow = {
   nickname: string
   time: string
   channel_name: string
+  obstacles: string
   extra_data: string
 }
 
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   const db = getDb()
 
   const result = await db.execute({
-    sql: "SELECT nickname, time, channel_name, extra_data FROM kpi_entries WHERE department = 'ไลฟ์สด' AND date = ? ORDER BY created_at ASC",
+    sql: "SELECT nickname, time, channel_name, obstacles, extra_data FROM kpi_entries WHERE department = 'ไลฟ์สด' AND date = ? ORDER BY created_at ASC",
     args: [date],
   })
 
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
       channels: r.channel_name ? r.channel_name.split(', ').filter(Boolean) : [],
       live_hours: String(ex.live_hours || ''),
       sales_amount: String(ex.sales_amount || ''),
+      obstacles: r.obstacles || '',
     }
   })
 
