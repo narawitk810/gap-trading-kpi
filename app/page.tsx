@@ -777,6 +777,25 @@ export default function Home() {
           </Link>
         )}
 
+        {(formData.department === 'บุคคล' || formData.department === 'ผู้จัดการไลฟ์สด') && (
+          <Link
+            href="/evidence"
+            target="_blank"
+            className="flex items-center gap-3 bg-[#DC2626]/5 border border-[#DC2626]/20 rounded-2xl p-4 hover:bg-[#DC2626]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#DC2626] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              📋
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#DC2626]">หลักฐานรอลงทัณฑ์</p>
+              <p className="text-xs text-gray-400 mt-0.5">บันทึกและดาวน์โหลดหลักฐาน</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#DC2626] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
         {PROMO_THRESHOLD_DEPTS.includes(formData.department) && (
           <Link
             href="/promo-threshold"

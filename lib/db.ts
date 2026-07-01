@@ -228,6 +228,18 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS disciplinary_evidence (
+      id            TEXT PRIMARY KEY,
+      employee_name TEXT NOT NULL,
+      incident      TEXT NOT NULL,
+      evidence_data TEXT NOT NULL,
+      created_by    TEXT NOT NULL,
+      created_dept  TEXT NOT NULL,
+      created_at    TEXT NOT NULL
+    )
+  `)
+
   g.dbReady = true
 }
 
