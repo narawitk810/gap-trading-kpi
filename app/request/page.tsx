@@ -192,7 +192,12 @@ export default function RequestPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
-      <div className="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md">
+      <div className="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md relative">
+        <Link href="/" className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </Link>
         <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
         <p className="text-sm mt-1 opacity-75">ขอสินค้าสำหรับไลฟ์</p>
       </div>
