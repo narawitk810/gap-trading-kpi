@@ -590,13 +590,17 @@ export default function AdminDashboard() {
       boxPriceSystem = Number(oldPricing!.box_price_system)
       boxPriceExternal = oldPricing!.box_price_external ? Number(oldPricing!.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
       packPriceSystem = oldPricing!.pack_price_system ? Number(oldPricing!.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
-      packPriceExternal = oldPricing!.pack_price_external ? Number(oldPricing!.pack_price_external) : roundUp10(packPriceSystem * 0.90)
+      packPriceExternal = pmBreakEnabled
+        ? roundUp10(boxPriceExternal / packs)
+        : (oldPricing!.pack_price_external ? Number(oldPricing!.pack_price_external) : roundUp10(packPriceSystem * 0.90))
     } else {
       const rawBoxSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
       boxPriceSystem = pmMultiplier === 'msrp' ? rawBoxSystem : roundUp10(rawBoxSystem)
       boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
       packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
-      packPriceExternal = roundUp10(packPriceSystem * 0.90)
+      packPriceExternal = pmBreakEnabled
+        ? roundUp10(boxPriceExternal / packs)
+        : roundUp10(packPriceSystem * 0.90)
     }
 
     const pricing = {
@@ -1756,7 +1760,9 @@ export default function AdminDashboard() {
                   boxPriceSystem = Number(oldPricing.box_price_system)
                   boxPriceExternal = oldPricing.box_price_external ? Number(oldPricing.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
                   packPriceSystem = oldPricing.pack_price_system ? Number(oldPricing.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
-                  packPriceExternal = oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90)
+                  packPriceExternal = pmBreakEnabled
+                    ? roundUp10(boxPriceExternal / packs)
+                    : (oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90))
                   calcReady = true
                 } else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') {
                   boxPriceSystem = roundUp10(cost * Number(pmMultiplier))
@@ -1765,7 +1771,9 @@ export default function AdminDashboard() {
                 if (calcReady && pmMultiplier !== 'old') {
                   boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
                   packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
-                  packPriceExternal = roundUp10(packPriceSystem * 0.90)
+                  packPriceExternal = pmBreakEnabled
+                    ? roundUp10(boxPriceExternal / packs)
+                    : roundUp10(packPriceSystem * 0.90)
                 }
               }
 
