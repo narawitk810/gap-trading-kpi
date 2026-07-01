@@ -1,0 +1,182 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+
+type MarketingRow = {
+  nickname: string
+  channel: string
+  isLowRoi: boolean
+  isBestRoi: boolean
+  live_staff_name: string
+  ads_cost: string
+  gross_revenue: string
+  roi: string
+  cost_per_order: string
+  cost_per_10sec_view: string
+  avg_view_duration: string
+  new_followers: string
+}
+
+function formatThaiDate(dateStr: string) {
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+  const [y, m, d] = dateStr.split('-')
+  return `${parseInt(d)} ${months[parseInt(m) - 1]} ${parseInt(y) + 543}`
+}
+
+function fmt(val: string) {
+  if (!val) return '—'
+  const n = Number(val)
+  return isNaN(n) ? val : n.toLocaleString('th-TH')
+}
+
+export default function ManagerPage() {
+  const [rows, setRows] = useState<MarketingRow[]>([])
+  const [date, setDate] = useState(new Date().toLocaleDateString('sv-SE'))
+  const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState('')
+  const [countdown, setCountdown] = useState(60)
+
+  const fetchData = useCallback(async (d: string) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/marketing-summary?date=${d}`)
+      const data = await res.json()
+      setRows(data.rows || [])
+      setLastUpdated(new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }))
+      setCountdown(60)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData(date)
+  }, [date, fetchData])
+
+  // Auto-refresh countdown
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          fetchData(date)
+          return 60
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [date, fetchData])
+
+  const cols = [
+    { key: 'ads_cost', label: 'ต้นทุน ads', unit: 'บาท' },
+    { key: 'gross_revenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
+    { key: 'roi', label: 'ROI', unit: 'บาท' },
+    { key: 'cost_per_order', label: 'ต้นทุน/คำสั่ง', unit: 'บาท' },
+    { key: 'cost_per_10sec_view', label: 'ดู 10 วิ', unit: 'บาท' },
+    { key: 'avg_view_duration', label: 'ระยะดู', unit: 'วิ' },
+    { key: 'new_followers', label: 'follower', unit: '' },
+  ]
+
+  return (
+    <div className="min-h-screen bg-[#F5F6F8]" style={{ fontFamily: "'Noto Sans Thai', 'Sarabun', sans-serif" }}>
+      {/* Header */}
+      <div className="bg-[#1E3A5F] text-white px-4 py-4">
+        <h1 className="text-lg font-bold">รายงานการตลาด</h1>
+        <p className="text-sm text-blue-200 mt-0.5">{formatThaiDate(date)}</p>
+      </div>
+
+      <div className="max-w-screen-xl mx-auto px-4 py-4 space-y-4">
+        {/* Controls */}
+        <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-[#374151]">
+            <span className="text-xs text-gray-400 font-semibold">วันที่</span>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+            />
+          </div>
+          <div className="ml-auto flex items-center gap-3">
+            {lastUpdated && (
+              <span className="text-xs text-gray-400">อัปเดต {lastUpdated} · รีเฟรชใน {countdown} วิ</span>
+            )}
+            <button
+              onClick={() => fetchData(date)}
+              disabled={loading}
+              className="bg-[#1E3A5F] text-white text-xs font-semibold px-3 py-1.5 rounded-lg disabled:opacity-60"
+            >
+              {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
+            </button>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex gap-3 text-xs">
+          <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-[#DC2626] font-semibold px-2.5 py-1 rounded-lg">
+            <span className="w-2 h-2 rounded-full bg-[#DC2626] inline-block" /> ROI ต่ำกว่า 15
+          </span>
+          <span className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-[#16A34A] font-semibold px-2.5 py-1 rounded-lg">
+            ⭐ ROI สูงสุด
+          </span>
+        </div>
+
+        {/* Table */}
+        {loading ? (
+          <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+        ) : rows.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm py-16 text-center">
+            <p className="text-gray-400 text-sm">รอข้อมูลจากทีมการตลาด...</p>
+            <p className="text-gray-300 text-xs mt-1">รีเฟรชอัตโนมัติทุก 60 วินาที</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[860px]">
+                <thead>
+                  <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                    <th className="text-left px-4 py-3 sticky left-0 bg-[#F5F6F8]">ช่อง</th>
+                    <th className="text-left px-4 py-3">โดย</th>
+                    <th className="text-left px-4 py-3">พนักงานไลฟ์</th>
+                    {cols.map((c) => (
+                      <th key={c.key} className="text-right px-4 py-3">
+                        {c.label}
+                        {c.unit && <span className="font-normal text-gray-400"> ({c.unit})</span>}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr
+                      key={i}
+                      className={`border-t border-[#E2E8F0] ${
+                        row.isBestRoi ? 'bg-green-50' : row.isLowRoi ? 'bg-red-50' : 'bg-white'
+                      }`}
+                    >
+                      <td className={`px-4 py-3 font-semibold whitespace-nowrap sticky left-0 ${
+                        row.isBestRoi ? 'bg-green-50 text-[#16A34A]' : row.isLowRoi ? 'bg-red-50 text-[#DC2626]' : 'bg-white text-[#1E3A5F]'
+                      }`}>
+                        {row.isBestRoi ? '⭐ ' : ''}{row.channel}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.nickname}</td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.live_staff_name || '—'}</td>
+                      {cols.map((c) => (
+                        <td key={c.key} className="px-4 py-3 text-right text-[#374151] whitespace-nowrap">
+                          {fmt(row[c.key as keyof MarketingRow] as string)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-2 border-t border-[#E2E8F0] text-xs text-gray-400">
+              {rows.length} ช่อง · {rows.filter((r) => r.isLowRoi).length} ช่อง ROI &lt; 15 · {rows.filter((r) => r.isBestRoi).length} ช่อง ROI สูงสุด
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
