@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
   const row = existing.rows[0] as unknown as
     | { product_name: string; threshold_amount: string; start_month: string; end_month: string }
     | undefined
-  if (row) notifyPromoAcknowledged(row)
+  if (row) await notifyPromoAcknowledged(row)
 
   return NextResponse.json({ ok: true })
 }
