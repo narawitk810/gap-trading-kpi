@@ -17,6 +17,14 @@ type MarketingRow = {
   new_followers: string
 }
 
+type LiveRow = {
+  nickname: string
+  time: string
+  channels: string[]
+  live_hours: string
+  sales_amount: string
+}
+
 function formatThaiDate(dateStr: string) {
   const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
   const [y, m, d] = dateStr.split('-')
@@ -30,30 +38,41 @@ function fmt(val: string) {
 }
 
 export default function ManagerPage() {
-  const [rows, setRows] = useState<MarketingRow[]>([])
+  const [activeTab, setActiveTab] = useState<'marketing' | 'live'>('marketing')
+  const [marketingRows, setMarketingRows] = useState<MarketingRow[]>([])
+  const [liveRows, setLiveRows] = useState<LiveRow[]>([])
   const [date, setDate] = useState(new Date().toLocaleDateString('sv-SE'))
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState('')
   const [countdown, setCountdown] = useState(60)
 
+  const fetchMarketing = useCallback(async (d: string) => {
+    const res = await fetch(`/api/marketing-summary?date=${d}`)
+    const data = await res.json()
+    setMarketingRows(data.rows || [])
+  }, [])
+
+  const fetchLive = useCallback(async (d: string) => {
+    const res = await fetch(`/api/live-summary?date=${d}`)
+    const data = await res.json()
+    setLiveRows(data.rows || [])
+  }, [])
+
   const fetchData = useCallback(async (d: string) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/marketing-summary?date=${d}`)
-      const data = await res.json()
-      setRows(data.rows || [])
+      await Promise.all([fetchMarketing(d), fetchLive(d)])
       setLastUpdated(new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }))
       setCountdown(60)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [fetchMarketing, fetchLive])
 
   useEffect(() => {
     fetchData(date)
   }, [date, fetchData])
 
-  // Auto-refresh countdown
   useEffect(() => {
     const interval = setInterval(() => {
       setCountdown((c) => {
@@ -67,7 +86,7 @@ export default function ManagerPage() {
     return () => clearInterval(interval)
   }, [date, fetchData])
 
-  const cols = [
+  const marketingCols = [
     { key: 'ads_cost', label: 'ต้นทุน ads', unit: 'บาท' },
     { key: 'gross_revenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
     { key: 'roi', label: 'ROI', unit: 'บาท' },
@@ -77,11 +96,14 @@ export default function ManagerPage() {
     { key: 'new_followers', label: 'follower', unit: '' },
   ]
 
+  const totalSales = liveRows.reduce((sum, r) => sum + (Number(r.sales_amount) || 0), 0)
+  const totalHours = liveRows.reduce((sum, r) => sum + (Number(r.live_hours) || 0), 0)
+
   return (
     <div className="min-h-screen bg-[#F5F6F8]" style={{ fontFamily: "'Noto Sans Thai', 'Sarabun', sans-serif" }}>
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 py-4">
-        <h1 className="text-lg font-bold">รายงานการตลาด</h1>
+        <h1 className="text-lg font-bold">รายงานผู้จัดการไลฟ์สด</h1>
         <p className="text-sm text-blue-200 mt-0.5">{formatThaiDate(date)}</p>
       </div>
 
@@ -111,70 +133,143 @@ export default function ManagerPage() {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex gap-3 text-xs">
-          <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-[#DC2626] font-semibold px-2.5 py-1 rounded-lg">
-            <span className="w-2 h-2 rounded-full bg-[#DC2626] inline-block" /> ROI ต่ำกว่า 15
-          </span>
-          <span className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-[#16A34A] font-semibold px-2.5 py-1 rounded-lg">
-            ⭐ ROI สูงสุด
-          </span>
+        {/* Tab bar */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab('marketing')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              activeTab === 'marketing'
+                ? 'bg-[#1E3A5F] text-white shadow-sm'
+                : 'bg-white text-[#374151] shadow-sm hover:bg-[#F5F6F8]'
+            }`}
+          >
+            การตลาด
+          </button>
+          <button
+            onClick={() => setActiveTab('live')}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              activeTab === 'live'
+                ? 'bg-[#1E3A5F] text-white shadow-sm'
+                : 'bg-white text-[#374151] shadow-sm hover:bg-[#F5F6F8]'
+            }`}
+          >
+            ไลฟ์สด
+          </button>
         </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
-        ) : rows.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm py-16 text-center">
-            <p className="text-gray-400 text-sm">รอข้อมูลจากทีมการตลาด...</p>
-            <p className="text-gray-300 text-xs mt-1">รีเฟรชอัตโนมัติทุก 60 วินาที</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[860px]">
-                <thead>
-                  <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                    <th className="text-left px-4 py-3 sticky left-0 bg-[#F5F6F8]">ช่อง</th>
-                    <th className="text-left px-4 py-3">โดย</th>
-                    <th className="text-left px-4 py-3">พนักงานไลฟ์</th>
-                    {cols.map((c) => (
-                      <th key={c.key} className="text-right px-4 py-3">
-                        {c.label}
-                        {c.unit && <span className="font-normal text-gray-400"> ({c.unit})</span>}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, i) => (
-                    <tr
-                      key={i}
-                      className={`border-t border-[#E2E8F0] ${
-                        row.isBestRoi ? 'bg-green-50' : row.isLowRoi ? 'bg-red-50' : 'bg-white'
-                      }`}
-                    >
-                      <td className={`px-4 py-3 font-semibold whitespace-nowrap sticky left-0 ${
-                        row.isBestRoi ? 'bg-green-50 text-[#16A34A]' : row.isLowRoi ? 'bg-red-50 text-[#DC2626]' : 'bg-white text-[#1E3A5F]'
-                      }`}>
-                        {row.isBestRoi ? '⭐ ' : ''}{row.channel}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.nickname}</td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.live_staff_name || '—'}</td>
-                      {cols.map((c) => (
-                        <td key={c.key} className="px-4 py-3 text-right text-[#374151] whitespace-nowrap">
-                          {fmt(row[c.key as keyof MarketingRow] as string)}
-                        </td>
+        {/* Marketing Tab */}
+        {activeTab === 'marketing' && (
+          <>
+            <div className="flex gap-3 text-xs">
+              <span className="flex items-center gap-1.5 bg-red-50 border border-red-200 text-[#DC2626] font-semibold px-2.5 py-1 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-[#DC2626] inline-block" /> ROI ต่ำกว่า 15
+              </span>
+              <span className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-[#16A34A] font-semibold px-2.5 py-1 rounded-lg">
+                ⭐ ROI สูงสุด
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : marketingRows.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center">
+                <p className="text-gray-400 text-sm">รอข้อมูลจากทีมการตลาด...</p>
+                <p className="text-gray-300 text-xs mt-1">รีเฟรชอัตโนมัติทุก 60 วินาที</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[860px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        <th className="text-left px-4 py-3 sticky left-0 bg-[#F5F6F8]">ช่อง</th>
+                        <th className="text-left px-4 py-3">โดย</th>
+                        <th className="text-left px-4 py-3">พนักงานไลฟ์</th>
+                        {marketingCols.map((c) => (
+                          <th key={c.key} className="text-right px-4 py-3">
+                            {c.label}
+                            {c.unit && <span className="font-normal text-gray-400"> ({c.unit})</span>}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {marketingRows.map((row, i) => (
+                        <tr
+                          key={i}
+                          className={`border-t border-[#E2E8F0] ${
+                            row.isBestRoi ? 'bg-green-50' : row.isLowRoi ? 'bg-red-50' : 'bg-white'
+                          }`}
+                        >
+                          <td className={`px-4 py-3 font-semibold whitespace-nowrap sticky left-0 ${
+                            row.isBestRoi ? 'bg-green-50 text-[#16A34A]' : row.isLowRoi ? 'bg-red-50 text-[#DC2626]' : 'bg-white text-[#1E3A5F]'
+                          }`}>
+                            {row.isBestRoi ? '⭐ ' : ''}{row.channel}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.nickname}</td>
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.live_staff_name || '—'}</td>
+                          {marketingCols.map((c) => (
+                            <td key={c.key} className="px-4 py-3 text-right text-[#374151] whitespace-nowrap">
+                              {fmt(row[c.key as keyof MarketingRow] as string)}
+                            </td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-2 border-t border-[#E2E8F0] text-xs text-gray-400">
-              {rows.length} ช่อง · {rows.filter((r) => r.isLowRoi).length} ช่อง ROI &lt; 15 · {rows.filter((r) => r.isBestRoi).length} ช่อง ROI สูงสุด
-            </div>
-          </div>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-2 border-t border-[#E2E8F0] text-xs text-gray-400">
+                  {marketingRows.length} ช่อง · {marketingRows.filter((r) => r.isLowRoi).length} ช่อง ROI &lt; 15 · {marketingRows.filter((r) => r.isBestRoi).length} ช่อง ROI สูงสุด
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Live Tab */}
+        {activeTab === 'live' && (
+          <>
+            {loading ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : liveRows.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center">
+                <p className="text-gray-400 text-sm">รอข้อมูลจากทีมไลฟ์สด...</p>
+                <p className="text-gray-300 text-xs mt-1">รีเฟรชอัตโนมัติทุก 60 วินาที</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[500px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        <th className="text-left px-4 py-3">ช่อง</th>
+                        <th className="text-left px-4 py-3">โดย</th>
+                        <th className="text-left px-4 py-3">เวลา</th>
+                        <th className="text-right px-4 py-3">ชั่วโมงไลฟ์</th>
+                        <th className="text-right px-4 py-3">ยอดขาย (บาท)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {liveRows.map((row, i) => (
+                        <tr key={i} className="border-t border-[#E2E8F0] bg-white">
+                          <td className="px-4 py-3 text-[#1E3A5F] font-semibold">
+                            {row.channels.length > 0 ? row.channels.join(', ') : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.nickname}</td>
+                          <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{row.time || '—'}</td>
+                          <td className="px-4 py-3 text-right text-[#374151]">{fmt(row.live_hours)}</td>
+                          <td className="px-4 py-3 text-right text-[#374151] font-semibold">{fmt(row.sales_amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-2 border-t border-[#E2E8F0] text-xs text-gray-400">
+                  {liveRows.length} รายการ · รวมยอด {totalSales.toLocaleString('th-TH')} บาท · รวม {totalHours.toLocaleString('th-TH')} ชั่วโมง
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
