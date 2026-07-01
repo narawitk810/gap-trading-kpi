@@ -1792,25 +1792,22 @@ export default function AdminDashboard() {
                           <p className="text-xs font-semibold text-gray-500 mb-3">ผลการคำนวณ</p>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="bg-white rounded-lg p-3 shadow-sm">
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="text-xs text-gray-400">ยกกล่อง (ในระบบ)</p>
-                                <label className="flex items-center gap-1 text-xs cursor-pointer select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={pmBoxSystemEnabled}
-                                    onChange={(e) => setPmBoxSystemEnabled(e.target.checked)}
-                                    className="w-3.5 h-3.5"
-                                  />
-                                  <span className={pmBoxSystemEnabled ? 'text-[#16A34A] font-bold' : 'text-gray-400'}>
-                                    {pmBoxSystemEnabled ? 'ลงระบบ' : 'ไม่ลงระบบ'}
-                                  </span>
-                                </label>
-                              </div>
+                              <p className="text-xs text-gray-400 mb-1">ยกกล่อง (ในระบบ)</p>
                               <p className="text-base font-bold text-[#1E3A5F]">{fmt(boxPriceSystem)}</p>
                               <p className="text-xs text-gray-400">บาท</p>
                               {pmMultiplier !== 'old' && oldPricing?.box_price_system && (
                                 <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_system} บาท</p>
                               )}
+                              <div className="flex gap-1 mt-2">
+                                <button type="button" onClick={() => setPmBoxSystemEnabled(true)}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBoxSystemEnabled ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                  ลงระบบ
+                                </button>
+                                <button type="button" onClick={() => setPmBoxSystemEnabled(false)}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${!pmBoxSystemEnabled ? 'bg-[#DC2626] text-white border-[#DC2626]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                  ไม่ลงระบบ
+                                </button>
+                              </div>
                             </div>
                             <div className="bg-white rounded-lg p-3 shadow-sm">
                               <p className="text-xs text-gray-400 mb-1">ยกกล่อง (โยนนอก)</p>
@@ -1821,25 +1818,22 @@ export default function AdminDashboard() {
                               )}
                             </div>
                             <div className="bg-white rounded-lg p-3 shadow-sm">
-                              <div className="flex items-center justify-between mb-1">
-                                <p className="text-xs text-gray-400">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
-                                <label className="flex items-center gap-1 text-xs cursor-pointer select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={pmBreakEnabled}
-                                    onChange={(e) => setPmBreakEnabled(e.target.checked)}
-                                    className="w-3.5 h-3.5"
-                                  />
-                                  <span className={pmBreakEnabled ? 'text-[#D97706] font-bold' : 'text-gray-400'}>
-                                    {pmBreakEnabled ? 'break เท่านั้น' : 'break ได้ปกติ'}
-                                  </span>
-                                </label>
-                              </div>
+                              <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
                               <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
                               <p className="text-xs text-gray-400">บาท/ซอง</p>
                               {pmMultiplier !== 'old' && oldPricing?.pack_price_system && (
                                 <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.pack_price_system} บาท</p>
                               )}
+                              <div className="flex gap-1 mt-2">
+                                <button type="button" onClick={() => setPmBreakEnabled(false)}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${!pmBreakEnabled ? 'bg-[#374151] text-white border-[#374151]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                  break ได้ปกติ
+                                </button>
+                                <button type="button" onClick={() => setPmBreakEnabled(true)}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBreakEnabled ? 'bg-[#D97706] text-white border-[#D97706]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                  break เท่านั้น
+                                </button>
+                              </div>
                             </div>
                             <div className="bg-white rounded-lg p-3 shadow-sm">
                               <p className="text-xs text-gray-400 mb-1">แยกซอง (โยนนอก)</p>
