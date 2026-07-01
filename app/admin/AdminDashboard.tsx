@@ -2071,8 +2071,43 @@ export default function AdminDashboard() {
                   value={`${formatDate(selectedEntry.date)}  ${selectedEntry.time} น.`}
                 />
                 <DetailRow label="ชื่อเล่น" value={selectedEntry.nickname} />
-                <DetailRow label="ช่องที่ดูแล" value={selectedEntry.channel_name} />
+                <DetailRow
+                  label={selectedEntry.department === 'การตลาด' ? 'ช่องที่ ROI ต่ำกว่า 15' : 'ช่องที่ดูแล'}
+                  value={selectedEntry.channel_name}
+                />
               </div>
+
+              {/* ช่องที่ ROI ต่ำกว่า 15 — แสดงเฉพาะแผนกการตลาด */}
+              {selectedEntry.department === 'การตลาด' && selectedEntry.channel_name && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <p className="text-xs font-bold text-[#DC2626] mb-2">ช่องที่ ROI ต่ำกว่า 15</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEntry.channel_name.split(', ').map((ch, i) => (
+                      <span key={i} className="bg-white border border-red-200 text-[#DC2626] text-xs font-semibold px-2.5 py-1 rounded-full">
+                        {ch}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ช่องที่ ROI สูงสุด — แสดงเฉพาะแผนกการตลาด */}
+              {selectedEntry.department === 'การตลาด' && (() => {
+                try {
+                  const ex = JSON.parse(selectedEntry.extra_data || '{}')
+                  if (!ex.best_roi_channel) return null
+                  return (
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-3">
+                      <div>
+                        <p className="text-xs font-bold text-[#16A34A] mb-1">ช่องที่ ROI สูงสุดวันนี้</p>
+                        <span className="bg-white border border-green-200 text-[#16A34A] text-sm font-bold px-3 py-1 rounded-full inline-block">
+                          {String(ex.best_roi_channel)}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                } catch { return null }
+              })()}
 
               {/* Department-specific extra data */}
               <ExtraDataSection entry={selectedEntry} />

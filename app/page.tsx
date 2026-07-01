@@ -75,6 +75,7 @@ interface FormData {
   time: string
   nickname: string
   channelName: string[]
+  bestRoiChannel: string
   tasks: string[]
   obstacles: string
   extraData: ExtraData
@@ -207,6 +208,7 @@ export default function Home() {
     time: getCurrentTime(),
     nickname: '',
     channelName: [],
+    bestRoiChannel: '',
     tasks: [''],
     obstacles: '',
     extraData: { ...defaultExtraData, clipLinks: [''] },
@@ -265,6 +267,7 @@ export default function Home() {
     if (!formData.date) e.date = 'กรุณาเลือกวันที่'
     if (!formData.nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
     if (CHANNEL_DEPTS.includes(formData.department) && formData.channelName.length === 0) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
+    if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -278,6 +281,9 @@ export default function Home() {
     setPageState('submitting')
     const validTasks = formData.tasks.filter((t) => t.trim())
     const extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelEntries)
+    if (formData.department === 'การตลาด' && formData.bestRoiChannel && extra_data) {
+      extra_data.best_roi_channel = formData.bestRoiChannel
+    }
     try {
       const res = await fetch('/api/kpi', {
         method: 'POST',
@@ -358,6 +364,7 @@ export default function Home() {
       time: getCurrentTime(),
       nickname: '',
       channelName: [],
+      bestRoiChannel: '',
       tasks: [''],
       obstacles: '',
       extraData: { ...defaultExtraData, clipLinks: [''] },
@@ -438,6 +445,7 @@ export default function Home() {
                     ...prev,
                     department: dept,
                     channelName: [],
+                    bestRoiChannel: '',
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
                   setChannelEntries({})
@@ -574,6 +582,33 @@ export default function Home() {
                         selected
                           ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
                           : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {ch}
+                    </button>
+                  )
+                })}
+              </div>
+            </InputField>
+          )}
+          {formData.department === 'การตลาด' && (
+            <InputField label="ช่องที่ ROI สูงสุดวันนี้" required error={errors.bestRoiChannel}>
+              <p className="text-xs text-gray-400 mb-2">เลือกได้ 1 ช่องเท่านั้น</p>
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {CHANNEL_LIST.map((ch) => {
+                  const selected = formData.bestRoiChannel === ch
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, bestRoiChannel: selected ? '' : ch }))
+                        setErrors((prev) => ({ ...prev, bestRoiChannel: '' }))
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                        selected
+                          ? 'bg-[#16A34A] text-white border-[#16A34A]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#16A34A]'
                       }`}
                     >
                       {ch}
@@ -1107,6 +1142,9 @@ export default function Home() {
                 <ConfirmRow label="ชื่อเล่น" value={formData.nickname} />
                 {formData.channelName.length > 0 && (
                   <ConfirmRow label={formData.department === 'การตลาด' ? 'ช่องที่ ROI ต่ำกว่า 15' : 'ช่องที่ดูแล'} value={formData.channelName.join(', ')} />
+                )}
+                {formData.department === 'การตลาด' && formData.bestRoiChannel && (
+                  <ConfirmRow label="ช่องที่ ROI สูงสุด" value={formData.bestRoiChannel} />
                 )}
               </div>
 
