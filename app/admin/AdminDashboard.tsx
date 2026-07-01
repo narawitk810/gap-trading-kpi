@@ -307,6 +307,7 @@ export default function AdminDashboard() {
   const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
+  const [deletingArrivalId, setDeletingArrivalId] = useState<string | null>(null)
   const [arrivalFilters, setArrivalFilters] = useState({ dateFrom: '', dateTo: '' })
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
   const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
@@ -547,6 +548,21 @@ export default function AdminDashboard() {
       } else { alert('เกิดข้อผิดพลาด') }
     } catch { alert('เกิดข้อผิดพลาด') }
     finally { setPmSubmitting(false) }
+  }
+
+  async function handleDeleteArrival(id: string) {
+    if (!confirm('ยืนยันลบรายการสินค้าเข้านี้?')) return
+    setDeletingArrivalId(id)
+    try {
+      const res = await fetch(`/api/stock-arrival?key=${ADMIN_KEY}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) setStockArrivals((prev) => prev.filter((r) => r.id !== id))
+      else alert('เกิดข้อผิดพลาด')
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setDeletingArrivalId(null) }
   }
 
   async function handleNoted(id: string) {
@@ -1603,21 +1619,30 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            {r.status === 'pending' ? (
+                            <div className="flex items-center justify-center gap-1.5">
+                              {r.status === 'pending' ? (
+                                <button
+                                  onClick={() => openPricingModal(r)}
+                                  className="bg-[#1E3A5F] text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap"
+                                >
+                                  กำหนดราคา
+                                </button>
+                              ) : r.pricing_data ? (
+                                <button
+                                  onClick={() => openPricingModal(r)}
+                                  className="border border-[#1E3A5F] text-[#1E3A5F] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
+                                >
+                                  แก้ไขราคา
+                                </button>
+                              ) : null}
                               <button
-                                onClick={() => openPricingModal(r)}
-                                className="bg-[#1E3A5F] text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap"
+                                onClick={() => handleDeleteArrival(r.id)}
+                                disabled={deletingArrivalId === r.id}
+                                className="bg-red-50 text-[#DC2626] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-red-100 disabled:opacity-60"
                               >
-                                กำหนดราคา
+                                {deletingArrivalId === r.id ? '...' : 'ลบ'}
                               </button>
-                            ) : r.pricing_data ? (
-                              <button
-                                onClick={() => openPricingModal(r)}
-                                className="border border-[#1E3A5F] text-[#1E3A5F] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
-                              >
-                                แก้ไขราคา
-                              </button>
-                            ) : null}
+                            </div>
                           </td>
                         </tr>
                       ))}

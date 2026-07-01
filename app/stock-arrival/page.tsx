@@ -129,6 +129,20 @@ export default function StockArrivalPage() {
   }
 
   if (pageState === 'success') {
+    const handleDeleteOwn = async () => {
+      if (!confirm('ยืนยันลบรายการที่เพิ่งส่ง?')) return
+      const res = await fetch('/api/stock-arrival', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: submittedId }),
+      })
+      if (res.ok) {
+        setPageState('form')
+      } else {
+        const data = await res.json()
+        alert(data.error || 'ไม่สามารถลบได้')
+      }
+    }
     return (
       <div className="min-h-screen bg-[#F5F6F8] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
@@ -137,8 +151,12 @@ export default function StockArrivalPage() {
           <p className="text-gray-500 text-sm mb-1">รหัส: <span className="font-mono text-xs">{submittedId}</span></p>
           <p className="text-gray-400 text-xs mb-6">Admin จะรับทราบรายการสินค้าเข้า</p>
           <button onClick={() => router.push('/')}
-            className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm">
+            className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm mb-3">
             กลับหน้าหลัก
+          </button>
+          <button onClick={handleDeleteOwn}
+            className="w-full bg-red-50 text-[#DC2626] py-3 rounded-xl font-semibold text-sm border border-red-100">
+            ลบรายการนี้ (กรอกผิด)
           </button>
         </div>
       </div>

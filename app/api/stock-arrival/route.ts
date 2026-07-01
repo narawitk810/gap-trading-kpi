@@ -34,6 +34,26 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ id }, { status: 201 })
 }
 
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const isAdmin = searchParams.get('key') === ADMIN_KEY
+  const body = await request.json()
+  if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  await ensureSchema()
+  const db = getDb()
+  if (isAdmin) {
+    await db.execute({ sql: 'DELETE FROM stock_arrivals WHERE id = ?', args: [body.id] })
+  } else {
+    const result = await db.execute({
+      sql: "DELETE FROM stock_arrivals WHERE id = ? AND status = 'pending'",
+      args: [body.id],
+    })
+    if ((result.rowsAffected ?? 0) === 0)
+      return NextResponse.json({ error: 'ไม่สามารถลบได้ เนื่องจาก Admin ดำเนินการแล้ว' }, { status: 403 })
+  }
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   if (searchParams.get('key') !== ADMIN_KEY) {
