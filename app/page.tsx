@@ -218,6 +218,7 @@ export default function Home() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [channelEntries, setChannelEntries] = useState<Record<string, ChannelEntry>>({})
   const [bestRoiEntry, setBestRoiEntry] = useState<ChannelEntry>({ ...emptyChannelEntry })
+  const [activeChannelTab, setActiveChannelTab] = useState<string>('')
 
   const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
@@ -382,6 +383,7 @@ export default function Home() {
     })
     setChannelEntries({})
     setBestRoiEntry({ ...emptyChannelEntry })
+    setActiveChannelTab('')
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -462,6 +464,7 @@ export default function Home() {
                   }))
                   setChannelEntries({})
                   setBestRoiEntry({ ...emptyChannelEntry })
+                  setActiveChannelTab('')
                   setErrors((prev) => ({ ...prev, department: '' }))
                   setCodeVerified(isCodeVerifiedLocally(dept))
                   setCodeInput('')
@@ -583,11 +586,16 @@ export default function Home() {
                       type="button"
                       onClick={() => {
                         if (selected) {
-                          setFormData((prev) => ({ ...prev, channelName: prev.channelName.filter((c) => c !== ch) }))
+                          setFormData((prev) => {
+                            const next = prev.channelName.filter((c) => c !== ch)
+                            setActiveChannelTab((t) => t === ch ? (next[0] || '') : t)
+                            return { ...prev, channelName: next }
+                          })
                           setChannelEntries((prev) => { const n = { ...prev }; delete n[ch]; return n })
                         } else {
                           setFormData((prev) => ({ ...prev, channelName: [...prev.channelName, ch] }))
                           setChannelEntries((prev) => ({ ...prev, [ch]: { ...emptyChannelEntry } }))
+                          setActiveChannelTab((t) => t || ch)
                         }
                         setErrors((prev) => ({ ...prev, channelName: '' }))
                       }}
@@ -969,47 +977,72 @@ export default function Home() {
           </div>
         )}
 
-        {/* การตลาด */}
-        {formData.department === 'การตลาด' && formData.channelName.length > 0 && (
-          <div className="space-y-4">
-            {formData.channelName.map((ch) => {
-              const entry = channelEntries[ch] || emptyChannelEntry
-              const updateEntry = (field: keyof ChannelEntry, value: string) =>
-                setChannelEntries((prev) => ({ ...prev, [ch]: { ...(prev[ch] || emptyChannelEntry), [field]: value } }))
-              return (
-                <div key={ch} className="bg-white rounded-2xl p-4 shadow-sm space-y-3 border-l-4 border-[#1E3A5F]">
-                  <p className="text-sm font-bold text-[#1E3A5F]">{ch}</p>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-[#374151] font-medium w-28 shrink-0">พนักงานไลฟ์</span>
-                    <input
-                      type="text"
-                      placeholder="ชื่อพนักงาน"
-                      value={entry.liveStaffName}
-                      onChange={(e) => updateEntry('liveStaffName', e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-                  {MARKETING_METRICS.map(({ field, label, unit }) => (
-                    <div key={field} className="flex items-center gap-3">
-                      <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
-                      <div className="relative w-36">
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={entry[field]}
-                          onChange={(e) => updateEntry(field, e.target.value)}
-                          className={inputClass + ' pr-14'}
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
-                      </div>
-                    </div>
-                  ))}
+        {/* การตลาด — tab-based metrics */}
+        {formData.department === 'การตลาด' && formData.channelName.length > 0 && (() => {
+          const currentTab = activeChannelTab || formData.channelName[0] || ''
+          const entry = channelEntries[currentTab] || emptyChannelEntry
+          const isFilled = (e: ChannelEntry) => Object.values(e).some((v) => v.trim())
+          const updateEntry = (field: keyof ChannelEntry, value: string) =>
+            setChannelEntries((prev) => ({ ...prev, [currentTab]: { ...(prev[currentTab] || emptyChannelEntry), [field]: value } }))
+          return (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              {/* Tab bar */}
+              <div className="flex overflow-x-auto gap-1 p-3 border-b border-[#E2E8F0] scrollbar-none">
+                {formData.channelName.map((ch) => {
+                  const filled = isFilled(channelEntries[ch] || emptyChannelEntry)
+                  const isActive = ch === currentTab
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => setActiveChannelTab(ch)}
+                      className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap flex items-center gap-1 ${
+                        isActive
+                          ? 'bg-[#1E3A5F] text-white'
+                          : filled
+                          ? 'bg-[#1E3A5F]/10 text-[#1E3A5F]'
+                          : 'bg-[#F5F6F8] text-gray-400'
+                      }`}
+                    >
+                      {ch}
+                      {filled && !isActive && <span className="text-[#16A34A]">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+              {/* Form สำหรับ tab ที่ active */}
+              <div className="p-4 space-y-3">
+                <p className="text-xs text-gray-400">{formData.channelName.indexOf(currentTab) + 1}/{formData.channelName.length} ช่อง</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-[#374151] font-medium w-28 shrink-0">พนักงานไลฟ์</span>
+                  <input
+                    type="text"
+                    placeholder="ชื่อพนักงาน"
+                    value={entry.liveStaffName}
+                    onChange={(e) => updateEntry('liveStaffName', e.target.value)}
+                    className={inputClass}
+                  />
                 </div>
-              )
-            })}
-          </div>
-        )}
+                {MARKETING_METRICS.map(({ field, label, unit }) => (
+                  <div key={field} className="flex items-center gap-3">
+                    <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
+                    <div className="relative w-36">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={entry[field]}
+                        onChange={(e) => updateEntry(field, e.target.value)}
+                        className={inputClass + ' pr-14'}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* แพค */}
         {formData.department === 'แพค' && (
