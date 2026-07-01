@@ -217,6 +217,7 @@ export default function Home() {
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [channelEntries, setChannelEntries] = useState<Record<string, ChannelEntry>>({})
+  const [bestRoiEntry, setBestRoiEntry] = useState<ChannelEntry>({ ...emptyChannelEntry })
 
   const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
@@ -282,7 +283,17 @@ export default function Home() {
     const validTasks = formData.tasks.filter((t) => t.trim())
     const extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelEntries)
     if (formData.department === 'การตลาด' && formData.bestRoiChannel && extra_data) {
-      extra_data.best_roi_channel = formData.bestRoiChannel
+      extra_data.best_roi = {
+        channel: formData.bestRoiChannel,
+        ...(bestRoiEntry.liveStaffName && { live_staff_name: bestRoiEntry.liveStaffName }),
+        ...(bestRoiEntry.adsCost && { ads_cost: bestRoiEntry.adsCost }),
+        ...(bestRoiEntry.grossRevenue && { gross_revenue: bestRoiEntry.grossRevenue }),
+        ...(bestRoiEntry.roi && { roi: bestRoiEntry.roi }),
+        ...(bestRoiEntry.costPerOrder && { cost_per_order: bestRoiEntry.costPerOrder }),
+        ...(bestRoiEntry.costPer10SecView && { cost_per_10sec_view: bestRoiEntry.costPer10SecView }),
+        ...(bestRoiEntry.avgViewDuration && { avg_view_duration: bestRoiEntry.avgViewDuration }),
+        ...(bestRoiEntry.newFollowers && { new_followers: bestRoiEntry.newFollowers }),
+      }
     }
     try {
       const res = await fetch('/api/kpi', {
@@ -370,6 +381,7 @@ export default function Home() {
       extraData: { ...defaultExtraData, clipLinks: [''] },
     })
     setChannelEntries({})
+    setBestRoiEntry({ ...emptyChannelEntry })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -449,6 +461,7 @@ export default function Home() {
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
                   setChannelEntries({})
+                  setBestRoiEntry({ ...emptyChannelEntry })
                   setErrors((prev) => ({ ...prev, department: '' }))
                   setCodeVerified(isCodeVerifiedLocally(dept))
                   setCodeInput('')
@@ -920,6 +933,39 @@ export default function Home() {
                 + เพิ่มลิ้งคลิป
               </button>
             )}
+          </div>
+        )}
+
+        {/* การตลาด — ช่องที่ ROI สูงสุด metrics */}
+        {formData.department === 'การตลาด' && formData.bestRoiChannel && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3 border-l-4 border-[#16A34A]">
+            <p className="text-sm font-bold text-[#16A34A]">ช่องที่ ROI สูงสุด: {formData.bestRoiChannel}</p>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-[#374151] font-medium w-28 shrink-0">พนักงานไลฟ์</span>
+              <input
+                type="text"
+                placeholder="ชื่อพนักงาน"
+                value={bestRoiEntry.liveStaffName}
+                onChange={(e) => setBestRoiEntry((prev) => ({ ...prev, liveStaffName: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            {MARKETING_METRICS.map(({ field, label, unit }) => (
+              <div key={field} className="flex items-center gap-3">
+                <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
+                <div className="relative w-36">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={bestRoiEntry[field]}
+                    onChange={(e) => setBestRoiEntry((prev) => ({ ...prev, [field]: e.target.value }))}
+                    className={inputClass + ' pr-14'}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

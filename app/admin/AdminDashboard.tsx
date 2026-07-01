@@ -2095,15 +2095,34 @@ export default function AdminDashboard() {
               {selectedEntry.department === 'การตลาด' && (() => {
                 try {
                   const ex = JSON.parse(selectedEntry.extra_data || '{}')
-                  if (!ex.best_roi_channel) return null
+                  const best = ex.best_roi as Record<string, unknown> | undefined
+                  if (!best?.channel) return null
+                  const metricDefs = [
+                    { k: 'ads_cost', l: 'ต้นทุน ads', u: 'บาท' },
+                    { k: 'gross_revenue', l: 'รายได้ขั้นต้น', u: 'บาท' },
+                    { k: 'roi', l: 'ROI', u: 'บาท' },
+                    { k: 'cost_per_order', l: 'ต้นทุนต่อคำสั่งซื้อ', u: 'บาท' },
+                    { k: 'cost_per_10sec_view', l: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', u: 'บาท' },
+                    { k: 'avg_view_duration', l: 'ระยะการดู live โดยเฉลี่ย', u: 'วินาที' },
+                    { k: 'new_followers', l: 'ยอดติดตามจาก live', u: 'user' },
+                  ]
+                  const metrics = metricDefs.filter(({ k }) => best[k])
                   return (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-3">
-                      <div>
-                        <p className="text-xs font-bold text-[#16A34A] mb-1">ช่องที่ ROI สูงสุดวันนี้</p>
-                        <span className="bg-white border border-green-200 text-[#16A34A] text-sm font-bold px-3 py-1 rounded-full inline-block">
-                          {String(ex.best_roi_channel)}
-                        </span>
-                      </div>
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 space-y-2">
+                      <p className="text-xs font-bold text-[#16A34A]">ช่องที่ ROI สูงสุดวันนี้</p>
+                      <span className="bg-white border border-green-200 text-[#16A34A] text-sm font-bold px-3 py-1 rounded-full inline-block">
+                        {String(best.channel)}
+                      </span>
+                      {!!best.live_staff_name && (
+                        <DetailRow label="พนักงานไลฟ์" value={String(best.live_staff_name)} />
+                      )}
+                      {metrics.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          {metrics.map(({ k, l, u }) => (
+                            <DetailRow key={k} label={l} value={`${Number(best[k]).toLocaleString()} ${u}`} />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )
                 } catch { return null }
