@@ -303,6 +303,7 @@ export default function AdminDashboard() {
   const [promoThresholds, setPromoThresholds] = useState<PromoThreshold[]>([])
   const [loadingPromo, setLoadingPromo] = useState(false)
   const [ackingPromoId, setAckingPromoId] = useState<string | null>(null)
+  const [deletingPromoId, setDeletingPromoId] = useState<string | null>(null)
   const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
@@ -572,6 +573,20 @@ export default function AdminDashboard() {
       if (res.ok) setPromoThresholds((prev) => prev.map((r) => r.id === id ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString() } : r))
     } catch { alert('เกิดข้อผิดพลาด') }
     finally { setAckingPromoId(null) }
+  }
+
+  async function handleDeletePromo(id: string) {
+    if (!confirm('ยืนยันลบโปรนี้? รายการจะหายไปจากทุกแผนก')) return
+    setDeletingPromoId(id)
+    try {
+      const res = await fetch(`/api/promo-threshold?key=${ADMIN_KEY}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) setPromoThresholds((prev) => prev.filter((r) => r.id !== id))
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setDeletingPromoId(null) }
   }
 
   const fetchTaxInvoices = useCallback(async (month?: string) => {
@@ -1462,15 +1477,24 @@ export default function AdminDashboard() {
                       <p className="text-sm text-[#374151]">ซื้อครบ <span className="font-bold">{r.threshold_amount}</span> บาท</p>
                       <p className="text-xs text-gray-400">{formatPromoMonth(r.start_month)} – {formatPromoMonth(r.end_month)}</p>
                       {r.note && <p className="text-xs text-gray-400">{r.note}</p>}
-                      {r.status === 'pending' && (
+                      <div className="flex gap-2 mt-1">
+                        {r.status === 'pending' && (
+                          <button
+                            onClick={() => handleAcknowledgePromo(r.id)}
+                            disabled={ackingPromoId === r.id}
+                            className="flex-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                          >
+                            {ackingPromoId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleAcknowledgePromo(r.id)}
-                          disabled={ackingPromoId === r.id}
-                          className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                          onClick={() => handleDeletePromo(r.id)}
+                          disabled={deletingPromoId === r.id}
+                          className="px-3 py-2 bg-red-50 text-[#DC2626] rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-red-100"
                         >
-                          {ackingPromoId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
+                          {deletingPromoId === r.id ? '...' : 'ลบ'}
                         </button>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}
