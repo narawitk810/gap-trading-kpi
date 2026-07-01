@@ -148,10 +148,18 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> {
   }
   if (entry.department === 'การตลาด') {
     return {
-      'Ads Shopee (บาท)': ex.ads_shopee ? Number(ex.ads_shopee) : '',
-      'Ads Lazada (บาท)': ex.ads_lazada ? Number(ex.ads_lazada) : '',
-      'Ads TikTok (บาท)': ex.ads_tiktok ? Number(ex.ads_tiktok) : '',
-      'Ads Facebook (บาท)': ex.ads_facebook ? Number(ex.ads_facebook) : '',
+      'ช่วงเวลา': ex.time_from && ex.time_to ? `${ex.time_from} – ${ex.time_to} น.` : '',
+      'ต้นทุน ads (บาท)': ex.ads_cost ? Number(ex.ads_cost) : '',
+      'รายได้ขั้นต้น (บาท)': ex.gross_revenue ? Number(ex.gross_revenue) : '',
+      'ROI (บาท)': ex.roi ? Number(ex.roi) : '',
+      'ต้นทุนต่อคำสั่งซื้อ (บาท)': ex.cost_per_order ? Number(ex.cost_per_order) : '',
+      'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ (บาท)': ex.cost_per_10sec_view ? Number(ex.cost_per_10sec_view) : '',
+      'ระยะการดู live โดยเฉลี่ย (วินาที)': ex.avg_view_duration ? Number(ex.avg_view_duration) : '',
+      'ยอดติดตามจาก live (user)': ex.new_followers ? Number(ex.new_followers) : '',
+      ...(ex.ads_shopee ? { 'Ads Shopee (บาท)': Number(ex.ads_shopee) } : {}),
+      ...(ex.ads_lazada ? { 'Ads Lazada (บาท)': Number(ex.ads_lazada) } : {}),
+      ...(ex.ads_tiktok ? { 'Ads TikTok (บาท)': Number(ex.ads_tiktok) } : {}),
+      ...(ex.ads_facebook ? { 'Ads Facebook (บาท)': Number(ex.ads_facebook) } : {}),
     }
   }
   return {}
@@ -255,24 +263,45 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
 
   if (dept === 'การตลาด') {
-    const platforms = [
-      { k: 'ads_shopee', l: 'Shopee' },
-      { k: 'ads_lazada', l: 'Lazada' },
-      { k: 'ads_tiktok', l: 'TikTok' },
-      { k: 'ads_facebook', l: 'Facebook' },
+    const metrics = [
+      { k: 'ads_cost', l: 'ต้นทุน ads', u: 'บาท' },
+      { k: 'gross_revenue', l: 'รายได้ขั้นต้น', u: 'บาท' },
+      { k: 'roi', l: 'ROI', u: 'บาท' },
+      { k: 'cost_per_order', l: 'ต้นทุนต่อคำสั่งซื้อ', u: 'บาท' },
+      { k: 'cost_per_10sec_view', l: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', u: 'บาท' },
+      { k: 'avg_view_duration', l: 'ระยะการดู live โดยเฉลี่ย', u: 'วินาที' },
+      { k: 'new_followers', l: 'ยอดติดตามจาก live', u: 'user' },
     ].filter(({ k }) => ex[k])
-    if (platforms.length === 0) return null
-    const total = platforms.reduce((s, { k }) => s + Number(ex[k] || 0), 0)
+    const oldAds = [
+      { k: 'ads_shopee', l: 'Shopee' }, { k: 'ads_lazada', l: 'Lazada' },
+      { k: 'ads_tiktok', l: 'TikTok' }, { k: 'ads_facebook', l: 'Facebook' },
+    ].filter(({ k }) => ex[k])
+    if (metrics.length === 0 && oldAds.length === 0) return null
     return (
-      <div className="bg-blue-50 rounded-xl p-3">
-        <p className="text-xs font-bold text-[#1E3A5F] mb-2">
-          ค่า Ads วันนี้ (รวม {total.toLocaleString()} บาท)
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {platforms.map(({ k, l }) => (
-            <DetailRow key={k} label={l} value={`${Number(ex[k]).toLocaleString()} บาท`} />
-          ))}
-        </div>
+      <div className="bg-blue-50 rounded-xl p-3 space-y-2">
+        {!!(ex.time_from || ex.time_to) && (
+          <DetailRow label="ช่วงเวลา" value={`${String(ex.time_from || '?')} – ${String(ex.time_to || '?')} น.`} />
+        )}
+        {metrics.length > 0 && (
+          <>
+            <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลโฆษณา</p>
+            <div className="grid grid-cols-2 gap-2">
+              {metrics.map(({ k, l, u }) => (
+                <DetailRow key={k} label={l} value={`${Number(ex[k]).toLocaleString()} ${u}`} />
+              ))}
+            </div>
+          </>
+        )}
+        {oldAds.length > 0 && (
+          <>
+            <p className="text-xs font-bold text-[#1E3A5F]">ค่า Ads (เดิม)</p>
+            <div className="grid grid-cols-2 gap-2">
+              {oldAds.map(({ k, l }) => (
+                <DetailRow key={k} label={l} value={`${Number(ex[k]).toLocaleString()} บาท`} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     )
   }

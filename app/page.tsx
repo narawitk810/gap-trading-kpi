@@ -49,7 +49,17 @@ interface ExtraData {
   salesAmount: string
   // Creative
   clipLinks: string[]
-  // การตลาด
+  // การตลาด — ใหม่
+  timeFrom: string
+  timeTo: string
+  adsCost: string
+  grossRevenue: string
+  roi: string
+  costPerOrder: string
+  costPer10SecView: string
+  avgViewDuration: string
+  newFollowers: string
+  // การตลาด — เดิม (backward compat)
   adsShopee: string
   adsLazada: string
   adsTiktok: string
@@ -62,6 +72,15 @@ const defaultExtraData: ExtraData = {
   liveHours: '',
   salesAmount: '',
   clipLinks: [''],
+  timeFrom: '',
+  timeTo: '',
+  adsCost: '',
+  grossRevenue: '',
+  roi: '',
+  costPerOrder: '',
+  costPer10SecView: '',
+  avgViewDuration: '',
+  newFollowers: '',
   adsShopee: '',
   adsLazada: '',
   adsTiktok: '',
@@ -153,10 +172,15 @@ function buildExtraDataPayload(dept: string, extra: ExtraData): Record<string, u
   }
   if (dept === 'การตลาด') {
     const payload: Record<string, unknown> = {}
-    if (extra.adsShopee.trim()) payload.ads_shopee = extra.adsShopee.trim()
-    if (extra.adsLazada.trim()) payload.ads_lazada = extra.adsLazada.trim()
-    if (extra.adsTiktok.trim()) payload.ads_tiktok = extra.adsTiktok.trim()
-    if (extra.adsFacebook.trim()) payload.ads_facebook = extra.adsFacebook.trim()
+    if (extra.timeFrom.trim()) payload.time_from = extra.timeFrom.trim()
+    if (extra.timeTo.trim()) payload.time_to = extra.timeTo.trim()
+    if (extra.adsCost.trim()) payload.ads_cost = extra.adsCost.trim()
+    if (extra.grossRevenue.trim()) payload.gross_revenue = extra.grossRevenue.trim()
+    if (extra.roi.trim()) payload.roi = extra.roi.trim()
+    if (extra.costPerOrder.trim()) payload.cost_per_order = extra.costPerOrder.trim()
+    if (extra.costPer10SecView.trim()) payload.cost_per_10sec_view = extra.costPer10SecView.trim()
+    if (extra.avgViewDuration.trim()) payload.avg_view_duration = extra.avgViewDuration.trim()
+    if (extra.newFollowers.trim()) payload.new_followers = extra.newFollowers.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   return undefined
@@ -509,7 +533,36 @@ export default function Home() {
               className={inputClass}
             />
           </InputField>
-          {CHANNEL_DEPTS.includes(formData.department) && (
+          {formData.department === 'การตลาด' && (
+            <InputField label="ช่องที่ ROI ต่ำกว่า 15" required error={errors.channelName}>
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {CHANNEL_LIST.map((ch) => {
+                  const selected = formData.channelName[0] === ch
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          channelName: selected ? [] : [ch],
+                        }))
+                        setErrors((prev) => ({ ...prev, channelName: '' }))
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                        selected
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {ch}
+                    </button>
+                  )
+                })}
+              </div>
+            </InputField>
+          )}
+          {['ไลฟ์สด', 'sale admin', 'Creative'].includes(formData.department) && (
             <InputField label="ช่องที่ดูแล" required error={errors.channelName}>
               <div className="flex flex-wrap gap-2 pt-0.5">
                 {CHANNEL_LIST.map((ch) => {
@@ -817,29 +870,49 @@ export default function Home() {
         {/* การตลาด */}
         {formData.department === 'การตลาด' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-            <p className="text-sm font-bold text-[#1E3A5F]">ค่า Ads วันนี้ (บาท)</p>
+            <p className="text-sm font-bold text-[#1E3A5F]">ช่วงเวลา</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="0.00"
+                value={extra.timeFrom}
+                onChange={(e) => setExtra({ timeFrom: e.target.value })}
+                className={inputClass + ' text-center'}
+              />
+              <span className="text-sm text-gray-400 shrink-0">ถึง</span>
+              <input
+                type="text"
+                placeholder="24.00"
+                value={extra.timeTo}
+                onChange={(e) => setExtra({ timeTo: e.target.value })}
+                className={inputClass + ' text-center'}
+              />
+              <span className="text-xs text-gray-400 shrink-0">น.</span>
+            </div>
+            <p className="text-sm font-bold text-[#1E3A5F] pt-1">ข้อมูลโฆษณา</p>
             {(
               [
-                { key: 'adsShopee', label: 'Shopee' },
-                { key: 'adsLazada', label: 'Lazada' },
-                { key: 'adsTiktok', label: 'TikTok' },
-                { key: 'adsFacebook', label: 'Facebook' },
-              ] as { key: keyof ExtraData; label: string }[]
-            ).map(({ key, label }) => (
+                { key: 'adsCost', label: 'ต้นทุน ads', unit: 'บาท' },
+                { key: 'grossRevenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
+                { key: 'roi', label: 'ROI', unit: 'บาท' },
+                { key: 'costPerOrder', label: 'ต้นทุนต่อคำสั่งซื้อ', unit: 'บาท' },
+                { key: 'costPer10SecView', label: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', unit: 'บาท' },
+                { key: 'avgViewDuration', label: 'ระยะการดู live โดยเฉลี่ย', unit: 'วินาที' },
+                { key: 'newFollowers', label: 'ยอดติดตามจาก live', unit: 'user' },
+              ] as { key: keyof ExtraData; label: string; unit: string }[]
+            ).map(({ key, label, unit }) => (
               <div key={key} className="flex items-center gap-3">
-                <span className="text-sm text-[#374151] font-medium w-20 shrink-0">{label}</span>
-                <div className="relative flex-1">
+                <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
+                <div className="relative w-36">
                   <input
                     type="number"
                     min="0"
                     value={extra[key] as string}
                     onChange={(e) => setExtra({ [key]: e.target.value } as Partial<ExtraData>)}
                     placeholder="0"
-                    className={inputClass + ' pr-10'}
+                    className={inputClass + ' pr-14'}
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    บาท
-                  </span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
                 </div>
               </div>
             ))}
