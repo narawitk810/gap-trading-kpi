@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, generateId, ensureSchema } from '@/lib/db'
+import { notifyPromoAcknowledged } from '@/lib/line'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
@@ -41,9 +42,21 @@ export async function PATCH(request: NextRequest) {
   await ensureSchema()
   const db = getDb()
   const now = new Date().toISOString()
+
+  const existing = await db.execute({
+    sql: 'SELECT product_name, threshold_amount, start_month, end_month FROM promo_thresholds WHERE id = ?',
+    args: [body.id],
+  })
+
   await db.execute({
     sql: `UPDATE promo_thresholds SET status = 'acknowledged', acknowledged_at = ? WHERE id = ?`,
     args: [now, body.id],
   })
+
+  const row = existing.rows[0] as unknown as
+    | { product_name: string; threshold_amount: string; start_month: string; end_month: string }
+    | undefined
+  if (row) notifyPromoAcknowledged(row)
+
   return NextResponse.json({ ok: true })
 }
