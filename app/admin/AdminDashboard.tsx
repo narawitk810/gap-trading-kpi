@@ -316,6 +316,7 @@ export default function AdminDashboard() {
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
   const [pmBoxSystemEnabled, setPmBoxSystemEnabled] = useState(true)
+  const [pmBreakEnabled, setPmBreakEnabled] = useState(false)
   const [pmSubmitting, setPmSubmitting] = useState(false)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
@@ -478,12 +479,14 @@ export default function AdminDashboard() {
       setPmRisk(p.risk_amount)
       setPmCommission(p.commission_tier)
       setPmBoxSystemEnabled(p.box_system_enabled !== false)
+      setPmBreakEnabled(p.break_enabled === true)
     } else {
       setPmMultiplier('')
       setPmMsrpPrice('')
       setPmRisk(0)
       setPmCommission('')
       setPmBoxSystemEnabled(true)
+      setPmBreakEnabled(false)
     }
   }
 
@@ -530,6 +533,7 @@ export default function AdminDashboard() {
       risk_amount: pmRisk,
       commission_tier: pmCommission,
       box_system_enabled: pmBoxSystemEnabled,
+      break_enabled: pmBreakEnabled,
       box_price_system: boxPriceSystem,
       box_price_external: boxPriceExternal,
       pack_price_system: packPriceSystem,
@@ -1817,7 +1821,20 @@ export default function AdminDashboard() {
                               )}
                             </div>
                             <div className="bg-white rounded-lg p-3 shadow-sm">
-                              <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-xs text-gray-400">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
+                                <label className="flex items-center gap-1 text-xs cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={pmBreakEnabled}
+                                    onChange={(e) => setPmBreakEnabled(e.target.checked)}
+                                    className="w-3.5 h-3.5"
+                                  />
+                                  {pmBreakEnabled && (
+                                    <span className="text-[#D97706] font-bold">เปิด break</span>
+                                  )}
+                                </label>
+                              </div>
                               <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
                               <p className="text-xs text-gray-400">บาท/ซอง</p>
                               {pmMultiplier !== 'old' && oldPricing?.pack_price_system && (

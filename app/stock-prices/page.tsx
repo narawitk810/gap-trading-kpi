@@ -9,6 +9,7 @@ type PricingData = {
   risk_amount: number
   commission_tier: string
   box_system_enabled?: boolean
+  break_enabled?: boolean
   box_price_system: number
   box_price_external: number
   pack_price_system: number
@@ -309,7 +310,14 @@ export default function StockPricesPage() {
                           {p.box_system_enabled === false ? <span className="text-gray-300 font-normal">-</span> : fmt(p.box_price_system)}
                         </td>
                         <td className="px-3 py-3 text-right text-xs text-[#374151] whitespace-nowrap">{fmt(p.box_price_external)}</td>
-                        <td className="px-3 py-3 text-right text-xs font-bold text-[#16A34A] whitespace-nowrap">{fmt(p.pack_price_system)}</td>
+                        <td className="px-3 py-3 text-right text-xs font-bold text-[#16A34A] whitespace-nowrap">
+                          {p.break_enabled ? (
+                            <>
+                              {fmt(p.pack_price_external)}
+                              <span className="block text-[10px] font-normal text-[#D97706] bg-orange-50 rounded px-1 mt-0.5">เปิด break</span>
+                            </>
+                          ) : fmt(p.pack_price_system)}
+                        </td>
                         <td className="px-3 py-3 text-right text-xs text-[#374151] whitespace-nowrap">{fmt(p.pack_price_external)}</td>
                         <td className="px-3 py-3 text-center">
                           <span className="text-xs font-bold bg-[#1E3A5F]/10 text-[#1E3A5F] px-2 py-0.5 rounded-full">
