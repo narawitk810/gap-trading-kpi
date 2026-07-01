@@ -33,7 +33,7 @@ async function compressImage(file: File): Promise<string> {
 
 type EvidenceFile = { name: string; type: 'image' | 'video'; data: string }
 
-type Record = {
+type EvidenceRow = {
   id: string
   employee_name: string
   incident: string
@@ -42,6 +42,8 @@ type Record = {
   created_dept: string
   created_at: string
 }
+
+type FormErrors = { [key: string]: string }
 
 function formatThaiDateTime(iso: string) {
   const d = new Date(iso)
@@ -55,34 +57,34 @@ export default function EvidencePage() {
   const [createdBy, setCreatedBy] = useState('')
   const [createdDept, setCreatedDept] = useState('')
   const [files, setFiles] = useState<EvidenceFile[]>([])
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
   const [showConfirm, setShowConfirm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [records, setRecords] = useState<Record[]>([])
-  const [loadingRecords, setLoadingRecords] = useState(true)
+  const [rows, setRows] = useState<EvidenceRow[]>([])
+  const [loadingRows, setLoadingRows] = useState(true)
   const [downloading, setDownloading] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const fetchRecords = useCallback(async () => {
-    setLoadingRecords(true)
+  const fetchRows = useCallback(async () => {
+    setLoadingRows(true)
     try {
       const res = await fetch('/api/evidence')
       const data = await res.json()
-      setRecords(Array.isArray(data) ? data : [])
+      setRows(Array.isArray(data) ? data : [])
     } finally {
-      setLoadingRecords(false)
+      setLoadingRows(false)
     }
   }, [])
 
-  useEffect(() => { fetchRecords() }, [fetchRecords])
+  useEffect(() => { fetchRows() }, [fetchRows])
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(e.target.files || [])
     if (!selected.length) return
     const remaining = MAX_FILES - files.length
     if (remaining <= 0) {
-      setErrors((p) => ({ ...p, files: `แนบหลักฐานได้สูงสุด ${MAX_FILES} รายการ` }))
+      setErrors((p: FormErrors) => ({ ...p, files: `แนบหลักฐานได้สูงสุด ${MAX_FILES} รายการ` }))
       return
     }
     const toProcess = selected.slice(0, remaining)
@@ -93,11 +95,11 @@ export default function EvidencePage() {
           const data = await compressImage(file)
           newFiles.push({ name: file.name, type: 'image', data })
         } catch {
-          setErrors((p) => ({ ...p, files: `โหลดรูป ${file.name} ไม่ได้` }))
+          setErrors((p: FormErrors) => ({ ...p, files: `โหลดรูป ${file.name} ไม่ได้` }))
         }
       } else if (file.type.startsWith('video/')) {
         if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
-          setErrors((p) => ({ ...p, files: `วีดีโอ ${file.name} ต้องไม่เกิน ${MAX_VIDEO_MB}MB` }))
+          setErrors((p: FormErrors) => ({ ...p, files: `วีดีโอ ${file.name} ต้องไม่เกิน ${MAX_VIDEO_MB}MB` }))
           continue
         }
         const data = await new Promise<string>((res, rej) => {
@@ -108,11 +110,11 @@ export default function EvidencePage() {
         })
         newFiles.push({ name: file.name, type: 'video', data })
       } else {
-        setErrors((p) => ({ ...p, files: 'รองรับเฉพาะรูปภาพและวีดีโอเท่านั้น' }))
+        setErrors((p: FormErrors) => ({ ...p, files: 'รองรับเฉพาะรูปภาพและวีดีโอเท่านั้น' }))
       }
     }
     setFiles((prev) => [...prev, ...newFiles])
-    setErrors((p) => ({ ...p, files: '' }))
+    setErrors((p: FormErrors) => ({ ...p, files: '' }))
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -121,7 +123,7 @@ export default function EvidencePage() {
   }
 
   function validate() {
-    const e: Record<string, string> = {}
+    const e: FormErrors = {}
     if (!employeeName.trim()) e.employeeName = 'กรุณากรอกชื่อพนักงาน'
     if (!incident.trim()) e.incident = 'กรุณาระบุเหตุการณ์'
     if (!createdBy.trim()) e.createdBy = 'กรุณากรอกชื่อผู้บันทึก'
@@ -155,7 +157,7 @@ export default function EvidencePage() {
         setShowConfirm(false)
         setSuccess(true)
         setTimeout(() => setSuccess(false), 4000)
-        fetchRecords()
+        fetchRows()
       } else {
         alert(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่')
         setShowConfirm(false)
@@ -168,14 +170,14 @@ export default function EvidencePage() {
     }
   }
 
-  async function downloadAll(record: Record) {
-    setDownloading(record.id)
+  async function downloadAll(row: EvidenceRow) {
+    setDownloading(row.id)
     try {
-      const evidenceFiles: EvidenceFile[] = JSON.parse(record.evidence_data)
+      const evidenceFiles: EvidenceFile[] = JSON.parse(row.evidence_data)
       for (let i = 0; i < evidenceFiles.length; i++) {
         const f = evidenceFiles[i]
         const ext = f.type === 'video' ? (f.name.split('.').pop() || 'mp4') : 'jpg'
-        const safeName = `${record.employee_name}_${i + 1}.${ext}`
+        const safeName = `${row.employee_name}_${i + 1}.${ext}`
         const a = document.createElement('a')
         a.href = f.data
         a.download = safeName
@@ -224,7 +226,7 @@ export default function EvidencePage() {
             <input
               type="text"
               value={employeeName}
-              onChange={(e) => { setEmployeeName(e.target.value); setErrors((p) => ({ ...p, employeeName: '' })) }}
+              onChange={(e) => { setEmployeeName(e.target.value); setErrors((p: FormErrors) => ({ ...p, employeeName: '' })) }}
               placeholder="ชื่อ-นามสกุล หรือชื่อเล่น"
               className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
             />
@@ -238,7 +240,7 @@ export default function EvidencePage() {
             </label>
             <textarea
               value={incident}
-              onChange={(e) => { setIncident(e.target.value); setErrors((p) => ({ ...p, incident: '' })) }}
+              onChange={(e) => { setIncident(e.target.value); setErrors((p: FormErrors) => ({ ...p, incident: '' })) }}
               placeholder="ระบุเหตุการณ์ที่เกิดขึ้น วัน-เวลา และรายละเอียดที่เกี่ยวข้อง"
               rows={4}
               className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
@@ -261,7 +263,6 @@ export default function EvidencePage() {
               className="hidden"
             />
 
-            {/* File previews */}
             {files.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mb-2">
                 {files.map((f, i) => (
@@ -324,7 +325,7 @@ export default function EvidencePage() {
               <input
                 type="text"
                 value={createdBy}
-                onChange={(e) => { setCreatedBy(e.target.value); setErrors((p) => ({ ...p, createdBy: '' })) }}
+                onChange={(e) => { setCreatedBy(e.target.value); setErrors((p: FormErrors) => ({ ...p, createdBy: '' })) }}
                 placeholder="ชื่อเล่น"
                 className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
               />
@@ -336,7 +337,7 @@ export default function EvidencePage() {
               </label>
               <select
                 value={createdDept}
-                onChange={(e) => { setCreatedDept(e.target.value); setErrors((p) => ({ ...p, createdDept: '' })) }}
+                onChange={(e) => { setCreatedDept(e.target.value); setErrors((p: FormErrors) => ({ ...p, createdDept: '' })) }}
                 className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] bg-white"
               >
                 <option value="">เลือก</option>
@@ -360,15 +361,15 @@ export default function EvidencePage() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
             <h2 className="text-base font-bold text-[#1E3A5F]">หลักฐานที่บันทึกแล้ว</h2>
-            <button onClick={fetchRecords} className="text-xs text-[#1E3A5F] font-semibold hover:underline">รีเฟรช</button>
+            <button onClick={fetchRows} className="text-xs text-[#1E3A5F] font-semibold hover:underline">รีเฟรช</button>
           </div>
-          {loadingRecords ? (
+          {loadingRows ? (
             <div className="py-10 text-center text-gray-400 text-sm">กำลังโหลด...</div>
-          ) : records.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="py-10 text-center text-gray-400 text-sm">ยังไม่มีหลักฐาน</div>
           ) : (
             <div className="divide-y divide-[#E2E8F0]">
-              {records.map((r) => {
+              {rows.map((r) => {
                 let evidenceFiles: EvidenceFile[] = []
                 try { evidenceFiles = JSON.parse(r.evidence_data) } catch { /* */ }
                 const imgCount = evidenceFiles.filter((f) => f.type === 'image').length
