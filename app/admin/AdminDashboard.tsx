@@ -7,6 +7,7 @@ import type { KPIEntry } from '@/types/kpi'
 import * as XLSX from 'xlsx'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
+const REGEN_PIN = 'GAP0000'
 
 const BASE_RATES: Record<string, number> = {
   'การตลาด': 500,
@@ -1911,7 +1912,14 @@ export default function AdminDashboard() {
                 <p className="text-xs text-gray-400 mt-0.5">รหัสเปลี่ยนอัตโนมัติทุก 3 เดือน (รายไตรมาส)</p>
               </div>
               <button
-                onClick={handleRegen}
+                onClick={() => {
+                  const pin = window.prompt('กรุณากรอกรหัสส่วนตัวเพื่อออกรหัสใหม่')
+                  if (pin !== REGEN_PIN) {
+                    if (pin !== null) alert('รหัสไม่ถูกต้อง ไม่สามารถดำเนินการได้')
+                    return
+                  }
+                  handleRegen()
+                }}
                 disabled={regenerating}
                 className="bg-[#DC2626] text-white px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-50"
               >
