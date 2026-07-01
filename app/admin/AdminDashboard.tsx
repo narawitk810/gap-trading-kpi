@@ -1830,9 +1830,9 @@ export default function AdminDashboard() {
                                     onChange={(e) => setPmBreakEnabled(e.target.checked)}
                                     className="w-3.5 h-3.5"
                                   />
-                                  {pmBreakEnabled && (
-                                    <span className="text-[#D97706] font-bold">เปิด break</span>
-                                  )}
+                                  <span className={pmBreakEnabled ? 'text-[#D97706] font-bold' : 'text-gray-400'}>
+                                    {pmBreakEnabled ? 'break เท่านั้น' : 'break ได้ปกติ'}
+                                  </span>
                                 </label>
                               </div>
                               <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
