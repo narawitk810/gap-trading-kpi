@@ -273,6 +273,16 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS break_bookings (
+      id         TEXT PRIMARY KEY,
+      nickname   TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      hour_slot  INTEGER NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `)
+
   g.dbReady = true
 }
 
