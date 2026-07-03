@@ -777,19 +777,6 @@ export default function Home() {
           </Link>
         )}
 
-        {formData.department === 'บุคคล' && (
-          <Link
-            href="/equipment"
-            target="_blank"
-            className="flex items-center gap-2 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-gray-500 hover:border-[#1E3A5F] hover:text-[#1E3A5F] transition-colors"
-          >
-            <span>🔧</span>
-            <span>แจ้งเกี่ยวกับอุปกรณ์ (เสีย/เบิก/ซ่อม)</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
 
         {(formData.department === 'บุคคล' || formData.department === 'ผู้จัดการไลฟ์สด') && (
           <Link
@@ -1135,6 +1122,20 @@ export default function Home() {
             className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
           />
         </div>
+
+        {formData.department === 'บุคคล' && (
+          <Link
+            href="/equipment"
+            target="_blank"
+            className="flex items-center gap-2 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-gray-500 hover:border-[#1E3A5F] hover:text-[#1E3A5F] transition-colors"
+          >
+            <span>🔧</span>
+            <span>แจ้งเกี่ยวกับอุปกรณ์ (เสีย/เบิก/ซ่อม)</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
 
         {/* Submit */}
         <button
