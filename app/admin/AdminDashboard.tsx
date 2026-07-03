@@ -125,6 +125,20 @@ type EquipmentRequest = {
   acknowledged_at: string | null
 }
 
+type MeetingReport = {
+  id: string
+  nickname: string
+  meeting_date: string
+  meeting_time: string
+  participants: string
+  summary: string
+  decisions: string
+  action_items: string
+  pending_issues: string
+  next_meeting: string
+  created_at: string
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString('th-TH', {
@@ -377,7 +391,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -412,6 +426,8 @@ export default function AdminDashboard() {
   const [equipmentRequests, setEquipmentRequests] = useState<EquipmentRequest[]>([])
   const [loadingEquipment, setLoadingEquipment] = useState(false)
   const [acknowledgingEquipId, setAcknowledgingEquipId] = useState<string | null>(null)
+  const [meetingReports, setMeetingReports] = useState<MeetingReport[]>([])
+  const [loadingMeetings, setLoadingMeetings] = useState(false)
 
   async function handleAnalyze(entry: KPIEntry) {
     const base = BASE_RATES[entry.department]
@@ -704,6 +720,15 @@ export default function AdminDashboard() {
     finally { setDeletingPromoId(null) }
   }
 
+  const fetchMeetings = useCallback(async () => {
+    setLoadingMeetings(true)
+    try {
+      const res = await fetch(`/api/meeting-report?key=${ADMIN_KEY}`)
+      if (res.ok) setMeetingReports(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingMeetings(false) }
+  }, [])
+
   const fetchEquipment = useCallback(async () => {
     setLoadingEquipment(true)
     try {
@@ -764,8 +789,9 @@ export default function AdminDashboard() {
       fetchCodes()
       fetchPromoThresholds()
       fetchEquipment()
+      fetchMeetings()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings])
 
   if (!isAuthorized) {
     return (
@@ -809,7 +835,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment(); fetchMeetings() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -936,6 +962,16 @@ export default function AdminDashboard() {
                 {equipmentRequests.filter((r) => r.status === 'pending').length}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('meetings')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'meetings'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            ประชุม
           </button>
           <button
             onClick={() => setActiveTab('codes')}
@@ -1545,6 +1581,68 @@ export default function AdminDashboard() {
           </div>
         )
       })()}
+
+      {/* Meetings Tab */}
+      {activeTab === 'meetings' && (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {loadingMeetings ? (
+            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : meetingReports.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีรายงานการประชุม</div>
+          ) : (
+            <div className="space-y-4">
+              {meetingReports.map((r) => {
+                const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+                const formatMeetDate = (d: string) => {
+                  if (!d) return ''
+                  const [y, m, day] = d.split('-')
+                  return `${parseInt(day)} ${months[parseInt(m) - 1]} ${parseInt(y) + 543}`
+                }
+                return (
+                  <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div className="bg-[#1E3A5F] px-5 py-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-bold text-sm">{formatMeetDate(r.meeting_date)} เวลา {r.meeting_time} น.</p>
+                        <p className="text-white/70 text-xs mt-0.5">บันทึกโดย {r.nickname} · {formatDateTime(r.created_at)}</p>
+                      </div>
+                    </div>
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">ผู้เข้าร่วม</p>
+                        <p className="text-sm text-[#374151] whitespace-pre-wrap">{r.participants}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">สรุปประเด็น</p>
+                        <p className="text-sm text-[#374151] whitespace-pre-wrap">{r.summary}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">มติ/ข้อตัดสินใจ</p>
+                        <p className="text-sm text-[#374151] whitespace-pre-wrap">{r.decisions}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Action Items</p>
+                        <p className="text-sm text-[#374151] whitespace-pre-wrap">{r.action_items}</p>
+                      </div>
+                      {r.pending_issues && (
+                        <div>
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">เรื่องค้าง</p>
+                          <p className="text-sm text-[#374151] whitespace-pre-wrap">{r.pending_issues}</p>
+                        </div>
+                      )}
+                      {r.next_meeting && (
+                        <div>
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">นัดครั้งหน้า</p>
+                          <p className="text-sm text-[#374151]">{r.next_meeting}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Equipment Tab */}
       {activeTab === 'equipment' && (

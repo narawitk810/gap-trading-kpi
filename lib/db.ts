@@ -244,6 +244,22 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE disciplinary_evidence ADD COLUMN time_end TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   await db.execute(`
+    CREATE TABLE IF NOT EXISTS meeting_reports (
+      id             TEXT PRIMARY KEY,
+      nickname       TEXT NOT NULL,
+      meeting_date   TEXT NOT NULL,
+      meeting_time   TEXT NOT NULL,
+      participants   TEXT NOT NULL,
+      summary        TEXT NOT NULL,
+      decisions      TEXT NOT NULL,
+      action_items   TEXT NOT NULL,
+      pending_issues TEXT NOT NULL DEFAULT '',
+      next_meeting   TEXT NOT NULL DEFAULT '',
+      created_at     TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS equipment_requests (
       id              TEXT PRIMARY KEY,
       nickname        TEXT NOT NULL,
