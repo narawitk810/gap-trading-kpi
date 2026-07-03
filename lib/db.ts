@@ -243,6 +243,20 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE disciplinary_evidence ADD COLUMN time_start TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disciplinary_evidence ADD COLUMN time_end TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS equipment_requests (
+      id              TEXT PRIMARY KEY,
+      nickname        TEXT NOT NULL,
+      request_type    TEXT NOT NULL,
+      action          TEXT NOT NULL DEFAULT '',
+      description     TEXT NOT NULL,
+      image_data      TEXT NOT NULL,
+      status          TEXT NOT NULL DEFAULT 'pending',
+      created_at      TEXT NOT NULL,
+      acknowledged_at TEXT
+    )
+  `)
+
   g.dbReady = true
 }
 

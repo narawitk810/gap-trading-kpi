@@ -113,6 +113,18 @@ type TaxInvoice = {
   created_at: string
 }
 
+type EquipmentRequest = {
+  id: string
+  nickname: string
+  request_type: string
+  action: string
+  description: string
+  image_data: string
+  status: string
+  created_at: string
+  acknowledged_at: string | null
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString('th-TH', {
@@ -365,7 +377,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -397,6 +409,9 @@ export default function AdminDashboard() {
   const [wageFilters, setWageFilters] = useState({ department: '', dateFrom: '', dateTo: '', nickname: '' })
   const [wageAnalysis, setWageAnalysis] = useState<Record<string, { score: number; estimated_wage: number; verdict: string; reason: string }>>({})
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+  const [equipmentRequests, setEquipmentRequests] = useState<EquipmentRequest[]>([])
+  const [loadingEquipment, setLoadingEquipment] = useState(false)
+  const [acknowledgingEquipId, setAcknowledgingEquipId] = useState<string | null>(null)
 
   async function handleAnalyze(entry: KPIEntry) {
     const base = BASE_RATES[entry.department]
@@ -689,6 +704,28 @@ export default function AdminDashboard() {
     finally { setDeletingPromoId(null) }
   }
 
+  const fetchEquipment = useCallback(async () => {
+    setLoadingEquipment(true)
+    try {
+      const res = await fetch(`/api/equipment?key=${ADMIN_KEY}`)
+      if (res.ok) setEquipmentRequests(await res.json())
+    } catch { /* silent */ }
+    finally { setLoadingEquipment(false) }
+  }, [])
+
+  async function handleAcknowledgeEquipment(id: string) {
+    setAcknowledgingEquipId(id)
+    try {
+      const res = await fetch(`/api/equipment?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) setEquipmentRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString() } : r))
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setAcknowledgingEquipId(null) }
+  }
+
   const fetchTaxInvoices = useCallback(async (month?: string) => {
     setLoadingTax(true)
     try {
@@ -726,8 +763,9 @@ export default function AdminDashboard() {
       fetchStockArrivals()
       fetchCodes()
       fetchPromoThresholds()
+      fetchEquipment()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds])
+  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment])
 
   if (!isAuthorized) {
     return (
@@ -771,7 +809,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -881,6 +919,21 @@ export default function AdminDashboard() {
             {promoThresholds.filter((r) => r.status === 'pending').length > 0 && (
               <span className="bg-[#16A34A] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {promoThresholds.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('equipment')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'equipment'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            อุปกรณ์
+            {equipmentRequests.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="bg-[#DC2626] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {equipmentRequests.filter((r) => r.status === 'pending').length}
               </span>
             )}
           </button>
@@ -1492,6 +1545,64 @@ export default function AdminDashboard() {
           </div>
         )
       })()}
+
+      {/* Equipment Tab */}
+      {activeTab === 'equipment' && (
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {loadingEquipment ? (
+            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : equipmentRequests.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีการแจ้งเกี่ยวกับอุปกรณ์</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {equipmentRequests.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {r.image_data && (
+                    <img src={r.image_data} alt="อุปกรณ์" className="w-full h-48 object-cover" />
+                  )}
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-[#374151] text-sm">{r.nickname}</p>
+                        <p className="text-xs text-gray-400">{formatDateTime(r.created_at)}</p>
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            r.request_type === 'damaged' ? 'bg-red-50 text-[#DC2626]' : 'bg-blue-50 text-[#1E3A5F]'
+                          }`}>
+                            {r.request_type === 'damaged' ? 'อุปกรณ์เสีย' : 'เบิกใหม่'}
+                          </span>
+                          {r.action && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">
+                              {r.action}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
+                        r.status === 'pending'
+                          ? 'bg-red-50 text-[#DC2626]'
+                          : 'bg-[#16A34A]/10 text-[#16A34A]'
+                      }`}>
+                        {r.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[#374151]">{r.description}</p>
+                    {r.status === 'pending' && (
+                      <button
+                        onClick={() => handleAcknowledgeEquipment(r.id)}
+                        disabled={acknowledgingEquipId === r.id}
+                        className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                      >
+                        {acknowledgingEquipId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Restock Tab */}
       {activeTab === 'restock' && (
