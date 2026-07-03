@@ -781,7 +781,7 @@ export default function Home() {
           <Link
             href="/equipment"
             target="_blank"
-            className="flex items-center gap-2 text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors py-1"
+            className="flex items-center gap-2 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-gray-500 hover:border-[#1E3A5F] hover:text-[#1E3A5F] transition-colors"
           >
             <span>🔧</span>
             <span>แจ้งเกี่ยวกับอุปกรณ์ (เสีย/เบิก/ซ่อม)</span>
