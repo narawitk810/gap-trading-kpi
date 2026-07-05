@@ -2603,6 +2603,25 @@ export default function AdminDashboard() {
                 <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศไลฟ์สด</h2>
                 <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงานไลฟ์แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
               </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/30">
+                <p className="text-xs font-semibold text-[#374151] mb-2">⚜️ Head ของแผนก</p>
+                <div className="flex flex-wrap gap-2">
+                  {liveStaff.map((s) => (
+                    <button
+                      key={s.id}
+                      disabled={savingHeadId === s.id}
+                      onClick={() => toggleHead(s, setLiveStaff)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                        s.is_head
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {s.is_head ? `⚜️ ${s.name}` : s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
                 <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
                 <div className="flex gap-2 flex-wrap items-start">
@@ -2739,6 +2758,25 @@ export default function AdminDashboard() {
               <div className="px-5 py-4 border-b border-[#E2E8F0]">
                 <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศ Creative</h2>
                 <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงาน Creative แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/30">
+                <p className="text-xs font-semibold text-[#374151] mb-2">⚜️ Head ของแผนก</p>
+                <div className="flex flex-wrap gap-2">
+                  {creativeStaff.map((s) => (
+                    <button
+                      key={s.id}
+                      disabled={savingHeadId === s.id}
+                      onClick={() => toggleHead(s, setCreativeStaff)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                        s.is_head
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {s.is_head ? `⚜️ ${s.name}` : s.name}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
                 <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
