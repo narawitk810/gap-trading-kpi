@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 2
+const SCHEMA_VERSION = 3
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -326,6 +326,9 @@ export async function ensureSchema(): Promise<void> {
   try {
     await db.execute(`ALTER TABLE live_staff ADD COLUMN department TEXT NOT NULL DEFAULT 'ไลฟ์สด'`)
   } catch { /* column already exists */ }
+  try {
+    await db.execute(`ALTER TABLE live_staff ADD COLUMN is_head INTEGER NOT NULL DEFAULT 0`)
+  } catch { /* column already exists */ }
 
   {
     const now = new Date().toISOString()
@@ -358,6 +361,9 @@ export async function ensureSchema(): Promise<void> {
         sql: 'INSERT OR IGNORE INTO live_staff (id, name, rank_name, rank_emoji, rank_order, department, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
         args: [id, name, rank_name, rank_emoji, rank_order, department, now],
       })
+    }
+    for (const headName of ['บิว', 'นีล', 'แก๊ง']) {
+      await db.execute({ sql: 'UPDATE live_staff SET is_head=1 WHERE name=?', args: [headName] })
     }
   }
 

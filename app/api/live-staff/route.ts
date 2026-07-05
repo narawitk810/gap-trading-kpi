@@ -48,8 +48,13 @@ export async function PATCH(req: NextRequest) {
   await ensureSchema()
   const db = getDb()
   const body = await req.json()
-  const { id, rank_name, rank_emoji, rank_order } = body
-  if (!id || !rank_name || !rank_emoji || rank_order === undefined) {
+  const { id, rank_name, rank_emoji, rank_order, is_head } = body
+  if (!id) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
+  if (is_head !== undefined && rank_name === undefined) {
+    await db.execute({ sql: 'UPDATE live_staff SET is_head=? WHERE id=?', args: [is_head ? 1 : 0, id] })
+    return NextResponse.json({ ok: true })
+  }
+  if (!rank_name || !rank_emoji || rank_order === undefined) {
     return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
   }
   await db.execute({

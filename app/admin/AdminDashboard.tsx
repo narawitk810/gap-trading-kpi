@@ -146,6 +146,7 @@ type LiveStaffMember = {
   rank_name: string
   rank_emoji: string
   rank_order: number
+  is_head?: number
 }
 
 function formatDateTime(iso: string) {
@@ -454,6 +455,7 @@ export default function AdminDashboard() {
   const [newCreativeStaffRank, setNewCreativeStaffRank] = useState('1|Junior Creative|🥉')
   const [addingCreativeStaff, setAddingCreativeStaff] = useState(false)
   const [addCreativeStaffError, setAddCreativeStaffError] = useState('')
+  const [savingHeadId, setSavingHeadId] = useState<string | null>(null)
   const [rankUnlocked, setRankUnlocked] = useState(() => {
     if (typeof window === 'undefined') return false
     const expiry = localStorage.getItem('rankUnlockedExpiry')
@@ -461,6 +463,21 @@ export default function AdminDashboard() {
   })
   const [rankCodeInput, setRankCodeInput] = useState('')
   const [rankCodeError, setRankCodeError] = useState('')
+
+  async function toggleHead(s: LiveStaffMember, staffSetter: React.Dispatch<React.SetStateAction<LiveStaffMember[]>>) {
+    setSavingHeadId(s.id)
+    try {
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: s.id, is_head: s.is_head ? 0 : 1 }),
+      })
+      if (res.ok) {
+        staffSetter((prev) => prev.map((x) => x.id === s.id ? { ...x, is_head: s.is_head ? 0 : 1 } : x))
+      }
+    } catch { /* ignore */ }
+    finally { setSavingHeadId(null) }
+  }
 
   function handleUnlockRank() {
     if (rankCodeInput === 'gap0000') {
@@ -2656,7 +2673,7 @@ export default function AdminDashboard() {
                   <tbody>
                     {liveStaff.map((s, i) => (
                       <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.name}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '👑 ' : ''}{s.name}</td>
                         <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
                         <td className="px-5 py-3">
                           <select
@@ -2698,7 +2715,13 @@ export default function AdminDashboard() {
                             <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
                           </select>
                         </td>
-                        <td className="px-5 py-3 text-right w-24">
+                        <td className="px-5 py-3 text-right w-32">
+                          <button
+                            disabled={savingHeadId === s.id}
+                            onClick={() => toggleHead(s, setLiveStaff)}
+                            title={s.is_head ? 'ถอด Head' : 'ตั้งเป็น Head'}
+                            className={`text-lg mr-2 disabled:opacity-40 transition-opacity ${s.is_head ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
+                          >👑</button>
                           {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
                         </td>
@@ -2787,7 +2810,7 @@ export default function AdminDashboard() {
                   <tbody>
                     {creativeStaff.map((s, i) => (
                       <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.name}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '👑 ' : ''}{s.name}</td>
                         <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
                         <td className="px-5 py-3">
                           <select
@@ -2829,7 +2852,13 @@ export default function AdminDashboard() {
                             <option value="8|Grandmaster Creative|👑">👑 Grandmaster Creative</option>
                           </select>
                         </td>
-                        <td className="px-5 py-3 text-right w-24">
+                        <td className="px-5 py-3 text-right w-32">
+                          <button
+                            disabled={savingHeadId === s.id}
+                            onClick={() => toggleHead(s, setCreativeStaff)}
+                            title={s.is_head ? 'ถอด Head' : 'ตั้งเป็น Head'}
+                            className={`text-lg mr-2 disabled:opacity-40 transition-opacity ${s.is_head ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
+                          >👑</button>
                           {savingCreativeRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {creativeRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
                         </td>
