@@ -33,6 +33,7 @@ function saveCodeVerified(department: string) {
 }
 
 const DRAFT_KEY = 'kpi_draft'
+const DEPT_KEY = 'kpi_dept'
 function saveDraft(data: FormData) {
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify(data)) } catch { /* */ }
 }
@@ -229,7 +230,17 @@ export default function Home() {
 
   useEffect(() => {
     if (loadDraft()) setHasDraft(true)
+    try {
+      const saved = localStorage.getItem(DEPT_KEY)
+      if (saved) setFormData(prev => ({ ...prev, department: saved }))
+    } catch { /* */ }
   }, [])
+
+  useEffect(() => {
+    if (formData.department) {
+      try { localStorage.setItem(DEPT_KEY, formData.department) } catch { /* */ }
+    }
+  }, [formData.department])
 
   function handleSaveDraft() {
     saveDraft(formData)
