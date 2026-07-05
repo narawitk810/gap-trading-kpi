@@ -188,6 +188,39 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 .empty { padding: 48px 24px; text-align: center; color: var(--text-muted); }
 .empty-icon { font-size: 40px; margin-bottom: 12px; }
 .empty-text { font-size: 15px; }
+
+/* ── Purchase section ── */
+.purchase-section { margin-top: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+.purchase-section-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.year-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; }
+.year-nav-btn { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.year-nav-btn:active { background: var(--purple-light); color: var(--purple); }
+.year-nav-label { font-size: 15px; font-weight: 600; color: var(--text); min-width: 50px; text-align: center; }
+.month-grid-purchase { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.month-cell { background: var(--surface); border: 1.5px dashed #C9C7E8; border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+.month-cell.has-value { border-style: solid; border-color: var(--green); background: var(--green-light); }
+.month-cell:active { opacity: 0.7; }
+.month-cell-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.month-cell-val { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 3px; }
+.month-cell.has-value .month-cell-val { color: var(--green); }
+.year-total { margin-top: 12px; padding: 10px 14px; background: var(--purple-light); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center; }
+.year-total-label { font-size: 13px; font-weight: 600; color: var(--purple); }
+.year-total-val { font-size: 15px; font-weight: 700; color: var(--purple-dark); }
+
+/* ── Purchase Modal ── */
+.purchase-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 300; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.purchase-modal-overlay.open { opacity: 1; pointer-events: all; }
+.purchase-modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 20px 20px calc(20px + var(--safe-bottom)); }
+.purchase-modal-title { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-align: center; }
+.purchase-modal-month { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 16px; text-align: center; }
+.purchase-input-row { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px; }
+.purchase-currency { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+.purchase-input { flex: 1; border: none; background: transparent; font-size: 20px; font-weight: 600; font-family: 'Sarabun', sans-serif; color: var(--text); outline: none; text-align: right; }
+.purchase-modal-btns { display: flex; gap: 10px; }
+.purchase-modal-btns button { flex: 1; border: none; border-radius: var(--radius-sm); padding: 13px; font-size: 15px; font-weight: 600; font-family: 'Sarabun', sans-serif; cursor: pointer; }
+.btn-purchase-cancel { background: var(--bg); color: var(--text-muted); }
+.btn-purchase-save { background: var(--purple); color: #fff; }
+.btn-purchase-save:active, .btn-purchase-cancel:active { opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -384,6 +417,21 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 
 <div class="toast" id="toast"></div>
 
+<div class="purchase-modal-overlay" id="purchase-modal-overlay" onclick="closePurchaseModal(event)">
+  <div class="purchase-modal">
+    <div class="purchase-modal-title">กรอกยอดซื้อ</div>
+    <div class="purchase-modal-month" id="pm-month-label"></div>
+    <div class="purchase-input-row">
+      <span class="purchase-currency">฿</span>
+      <input type="number" id="pm-input" class="purchase-input" placeholder="0" min="0" inputmode="decimal">
+    </div>
+    <div class="purchase-modal-btns">
+      <button class="btn-purchase-cancel" onclick="closePurchaseModal()">ยกเลิก</button>
+      <button class="btn-purchase-save" onclick="savePurchase()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -396,8 +444,70 @@ let editingId = null;
 let selectedTier = '';
 let selectedGifts = [];
 let selectedNotify = [7];
+let currentDetailId = null;
+let currentPurchaseYear = (new Date().getFullYear() + 543);
+let currentPurchaseMonth = null;
 
 function save() { localStorage.setItem('vip-db', JSON.stringify(db)); }
+
+function renderPurchaseGrid(id, year) {
+  const v = db.find(x => x.id === id); if (!v) return;
+  const yearData = (v.purchases || {})[year] || {};
+  const total = Object.values(yearData).reduce((s, n) => s + (parseFloat(n) || 0), 0);
+  const grid = document.getElementById('purchase-month-grid');
+  if (!grid) return;
+  grid.innerHTML = MONTHS.slice(1).map((m, i) => {
+    const key = String(i + 1).padStart(2, '0');
+    const val = yearData[key];
+    const hasVal = val !== undefined && val !== null && val !== '';
+    return `<div class="month-cell${hasVal ? ' has-value' : ''}" onclick="openPurchaseModal('${id}',${year},'${key}')">
+      <div class="month-cell-label">${m}</div>
+      <div class="month-cell-val">${hasVal ? Number(val).toLocaleString() : '–'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('purchase-year-label').textContent = year;
+  document.getElementById('purchase-year-total-val').textContent = '฿' + total.toLocaleString();
+  document.getElementById('purchase-year-total-label').textContent = 'รวม ' + year;
+}
+
+function changePurchaseYear(delta) {
+  currentPurchaseYear += delta;
+  renderPurchaseGrid(currentDetailId, currentPurchaseYear);
+}
+
+function openPurchaseModal(id, year, month) {
+  currentDetailId = id;
+  currentPurchaseYear = year;
+  currentPurchaseMonth = month;
+  const v = db.find(x => x.id === id);
+  const existing = ((v && v.purchases || {})[year] || {})[month];
+  document.getElementById('pm-month-label').textContent = MONTHS[+month] + ' ' + year;
+  document.getElementById('pm-input').value = existing !== undefined ? existing : '';
+  document.getElementById('purchase-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('pm-input').focus(), 100);
+}
+
+function closePurchaseModal(e) {
+  if (e && e.target !== document.getElementById('purchase-modal-overlay')) return;
+  document.getElementById('purchase-modal-overlay').classList.remove('open');
+}
+
+function savePurchase() {
+  const raw = document.getElementById('pm-input').value.trim();
+  const val = raw === '' ? null : parseFloat(raw);
+  const i = db.findIndex(x => x.id === currentDetailId);
+  if (i < 0) return;
+  if (!db[i].purchases) db[i].purchases = {};
+  if (!db[i].purchases[currentPurchaseYear]) db[i].purchases[currentPurchaseYear] = {};
+  if (val === null || isNaN(val)) {
+    delete db[i].purchases[currentPurchaseYear][currentPurchaseMonth];
+  } else {
+    db[i].purchases[currentPurchaseYear][currentPurchaseMonth] = val;
+  }
+  save();
+  document.getElementById('purchase-modal-overlay').classList.remove('open');
+  renderPurchaseGrid(currentDetailId, currentPurchaseYear);
+}
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 const dayEl = document.getElementById('f-day');
@@ -503,6 +613,7 @@ function saveVIP() {
     gifts: [...selectedGifts],
     notify: [...selectedNotify],
     giftStatus: editingId ? (db.find(x=>x.id===editingId)||{}).giftStatus||'none' : 'none',
+    purchases: editingId ? (db.find(x=>x.id===editingId)||{}).purchases||{} : {},
     createdAt: editingId ? (db.find(x=>x.id===editingId)||{}).createdAt||Date.now() : Date.now()
   };
   if(editingId) { const i=db.findIndex(x=>x.id===editingId); if(i>=0) db[i]=vip; }
@@ -645,6 +756,8 @@ function renderGifts() {
 
 function openDetail(id) {
   const v = db.find(x=>x.id===id); if(!v) return;
+  currentDetailId = id;
+  currentPurchaseYear = new Date().getFullYear() + 543;
   const body = document.getElementById('detail-body');
   body.innerHTML=`
     <div class="detail-avatar ${tierClass(v.tier)}">${avatarInitials(v)}</div>
@@ -670,8 +783,22 @@ function openDetail(id) {
         <div class="gs-btn ${v.giftStatus==='sent'?'active-sent':''}" onclick="updateGiftStatus('${v.id}','sent');openDetail('${v.id}')">ส่งแล้ว</div>
       </div>
     </div>
-    <button class="btn-save" style="margin-top:12px" onclick="closeDetail();openAddSheet('${v.id}')">แก้ไขข้อมูล</button>`;
+    <button class="btn-save" style="margin-top:12px" onclick="closeDetail();openAddSheet('${v.id}')">แก้ไขข้อมูล</button>
+    <div class="purchase-section" style="margin-top:16px">
+      <div class="purchase-section-title">ยอดซื้อรายเดือน</div>
+      <div class="year-nav">
+        <button class="year-nav-btn" onclick="changePurchaseYear(-1)">‹</button>
+        <div class="year-nav-label" id="purchase-year-label">${currentPurchaseYear}</div>
+        <button class="year-nav-btn" onclick="changePurchaseYear(1)">›</button>
+      </div>
+      <div class="month-grid-purchase" id="purchase-month-grid"></div>
+      <div class="year-total" style="margin-top:12px">
+        <span class="year-total-label" id="purchase-year-total-label">รวม ${currentPurchaseYear}</span>
+        <span class="year-total-val" id="purchase-year-total-val">฿0</span>
+      </div>
+    </div>`;
   document.getElementById('detail-overlay').classList.add('open');
+  renderPurchaseGrid(id, currentPurchaseYear);
 }
 
 function renderReport() {
