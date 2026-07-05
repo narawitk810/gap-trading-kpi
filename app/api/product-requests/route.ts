@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       `SELECT id, nickname, description, status, created_at, approved_at
        FROM product_requests
        ORDER BY created_at DESC
-       LIMIT 100`
+       LIMIT 200`
     )
     return NextResponse.json(result.rows)
   }

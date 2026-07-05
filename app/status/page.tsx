@@ -22,15 +22,6 @@ function formatDateTime(iso: string) {
   })
 }
 
-function getTodayDate() {
-  const now = new Date()
-  return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('-')
-}
-
 type PublicProductRequest = {
   id: string
   nickname: string
@@ -86,7 +77,7 @@ function StatusContent() {
     fetchRequests(nickname)
   }
 
-  const todayRequests = publicRequests.filter((r) => r.created_at.startsWith(getTodayDate()))
+  const allRequests = publicRequests
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
@@ -171,17 +162,17 @@ function StatusContent() {
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-bold text-[#1E3A5F]">คำขอสินค้าสำหรับไลฟ์วันนี้</h2>
+              <h2 className="text-sm font-bold text-[#1E3A5F]">ประวัติคำขอสินค้าสำหรับไลฟ์</h2>
               <p className="text-xs text-gray-400 mt-0.5">ทุกคนมองเห็น</p>
             </div>
             {!publicLoading && (
-              <span className="text-xs font-semibold text-gray-400">{todayRequests.length} รายการ</span>
+              <span className="text-xs font-semibold text-gray-400">{allRequests.length} รายการ</span>
             )}
           </div>
           {publicLoading ? (
             <div className="py-8 text-center text-sm text-gray-400">กำลังโหลด...</div>
-          ) : todayRequests.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">ยังไม่มีคำขอสินค้าสำหรับวันนี้</div>
+          ) : allRequests.length === 0 ? (
+            <div className="py-8 text-center text-sm text-gray-400">ยังไม่มีคำขอสินค้า</div>
           ) : (
             <div className="divide-y divide-[#E2E8F0]">
               <div className="grid grid-cols-[1fr_2fr_auto] gap-x-3 px-4 py-2 bg-[#F5F6F8]">
@@ -189,7 +180,7 @@ function StatusContent() {
                 <p className="text-xs font-semibold text-gray-500">รายละเอียดสินค้า</p>
                 <p className="text-xs font-semibold text-gray-500 text-right">สถานะ</p>
               </div>
-              {todayRequests.map((req) => (
+              {allRequests.map((req) => (
                 <div key={req.id} className="grid grid-cols-[1fr_2fr_auto] gap-x-3 px-4 py-3 items-start">
                   <div>
                     <p className="text-xs font-semibold text-[#374151] truncate">{req.nickname}</p>
