@@ -336,7 +336,7 @@ export default function Home() {
     if (formData.department !== 'Sales Admin') return
     setSaleAdminPickerOpen(!formData.nickname)
     setLoadingSaleAdmin(true)
-    fetch('/api/live-staff?department=sale admin')
+    fetch('/api/live-staff?department=Sales Admin')
       .then((r) => r.json())
       .then((d) => setSaleAdminStaff(d.staff || []))
       .catch(() => setSaleAdminStaff([]))
