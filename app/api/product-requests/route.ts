@@ -89,6 +89,26 @@ export async function PATCH(request: NextRequest) {
   await ensureSchema()
   const db = getDb()
 
+  if (body.action === 'edit') {
+    if (body.status === 'approved') {
+      await db.execute({
+        sql: `UPDATE product_requests SET status = 'approved', approved_at = ?, rejected_reason = NULL WHERE id = ?`,
+        args: [new Date().toISOString(), body.id],
+      })
+    } else if (body.status === 'rejected') {
+      await db.execute({
+        sql: `UPDATE product_requests SET status = 'rejected', approved_at = NULL, rejected_reason = ? WHERE id = ?`,
+        args: [body.reason || '', body.id],
+      })
+    } else {
+      await db.execute({
+        sql: `UPDATE product_requests SET status = 'pending', approved_at = NULL, rejected_reason = NULL WHERE id = ?`,
+        args: [body.id],
+      })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   if (body.action === 'reject') {
     await db.execute({
       sql: `UPDATE product_requests SET status = 'rejected', rejected_reason = ? WHERE id = ?`,

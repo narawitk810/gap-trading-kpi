@@ -468,6 +468,9 @@ export default function AdminDashboard() {
   const [rejectModal, setRejectModal] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [productImageModal, setProductImageModal] = useState<string | null>(null)
+  const [editStatusModal, setEditStatusModal] = useState<string | null>(null)
+  const [editStatusValue, setEditStatusValue] = useState('')
+  const [editStatusReason, setEditStatusReason] = useState('')
   const [complaints, setComplaints] = useState<Complaint[]>([])
   const [loadingComplaints, setLoadingComplaints] = useState(false)
   const [reviewingId, setReviewingId] = useState<string | null>(null)
@@ -552,6 +555,28 @@ export default function AdminDashboard() {
         )
         setRejectModal(null)
         setRejectReason('')
+      } else alert('เกิดข้อผิดพลาด')
+    } catch { alert('เกิดข้อผิดพลาด') }
+  }
+
+  async function handleEditStatus(id: string, newStatus: string, reason: string) {
+    try {
+      const res = await fetch(`/api/product-requests?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'edit', status: newStatus, reason }),
+      })
+      if (res.ok) {
+        setProductRequests((prev) =>
+          prev.map((r) => r.id === id
+            ? { ...r, status: newStatus, rejected_reason: newStatus === 'rejected' ? reason : null,
+                approved_at: newStatus === 'approved' ? new Date().toISOString() : null }
+            : r
+          )
+        )
+        setEditStatusModal(null)
+        setEditStatusValue('')
+        setEditStatusReason('')
       } else alert('เกิดข้อผิดพลาด')
     } catch { alert('เกิดข้อผิดพลาด') }
   }
@@ -1326,6 +1351,12 @@ export default function AdminDashboard() {
                               </>
                             )}
                             <button
+                              onClick={() => { setEditStatusModal(req.id); setEditStatusValue(req.status); setEditStatusReason(req.rejected_reason || '') }}
+                              className="border border-[#E2E8F0] text-[#1E3A5F] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
+                            >
+                              แก้ไข
+                            </button>
+                            <button
                               onClick={() => handleDeleteRequest(req.id)}
                               disabled={deletingRequestId === req.id}
                               className="border border-[#E2E8F0] text-gray-400 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 disabled:opacity-60"
@@ -1373,6 +1404,54 @@ export default function AdminDashboard() {
                     className="flex-1 bg-[#DC2626] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
                   >
                     ยืนยันไม่อนุมัติ
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit status modal */}
+          {editStatusModal && (
+            <div
+              className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+              onClick={(e) => { if (e.target === e.currentTarget) { setEditStatusModal(null) } }}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+                <h2 className="font-bold text-[#1E3A5F] text-base">แก้ไขสถานะคำขอ</h2>
+                <select
+                  value={editStatusValue}
+                  onChange={(e) => setEditStatusValue(e.target.value)}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                >
+                  <option value="pending">🟡 รอดำเนินการ</option>
+                  <option value="approved">✅ อนุมัติแล้ว</option>
+                  <option value="rejected">❌ ไม่อนุมัติ</option>
+                </select>
+                {editStatusValue === 'rejected' && (
+                  <select
+                    value={editStatusReason}
+                    onChange={(e) => setEditStatusReason(e.target.value)}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#DC2626]"
+                  >
+                    <option value="">— เลือกเหตุผล —</option>
+                    <option value="ต้นทุนสูง">ต้นทุนสูง</option>
+                    <option value="รุ่นใหม่กว่ากำลังออก">รุ่นใหม่กว่ากำลังออก</option>
+                    <option value="รอราคาลงค่อยสั่ง">รอราคาลงค่อยสั่ง</option>
+                  </select>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setEditStatusModal(null); setEditStatusValue(''); setEditStatusReason('') }}
+                    className="flex-1 border border-[#E2E8F0] text-gray-500 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5F6F8]"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    onClick={() => handleEditStatus(editStatusModal, editStatusValue, editStatusReason)}
+                    disabled={editStatusValue === 'rejected' && !editStatusReason.trim()}
+                    className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#163058] disabled:opacity-50"
+                  >
+                    บันทึก
                   </button>
                 </div>
               </div>
