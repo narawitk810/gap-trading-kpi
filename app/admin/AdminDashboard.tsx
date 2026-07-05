@@ -1350,13 +1350,16 @@ export default function AdminDashboard() {
             >
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
                 <h2 className="font-bold text-[#1E3A5F] text-base">ระบุเหตุผลที่ไม่อนุมัติ</h2>
-                <textarea
+                <select
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
-                  rows={3}
-                  placeholder="เช่น สินค้าหมดสต็อก / ไม่อยู่ในแผน..."
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#DC2626] resize-none"
-                />
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#DC2626]"
+                >
+                  <option value="">— เลือกเหตุผล —</option>
+                  <option value="ต้นทุนสูง">ต้นทุนสูง</option>
+                  <option value="รุ่นใหม่กว่ากำลังออก">รุ่นใหม่กว่ากำลังออก</option>
+                  <option value="รอราคาลงค่อยสั่ง">รอราคาลงค่อยสั่ง</option>
+                </select>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setRejectModal(null); setRejectReason('') }}
