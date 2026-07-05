@@ -454,15 +454,17 @@ export default function AdminDashboard() {
   const [newCreativeStaffRank, setNewCreativeStaffRank] = useState('1|Junior Creative|🥉')
   const [addingCreativeStaff, setAddingCreativeStaff] = useState(false)
   const [addCreativeStaffError, setAddCreativeStaffError] = useState('')
-  const [rankUnlocked, setRankUnlocked] = useState(() =>
-    typeof window !== 'undefined' && sessionStorage.getItem('rankUnlocked') === '1'
-  )
+  const [rankUnlocked, setRankUnlocked] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const expiry = localStorage.getItem('rankUnlockedExpiry')
+    return !!expiry && Date.now() < Number(expiry)
+  })
   const [rankCodeInput, setRankCodeInput] = useState('')
   const [rankCodeError, setRankCodeError] = useState('')
 
   function handleUnlockRank() {
     if (rankCodeInput === 'gap0000') {
-      sessionStorage.setItem('rankUnlocked', '1')
+      localStorage.setItem('rankUnlockedExpiry', String(Date.now() + 10 * 24 * 60 * 60 * 1000))
       setRankUnlocked(true)
       setRankCodeInput('')
     } else {
@@ -471,7 +473,7 @@ export default function AdminDashboard() {
   }
 
   function handleLockRank() {
-    sessionStorage.removeItem('rankUnlocked')
+    localStorage.removeItem('rankUnlockedExpiry')
     setRankUnlocked(false)
     setRankCodeInput('')
     setRankCodeError('')
