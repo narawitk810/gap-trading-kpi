@@ -134,6 +134,7 @@ const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 
 interface ChannelEntry {
   liveStaffName: string
+  liveHours: string
   adsCost: string
   grossRevenue: string
   roi: string
@@ -151,10 +152,12 @@ const MARKETING_METRICS: { field: keyof ChannelEntry; label: string; unit: strin
   { field: 'costPer10SecView', label: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', unit: 'บาท' },
   { field: 'avgViewDuration', label: 'ระยะการดู live โดยเฉลี่ย', unit: 'วินาที' },
   { field: 'newFollowers', label: 'ยอดติดตามจาก live', unit: 'user' },
+  { field: 'liveHours', label: 'ชั่วโมงไลฟ์', unit: 'ชม.' },
 ]
 
 const emptyChannelEntry: ChannelEntry = {
   liveStaffName: '',
+  liveHours: '',
   adsCost: '',
   grossRevenue: '',
   roi: '',
@@ -195,6 +198,7 @@ function buildExtraDataPayload(dept: string, extra: ExtraData, channelEntries: R
       ...(e.costPer10SecView && { cost_per_10sec_view: e.costPer10SecView }),
       ...(e.avgViewDuration && { avg_view_duration: e.avgViewDuration }),
       ...(e.newFollowers && { new_followers: e.newFollowers }),
+      ...(e.liveHours && { live_hours: e.liveHours }),
     }))
     return channels.length > 0 ? { channels } : undefined
   }
@@ -294,6 +298,7 @@ export default function Home() {
         ...(bestRoiEntry.costPer10SecView && { cost_per_10sec_view: bestRoiEntry.costPer10SecView }),
         ...(bestRoiEntry.avgViewDuration && { avg_view_duration: bestRoiEntry.avgViewDuration }),
         ...(bestRoiEntry.newFollowers && { new_followers: bestRoiEntry.newFollowers }),
+        ...(bestRoiEntry.liveHours && { live_hours: bestRoiEntry.liveHours }),
       }
     }
     try {
