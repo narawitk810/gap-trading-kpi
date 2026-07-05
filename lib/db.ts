@@ -283,6 +283,32 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS vip_customers (
+      id          TEXT PRIMARY KEY,
+      firstname   TEXT NOT NULL,
+      lastname    TEXT NOT NULL,
+      nickname    TEXT NOT NULL DEFAULT '',
+      gender      TEXT NOT NULL DEFAULT '',
+      tier        TEXT NOT NULL,
+      day         INTEGER NOT NULL,
+      month       INTEGER NOT NULL,
+      year        TEXT NOT NULL DEFAULT '',
+      phone       TEXT NOT NULL,
+      email       TEXT NOT NULL DEFAULT '',
+      line        TEXT NOT NULL DEFAULT '',
+      tiktok      TEXT NOT NULL DEFAULT '',
+      manager     TEXT NOT NULL DEFAULT '',
+      address     TEXT NOT NULL DEFAULT '',
+      note        TEXT NOT NULL DEFAULT '',
+      gifts       TEXT NOT NULL DEFAULT '[]',
+      notify      TEXT NOT NULL DEFAULT '[7]',
+      gift_status TEXT NOT NULL DEFAULT 'none',
+      purchases   TEXT NOT NULL DEFAULT '{}',
+      created_at  TEXT NOT NULL
+    )
+  `)
+
   g.dbReady = true
 }
 

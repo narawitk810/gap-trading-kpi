@@ -439,7 +439,7 @@ const MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.',
 const MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const GIFT_LABELS = {voucher:'บัตรกำนัล',premium:'ของขวัญพรีเมียม',cake:'เค้กวันเกิด',discount:'ส่วนลดพิเศษ',experience:'ประสบการณ์พิเศษ'};
 
-let db = JSON.parse(localStorage.getItem('vip-db') || '[]');
+let db = [];
 let currentFilter = 'all';
 let currentGiftFilter = 'all';
 let editingId = null;
@@ -450,7 +450,46 @@ let currentDetailId = null;
 let currentPurchaseYear = (new Date().getFullYear() + 543);
 let currentPurchaseMonth = null;
 
-function save() { localStorage.setItem('vip-db', JSON.stringify(db)); }
+function save() { /* ข้อมูลเก็บใน Turso DB แล้ว */ }
+
+async function loadDb() {
+  try {
+    const res = await fetch('/api/vip');
+    if (res.ok) { db = await res.json(); }
+  } catch { /* ออฟไลน์ */ }
+  renderHome(); renderCustomers(); renderGifts(); renderReport();
+}
+
+async function apiSave(vip) {
+  const existing = db.find(x => x.id === vip.id);
+  try {
+    await fetch('/api/vip', {
+      method: existing ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vip),
+    });
+  } catch { showToast('บันทึกไม่สำเร็จ — ตรวจสอบการเชื่อมต่อ'); }
+}
+
+async function apiDelete(id) {
+  try {
+    await fetch('/api/vip', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+  } catch { showToast('ลบไม่สำเร็จ — ตรวจสอบการเชื่อมต่อ'); }
+}
+
+async function apiUpdate(vip) {
+  try {
+    await fetch('/api/vip', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vip),
+    });
+  } catch { showToast('อัปเดตไม่สำเร็จ — ตรวจสอบการเชื่อมต่อ'); }
+}
 
 function renderPurchaseGrid(id, year) {
   const v = db.find(x => x.id === id); if (!v) return;
@@ -506,9 +545,9 @@ function savePurchase() {
   } else {
     db[i].purchases[currentPurchaseYear][currentPurchaseMonth] = val;
   }
-  save();
   document.getElementById('purchase-modal-overlay').classList.remove('open');
   renderPurchaseGrid(currentDetailId, currentPurchaseYear);
+  apiUpdate(db[i]);
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
@@ -624,18 +663,19 @@ function saveVIP() {
   };
   if(editingId) { const i=db.findIndex(x=>x.id===editingId); if(i>=0) db[i]=vip; }
   else db.push(vip);
-  save();
   document.getElementById('add-overlay').classList.remove('open');
   showToast(editingId ? 'อัปเดตข้อมูลแล้ว' : 'เพิ่ม VIP สำเร็จ');
   renderHome(); renderCustomers(); renderGifts(); renderReport();
+  apiSave(vip);
 }
 function deleteVIP() {
   if(!confirm('ลบข้อมูลลูกค้ารายนี้?')) return;
-  db = db.filter(x=>x.id!==editingId);
-  save();
+  const id = editingId;
+  db = db.filter(x=>x.id!==id);
   document.getElementById('add-overlay').classList.remove('open');
   showToast('ลบข้อมูลแล้ว');
   renderHome(); renderCustomers(); renderGifts(); renderReport();
+  apiDelete(id);
 }
 
 function avatarInitials(v) { return (v.firstname[0]||'')+(v.lastname[0]||''); }
@@ -731,9 +771,10 @@ function setGiftFilter(el) {
 }
 function updateGiftStatus(id, status) {
   const i = db.findIndex(x=>x.id===id); if(i<0) return;
-  db[i].giftStatus = status; save();
+  db[i].giftStatus = status;
   renderGifts(); renderHome();
   showToast(status==='sent'?'บันทึก: ส่งแล้ว':status==='pending'?'บันทึก: รอส่ง':'บันทึก: ยังไม่ได้เลือก');
+  apiUpdate(db[i]);
 }
 function renderGifts() {
   let list = db.filter(v=>{
@@ -836,7 +877,7 @@ function renderReport() {
   }).join('');
 }
 
-renderHome();
+loadDb();
 
 if('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
