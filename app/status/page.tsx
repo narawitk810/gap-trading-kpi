@@ -27,6 +27,7 @@ type PublicProductRequest = {
   id: string
   nickname: string
   description: string
+  image_data: string
   status: string
   created_at: string
   approved_at: string | null
@@ -83,9 +84,18 @@ function StatusContent() {
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
-      <div className="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md">
-        <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
-        <p className="text-sm mt-1 opacity-75">ตรวจสอบสถานะคำขอสินค้า</p>
+      <div className="bg-[#1E3A5F] text-white px-4 py-5 shadow-md">
+        <div className="max-w-lg mx-auto flex items-center gap-3">
+          <Link href="/" className="text-white/70 hover:text-white p-1 -ml-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
+            <p className="text-sm mt-0.5 opacity-75">ตรวจสอบสถานะคำขอสินค้า</p>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
@@ -186,18 +196,22 @@ function StatusContent() {
             <div className="py-8 text-center text-sm text-gray-400">ยังไม่มีคำขอสินค้า</div>
           ) : (
             <div className="divide-y divide-[#E2E8F0]">
-              <div className="grid grid-cols-[1fr_2fr_auto] gap-x-3 px-4 py-2 bg-[#F5F6F8]">
-                <p className="text-xs font-semibold text-gray-500">ผู้ขอ</p>
-                <p className="text-xs font-semibold text-gray-500">รายละเอียดสินค้า</p>
+              <div className="grid grid-cols-[40px_1fr_auto] gap-x-3 px-4 py-2 bg-[#F5F6F8]">
+                <p className="text-xs font-semibold text-gray-500">รูป</p>
+                <p className="text-xs font-semibold text-gray-500">สินค้า / ผู้ขอ</p>
                 <p className="text-xs font-semibold text-gray-500 text-right">สถานะ</p>
               </div>
               {allRequests.map((req) => (
-                <div key={req.id} className="grid grid-cols-[1fr_2fr_auto] gap-x-3 px-4 py-3 items-start">
-                  <div>
-                    <p className="text-xs font-semibold text-[#374151] truncate">{req.nickname}</p>
-                    <p className="text-[10px] text-gray-300 mt-0.5">{formatDateTime(req.created_at)}</p>
+                <div key={req.id} className="grid grid-cols-[40px_1fr_auto] gap-x-3 px-4 py-3 items-start">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#F5F6F8] flex items-center justify-center shrink-0">
+                    {req.image_data
+                      ? <img src={req.image_data} alt="สินค้า" className="w-full h-full object-cover" />
+                      : <span className="text-gray-300 text-xs">—</span>}
                   </div>
-                  <p className="text-xs text-[#374151] leading-relaxed">{req.description}</p>
+                  <div>
+                    <p className="text-xs font-semibold text-[#374151] leading-snug">{req.description}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{req.nickname} · {formatDateTime(req.created_at)}</p>
+                  </div>
                   <div className="flex justify-end">
                     {req.status === 'approved' ? (
                       <span className="inline-flex items-center bg-[#16A34A]/10 text-[#16A34A] text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">

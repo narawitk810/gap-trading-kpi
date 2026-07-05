@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const isPublic = searchParams.get('public') === 'true'
   if (isPublic) {
     const result = await db.execute(
-      `SELECT id, nickname, description, status, created_at, approved_at, rejected_reason
+      `SELECT id, nickname, description, image_data, status, created_at, approved_at, rejected_reason
        FROM product_requests
        ORDER BY created_at DESC
        LIMIT 200`
