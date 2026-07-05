@@ -454,6 +454,28 @@ export default function AdminDashboard() {
   const [newCreativeStaffRank, setNewCreativeStaffRank] = useState('1|Junior Creative|🥉')
   const [addingCreativeStaff, setAddingCreativeStaff] = useState(false)
   const [addCreativeStaffError, setAddCreativeStaffError] = useState('')
+  const [rankUnlocked, setRankUnlocked] = useState(() =>
+    typeof window !== 'undefined' && sessionStorage.getItem('rankUnlocked') === '1'
+  )
+  const [rankCodeInput, setRankCodeInput] = useState('')
+  const [rankCodeError, setRankCodeError] = useState('')
+
+  function handleUnlockRank() {
+    if (rankCodeInput === 'gap0000') {
+      sessionStorage.setItem('rankUnlocked', '1')
+      setRankUnlocked(true)
+      setRankCodeInput('')
+    } else {
+      setRankCodeError('รหัสไม่ถูกต้อง — กรุณาลองอีกครั้ง')
+    }
+  }
+
+  function handleLockRank() {
+    sessionStorage.removeItem('rankUnlocked')
+    setRankUnlocked(false)
+    setRankCodeInput('')
+    setRankCodeError('')
+  }
 
   async function handleAnalyze(entry: KPIEntry) {
     const base = BASE_RATES[entry.department]
@@ -2510,10 +2532,36 @@ export default function AdminDashboard() {
       )}
 
       {/* ปรับตำแหน่ง Tab */}
-      {activeTab === 'adjust-rank' && (
+      {activeTab === 'adjust-rank' && !rankUnlocked && (
+        <div className="max-w-sm mx-auto px-4 py-16 flex flex-col items-center gap-4">
+          <div className="w-14 h-14 bg-[#1E3A5F] rounded-2xl flex items-center justify-center text-2xl">🔒</div>
+          <p className="font-bold text-[#1E3A5F] text-lg">กรอกรหัสเพื่อปรับตำแหน่ง</p>
+          <input
+            type="password"
+            value={rankCodeInput}
+            onChange={(e) => { setRankCodeInput(e.target.value); setRankCodeError('') }}
+            onKeyDown={(e) => e.key === 'Enter' && handleUnlockRank()}
+            placeholder="รหัสผ่าน"
+            className="w-full border border-[#E2E8F0] rounded-xl px-4 py-3 text-center text-lg tracking-widest focus:outline-none focus:border-[#1E3A5F]"
+          />
+          {rankCodeError && <p className="text-xs text-[#DC2626]">{rankCodeError}</p>}
+          <button
+            onClick={handleUnlockRank}
+            className="w-full bg-[#1E3A5F] text-white rounded-xl py-3 font-semibold text-sm hover:bg-[#16305A] transition-colors"
+          >
+            ยืนยัน
+          </button>
+        </div>
+      )}
+      {activeTab === 'adjust-rank' && rankUnlocked && (
         <div className="max-w-6xl mx-auto px-4 pb-10 space-y-4">
+          <div className="flex justify-end pt-4">
+            <button onClick={handleLockRank} className="text-xs text-gray-400 hover:text-[#DC2626] transition-colors">
+              🔒 ล็อคอีกครั้ง
+            </button>
+          </div>
           {/* Department toggle */}
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2">
             {(['ไลฟ์สด', 'Creative'] as const).map((dept) => (
               <button
                 key={dept}
