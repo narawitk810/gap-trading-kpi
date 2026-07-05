@@ -2,7 +2,8 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const g = globalThis as unknown as { db: Client | undefined; dbReady: boolean }
+const SCHEMA_VERSION = 2
+const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
   const url = process.env.TURSO_DATABASE_URL
@@ -20,13 +21,13 @@ function createDb(): Client {
 export function getDb(): Client {
   if (!g.db) {
     g.db = createDb()
-    g.dbReady = false
+    g.dbVersion = 0
   }
   return g.db
 }
 
 export async function ensureSchema(): Promise<void> {
-  if (g.dbReady) return
+  if (g.dbVersion >= SCHEMA_VERSION) return
   const db = getDb()
   await db.execute(`
     CREATE TABLE IF NOT EXISTS kpi_entries (
@@ -322,39 +323,45 @@ export async function ensureSchema(): Promise<void> {
       created_at TEXT NOT NULL
     )
   `)
+  try {
+    await db.execute(`ALTER TABLE live_staff ADD COLUMN department TEXT NOT NULL DEFAULT 'ไลฟ์สด'`)
+  } catch { /* column already exists */ }
 
   {
     const now = new Date().toISOString()
-    const seed = [
-      ['ls-001', 'เอิร์น', 'Junior Live Sales', '🥉', 1],
-      ['ls-002', 'ต้น', 'Junior Live Sales', '🥉', 1],
-      ['ls-003', 'อาลีฟ', 'Junior Live Sales', '🥉', 1],
-      ['ls-004', 'มัส', 'Junior Live Sales', '🥉', 1],
-      ['ls-005', 'เดียร์', 'Junior Live Sales', '🥉', 1],
-      ['ls-006', 'กันต์', 'Live Sales', '🥈', 2],
-      ['ls-007', 'คิง', 'Live Sales', '🥈', 2],
-      ['ls-008', 'จ๊าบ', 'Live Sales', '🥈', 2],
-      ['ls-009', 'แบม', 'Live Sales', '🥈', 2],
-      ['ls-010', 'เฉิน', 'Live Sales', '🥈', 2],
-      ['ls-011', 'ขวัญ', 'Senior Live Sales', '🥇', 3],
-      ['ls-012', 'จ๊ะ', 'Senior Live Sales', '🥇', 3],
-      ['ls-013', 'เลย์', 'Senior Live Sales', '🥇', 3],
-      ['ls-014', 'ไข่เจีย', 'Senior Live Sales', '🥇', 3],
-      ['ls-015', 'มายด์', 'Senior Live Sales', '🥇', 3],
-      ['ls-016', 'เก็ท', 'Senior Live Sales', '🥇', 3],
-      ['ls-017', 'นีล', 'Expert Live Sales', '🏅', 4],
-      ['ls-018', 'หนิง', 'Expert Live Sales', '🏅', 4],
-      ['ls-019', 'บิว', 'Expert Live Sales', '🏅', 4],
-    ] as const
-    for (const [id, name, rank_name, rank_emoji, rank_order] of seed) {
+    const seed: [string, string, string, string, number, string][] = [
+      ['ls-001', 'เอิร์น', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
+      ['ls-002', 'ต้น', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
+      ['ls-003', 'อาลีฟ', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
+      ['ls-004', 'มัส', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
+      ['ls-005', 'เดียร์', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
+      ['ls-006', 'กันต์', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
+      ['ls-007', 'คิง', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
+      ['ls-008', 'จ๊าบ', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
+      ['ls-009', 'แบม', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
+      ['ls-010', 'เฉิน', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
+      ['ls-011', 'ขวัญ', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
+      ['ls-012', 'จ๊ะ', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
+      ['ls-013', 'เลย์', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
+      ['ls-014', 'ไข่เจีย', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
+      ['ls-015', 'มายด์', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
+      ['ls-016', 'เก็ท', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
+      ['ls-017', 'นีล', 'Expert Live Sales', '🏅', 4, 'ไลฟ์สด'],
+      ['ls-018', 'หนิง', 'Expert Live Sales', '🏅', 4, 'ไลฟ์สด'],
+      ['ls-019', 'บิว', 'Expert Live Sales', '🏅', 4, 'ไลฟ์สด'],
+      ['cs-001', 'เฟรม', 'Junior Creative', '🥉', 1, 'Creative'],
+      ['cs-002', 'ไทด์', 'Creative', '🥈', 2, 'Creative'],
+      ['cs-003', 'แก๊ง', 'Senior Creative', '🥇', 3, 'Creative'],
+    ]
+    for (const [id, name, rank_name, rank_emoji, rank_order, department] of seed) {
       await db.execute({
-        sql: 'INSERT OR IGNORE INTO live_staff (id, name, rank_name, rank_emoji, rank_order, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        args: [id, name, rank_name, rank_emoji, rank_order, now],
+        sql: 'INSERT OR IGNORE INTO live_staff (id, name, rank_name, rank_emoji, rank_order, department, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        args: [id, name, rank_name, rank_emoji, rank_order, department, now],
       })
     }
   }
 
-  g.dbReady = true
+  g.dbVersion = SCHEMA_VERSION
 }
 
 export function generateId(): string {

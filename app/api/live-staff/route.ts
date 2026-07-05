@@ -3,10 +3,14 @@ import { getDb, ensureSchema } from '@/lib/db'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   await ensureSchema()
   const db = getDb()
-  const result = await db.execute('SELECT * FROM live_staff ORDER BY rank_order, name')
+  const url = new URL(req.url)
+  const department = url.searchParams.get('department')
+  const result = department
+    ? await db.execute({ sql: 'SELECT * FROM live_staff WHERE department = ? ORDER BY rank_order, name', args: [department] })
+    : await db.execute('SELECT * FROM live_staff ORDER BY department, rank_order, name')
   return NextResponse.json({ staff: result.rows })
 }
 
@@ -18,21 +22,22 @@ export async function POST(req: NextRequest) {
   await ensureSchema()
   const db = getDb()
   const body = await req.json()
-  const { name, rank_name, rank_emoji, rank_order } = body
+  const { name, rank_name, rank_emoji, rank_order, department = 'ไลฟ์สด' } = body
   if (!name?.trim() || !rank_name || !rank_emoji || rank_order === undefined) {
     return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
   }
-  const id = `ls-${Date.now()}`
+  const prefix = department === 'Creative' ? 'cs' : 'ls'
+  const id = `${prefix}-${Date.now()}`
   const now = new Date().toISOString()
   try {
     await db.execute({
-      sql: 'INSERT INTO live_staff (id, name, rank_name, rank_emoji, rank_order, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [id, name.trim(), rank_name, rank_emoji, Number(rank_order), now],
+      sql: 'INSERT INTO live_staff (id, name, rank_name, rank_emoji, rank_order, department, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      args: [id, name.trim(), rank_name, rank_emoji, Number(rank_order), department, now],
     })
   } catch {
     return NextResponse.json({ error: 'ชื่อนี้มีอยู่แล้ว' }, { status: 409 })
   }
-  return NextResponse.json({ ok: true, staff: { id, name: name.trim(), rank_name, rank_emoji, rank_order: Number(rank_order), created_at: now } })
+  return NextResponse.json({ ok: true, staff: { id, name: name.trim(), rank_name, rank_emoji, rank_order: Number(rank_order), department, created_at: now } })
 }
 
 export async function PATCH(req: NextRequest) {

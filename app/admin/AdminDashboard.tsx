@@ -400,7 +400,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'live-staff'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -445,6 +445,15 @@ export default function AdminDashboard() {
   const [newStaffRank, setNewStaffRank] = useState('1|Junior Live Sales|🥉')
   const [addingStaff, setAddingStaff] = useState(false)
   const [addStaffError, setAddStaffError] = useState('')
+  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative'>('ไลฟ์สด')
+  const [creativeStaff, setCreativeStaff] = useState<LiveStaffMember[]>([])
+  const [loadingCreativeStaff, setLoadingCreativeStaff] = useState(false)
+  const [savingCreativeRankId, setSavingCreativeRankId] = useState<string | null>(null)
+  const [creativeRankSavedId, setCreativeRankSavedId] = useState<string | null>(null)
+  const [newCreativeStaffName, setNewCreativeStaffName] = useState('')
+  const [newCreativeStaffRank, setNewCreativeStaffRank] = useState('1|Junior Creative|🥉')
+  const [addingCreativeStaff, setAddingCreativeStaff] = useState(false)
+  const [addCreativeStaffError, setAddCreativeStaffError] = useState('')
 
   async function handleAnalyze(entry: KPIEntry) {
     const base = BASE_RATES[entry.department]
@@ -810,13 +819,25 @@ export default function AdminDashboard() {
   const fetchLiveStaff = useCallback(async () => {
     setLoadingLiveStaff(true)
     try {
-      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`)
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}&department=ไลฟ์สด`)
       if (res.ok) {
         const data = await res.json()
         setLiveStaff(data.staff || [])
       }
     } catch { /* silent */ }
     finally { setLoadingLiveStaff(false) }
+  }, [])
+
+  const fetchCreativeStaff = useCallback(async () => {
+    setLoadingCreativeStaff(true)
+    try {
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}&department=Creative`)
+      if (res.ok) {
+        const data = await res.json()
+        setCreativeStaff(data.staff || [])
+      }
+    } catch { /* silent */ }
+    finally { setLoadingCreativeStaff(false) }
   }, [])
 
   const fetchEquipment = useCallback(async () => {
@@ -1074,14 +1095,14 @@ export default function AdminDashboard() {
             รหัสแผนก
           </button>
           <button
-            onClick={() => { setActiveTab('live-staff'); fetchLiveStaff() }}
+            onClick={() => { setActiveTab('adjust-rank'); fetchLiveStaff(); fetchCreativeStaff() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
-              activeTab === 'live-staff'
+              activeTab === 'adjust-rank'
                 ? 'bg-white text-[#1E3A5F]'
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
-            ไลฟ์สด
+            ปรับตำแหน่ง
           </button>
         </div>
       </div>
@@ -2488,136 +2509,287 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* ไลฟ์สด Tab */}
-      {activeTab === 'live-staff' && (
-        <div className="max-w-6xl mx-auto px-4 pb-10">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-[#E2E8F0]">
-              <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศไลฟ์สด</h2>
-              <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงานไลฟ์แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
-            </div>
-            <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
-              <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
-              <div className="flex gap-2 flex-wrap items-start">
-                <input
-                  type="text"
-                  placeholder="ชื่อเล่น"
-                  value={newStaffName}
-                  onChange={(e) => { setNewStaffName(e.target.value); setAddStaffError('') }}
-                  className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white w-32 focus:outline-none focus:border-[#1E3A5F]"
-                />
-                <select
-                  value={newStaffRank}
-                  onChange={(e) => setNewStaffRank(e.target.value)}
-                  className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
-                >
-                  <option value="1|Junior Live Sales|🥉">🥉 Junior Live Sales</option>
-                  <option value="2|Live Sales|🥈">🥈 Live Sales</option>
-                  <option value="3|Senior Live Sales|🥇">🥇 Senior Live Sales</option>
-                  <option value="4|Expert Live Sales|🏅">🏅 Expert Live Sales</option>
-                  <option value="5|Master Live Sales|🏆">🏆 Master Live Sales</option>
-                  <option value="6|Elite Live Sales|💠">💠 Elite Live Sales</option>
-                  <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
-                  <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
-                </select>
-                <button
-                  disabled={addingStaff || !newStaffName.trim()}
-                  onClick={async () => {
-                    const parts = newStaffRank.split('|')
-                    setAddingStaff(true)
-                    setAddStaffError('')
-                    try {
-                      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: newStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2] }),
-                      })
-                      const data = await res.json()
-                      if (res.ok) {
-                        setLiveStaff((prev) => [...prev, data.staff].sort((a, b) => a.rank_order - b.rank_order || a.name.localeCompare(b.name, 'th')))
-                        setNewStaffName('')
-                      } else {
-                        setAddStaffError(data.error || 'เพิ่มไม่สำเร็จ')
-                      }
-                    } catch { setAddStaffError('เกิดข้อผิดพลาด') }
-                    finally { setAddingStaff(false) }
-                  }}
-                  className="px-4 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
-                >
-                  {addingStaff ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
-                </button>
-              </div>
-              {addStaffError && <p className="text-[#DC2626] text-xs mt-1.5">{addStaffError}</p>}
-            </div>
-            {loadingLiveStaff ? (
-              <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
-            ) : liveStaff.length === 0 ? (
-              <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
-                    <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
-                    <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
-                    <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
-                    <th className="px-5 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {liveStaff.map((s, i) => (
-                    <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                      <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.name}</td>
-                      <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
-                      <td className="px-5 py-3">
-                        <select
-                          value={`${s.rank_order}|${s.rank_name}|${s.rank_emoji}`}
-                          disabled={savingRankId === s.id}
-                          onChange={async (e) => {
-                            const parts = e.target.value.split('|')
-                            const newOrder = Number(parts[0])
-                            const newName = parts[1]
-                            const newEmoji = parts[2]
-                            setSavingRankId(s.id)
-                            try {
-                              const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: s.id, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder }),
-                              })
-                              if (res.ok) {
-                                setLiveStaff((prev) =>
-                                  prev.map((x) => x.id === s.id ? { ...x, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder } : x)
-                                )
-                                setRankSavedId(s.id)
-                                setTimeout(() => setRankSavedId((prev) => prev === s.id ? null : prev), 2000)
-                              } else {
-                                alert('บันทึกไม่สำเร็จ')
-                              }
-                            } catch { alert('เกิดข้อผิดพลาด') }
-                            finally { setSavingRankId(null) }
-                          }}
-                          className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white disabled:opacity-60"
-                        >
-                          <option value="1|Junior Live Sales|🥉">🥉 Junior Live Sales</option>
-                          <option value="2|Live Sales|🥈">🥈 Live Sales</option>
-                          <option value="3|Senior Live Sales|🥇">🥇 Senior Live Sales</option>
-                          <option value="4|Expert Live Sales|🏅">🏅 Expert Live Sales</option>
-                          <option value="5|Master Live Sales|🏆">🏆 Master Live Sales</option>
-                          <option value="6|Elite Live Sales|💠">💠 Elite Live Sales</option>
-                          <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
-                          <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
-                        </select>
-                      </td>
-                      <td className="px-5 py-3 text-right w-24">
-                        {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
-                        {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+      {/* ปรับตำแหน่ง Tab */}
+      {activeTab === 'adjust-rank' && (
+        <div className="max-w-6xl mx-auto px-4 pb-10 space-y-4">
+          {/* Department toggle */}
+          <div className="flex gap-2 pt-4">
+            {(['ไลฟ์สด', 'Creative'] as const).map((dept) => (
+              <button
+                key={dept}
+                onClick={() => setAdjustRankDept(dept)}
+                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  adjustRankDept === dept
+                    ? 'bg-[#1E3A5F] text-white'
+                    : 'bg-white text-[#374151] border border-[#E2E8F0] hover:border-[#1E3A5F]'
+                }`}
+              >
+                {dept === 'ไลฟ์สด' ? 'ปรับตำแหน่ง' : dept}
+              </button>
+            ))}
           </div>
+
+          {/* ไลฟ์สด section */}
+          {adjustRankDept === 'ไลฟ์สด' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศไลฟ์สด</h2>
+                <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงานไลฟ์แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
+                <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
+                <div className="flex gap-2 flex-wrap items-start">
+                  <input
+                    type="text"
+                    placeholder="ชื่อเล่น"
+                    value={newStaffName}
+                    onChange={(e) => { setNewStaffName(e.target.value); setAddStaffError('') }}
+                    className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white w-32 focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                  <select
+                    value={newStaffRank}
+                    onChange={(e) => setNewStaffRank(e.target.value)}
+                    className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
+                  >
+                    <option value="1|Junior Live Sales|🥉">🥉 Junior Live Sales</option>
+                    <option value="2|Live Sales|🥈">🥈 Live Sales</option>
+                    <option value="3|Senior Live Sales|🥇">🥇 Senior Live Sales</option>
+                    <option value="4|Expert Live Sales|🏅">🏅 Expert Live Sales</option>
+                    <option value="5|Master Live Sales|🏆">🏆 Master Live Sales</option>
+                    <option value="6|Elite Live Sales|💠">💠 Elite Live Sales</option>
+                    <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
+                    <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
+                  </select>
+                  <button
+                    disabled={addingStaff || !newStaffName.trim()}
+                    onClick={async () => {
+                      const parts = newStaffRank.split('|')
+                      setAddingStaff(true)
+                      setAddStaffError('')
+                      try {
+                        const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: newStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2], department: 'ไลฟ์สด' }),
+                        })
+                        const data = await res.json()
+                        if (res.ok) {
+                          setLiveStaff((prev) => [...prev, data.staff].sort((a, b) => a.rank_order - b.rank_order || a.name.localeCompare(b.name, 'th')))
+                          setNewStaffName('')
+                        } else {
+                          setAddStaffError(data.error || 'เพิ่มไม่สำเร็จ')
+                        }
+                      } catch { setAddStaffError('เกิดข้อผิดพลาด') }
+                      finally { setAddingStaff(false) }
+                    }}
+                    className="px-4 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    {addingStaff ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
+                  </button>
+                </div>
+                {addStaffError && <p className="text-[#DC2626] text-xs mt-1.5">{addStaffError}</p>}
+              </div>
+              {loadingLiveStaff ? (
+                <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+              ) : liveStaff.length === 0 ? (
+                <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
+                      <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
+                      <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
+                      <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="px-5 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {liveStaff.map((s, i) => (
+                      <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.name}</td>
+                        <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
+                        <td className="px-5 py-3">
+                          <select
+                            value={`${s.rank_order}|${s.rank_name}|${s.rank_emoji}`}
+                            disabled={savingRankId === s.id}
+                            onChange={async (e) => {
+                              const parts = e.target.value.split('|')
+                              const newOrder = Number(parts[0])
+                              const newName = parts[1]
+                              const newEmoji = parts[2]
+                              setSavingRankId(s.id)
+                              try {
+                                const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: s.id, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder }),
+                                })
+                                if (res.ok) {
+                                  setLiveStaff((prev) =>
+                                    prev.map((x) => x.id === s.id ? { ...x, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder } : x)
+                                  )
+                                  setRankSavedId(s.id)
+                                  setTimeout(() => setRankSavedId((prev) => prev === s.id ? null : prev), 2000)
+                                } else {
+                                  alert('บันทึกไม่สำเร็จ')
+                                }
+                              } catch { alert('เกิดข้อผิดพลาด') }
+                              finally { setSavingRankId(null) }
+                            }}
+                            className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white disabled:opacity-60"
+                          >
+                            <option value="1|Junior Live Sales|🥉">🥉 Junior Live Sales</option>
+                            <option value="2|Live Sales|🥈">🥈 Live Sales</option>
+                            <option value="3|Senior Live Sales|🥇">🥇 Senior Live Sales</option>
+                            <option value="4|Expert Live Sales|🏅">🏅 Expert Live Sales</option>
+                            <option value="5|Master Live Sales|🏆">🏆 Master Live Sales</option>
+                            <option value="6|Elite Live Sales|💠">💠 Elite Live Sales</option>
+                            <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
+                            <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
+                          </select>
+                        </td>
+                        <td className="px-5 py-3 text-right w-24">
+                          {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
+                          {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* Creative section */}
+          {adjustRankDept === 'Creative' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศ Creative</h2>
+                <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงาน Creative แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
+                <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
+                <div className="flex gap-2 flex-wrap items-start">
+                  <input
+                    type="text"
+                    placeholder="ชื่อเล่น"
+                    value={newCreativeStaffName}
+                    onChange={(e) => { setNewCreativeStaffName(e.target.value); setAddCreativeStaffError('') }}
+                    className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white w-32 focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                  <select
+                    value={newCreativeStaffRank}
+                    onChange={(e) => setNewCreativeStaffRank(e.target.value)}
+                    className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
+                  >
+                    <option value="1|Junior Creative|🥉">🥉 Junior Creative</option>
+                    <option value="2|Creative|🥈">🥈 Creative</option>
+                    <option value="3|Senior Creative|🥇">🥇 Senior Creative</option>
+                    <option value="4|Expert Creative|🏅">🏅 Expert Creative</option>
+                    <option value="5|Master Creative|🏆">🏆 Master Creative</option>
+                    <option value="6|Elite Creative|💠">💠 Elite Creative</option>
+                    <option value="7|Legend Creative|💎">💎 Legend Creative</option>
+                    <option value="8|Grandmaster Creative|👑">👑 Grandmaster Creative</option>
+                  </select>
+                  <button
+                    disabled={addingCreativeStaff || !newCreativeStaffName.trim()}
+                    onClick={async () => {
+                      const parts = newCreativeStaffRank.split('|')
+                      setAddingCreativeStaff(true)
+                      setAddCreativeStaffError('')
+                      try {
+                        const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: newCreativeStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2], department: 'Creative' }),
+                        })
+                        const data = await res.json()
+                        if (res.ok) {
+                          setCreativeStaff((prev) => [...prev, data.staff].sort((a, b) => a.rank_order - b.rank_order || a.name.localeCompare(b.name, 'th')))
+                          setNewCreativeStaffName('')
+                        } else {
+                          setAddCreativeStaffError(data.error || 'เพิ่มไม่สำเร็จ')
+                        }
+                      } catch { setAddCreativeStaffError('เกิดข้อผิดพลาด') }
+                      finally { setAddingCreativeStaff(false) }
+                    }}
+                    className="px-4 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    {addingCreativeStaff ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
+                  </button>
+                </div>
+                {addCreativeStaffError && <p className="text-[#DC2626] text-xs mt-1.5">{addCreativeStaffError}</p>}
+              </div>
+              {loadingCreativeStaff ? (
+                <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+              ) : creativeStaff.length === 0 ? (
+                <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
+                      <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
+                      <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
+                      <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="px-5 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {creativeStaff.map((s, i) => (
+                      <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.name}</td>
+                        <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
+                        <td className="px-5 py-3">
+                          <select
+                            value={`${s.rank_order}|${s.rank_name}|${s.rank_emoji}`}
+                            disabled={savingCreativeRankId === s.id}
+                            onChange={async (e) => {
+                              const parts = e.target.value.split('|')
+                              const newOrder = Number(parts[0])
+                              const newName = parts[1]
+                              const newEmoji = parts[2]
+                              setSavingCreativeRankId(s.id)
+                              try {
+                                const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: s.id, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder }),
+                                })
+                                if (res.ok) {
+                                  setCreativeStaff((prev) =>
+                                    prev.map((x) => x.id === s.id ? { ...x, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder } : x)
+                                  )
+                                  setCreativeRankSavedId(s.id)
+                                  setTimeout(() => setCreativeRankSavedId((prev) => prev === s.id ? null : prev), 2000)
+                                } else {
+                                  alert('บันทึกไม่สำเร็จ')
+                                }
+                              } catch { alert('เกิดข้อผิดพลาด') }
+                              finally { setSavingCreativeRankId(null) }
+                            }}
+                            className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white disabled:opacity-60"
+                          >
+                            <option value="1|Junior Creative|🥉">🥉 Junior Creative</option>
+                            <option value="2|Creative|🥈">🥈 Creative</option>
+                            <option value="3|Senior Creative|🥇">🥇 Senior Creative</option>
+                            <option value="4|Expert Creative|🏅">🏅 Expert Creative</option>
+                            <option value="5|Master Creative|🏆">🏆 Master Creative</option>
+                            <option value="6|Elite Creative|💠">💠 Elite Creative</option>
+                            <option value="7|Legend Creative|💎">💎 Legend Creative</option>
+                            <option value="8|Grandmaster Creative|👑">👑 Grandmaster Creative</option>
+                          </select>
+                        </td>
+                        <td className="px-5 py-3 text-right w-24">
+                          {savingCreativeRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
+                          {creativeRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
         </div>
       )}
 
