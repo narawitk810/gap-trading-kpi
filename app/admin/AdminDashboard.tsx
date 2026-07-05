@@ -2760,20 +2760,22 @@ export default function AdminDashboard() {
             </button>
           </div>
           {/* Department toggle */}
-          <div className="flex gap-2">
-            {(['ไลฟ์สด', 'Creative', 'การตลาด', 'Sales Admin', 'Store Retail', 'สต๊อค&จัดซื้อ', 'แพค', 'บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'ผู้จัดการไลฟ์สด'] as const).map((dept) => (
-              <button
-                key={dept}
-                onClick={() => setAdjustRankDept(dept)}
-                className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                  adjustRankDept === dept
-                    ? 'bg-[#1E3A5F] text-white'
-                    : 'bg-white text-[#374151] border border-[#E2E8F0] hover:border-[#1E3A5F]'
-                }`}
-              >
-                {dept === 'ไลฟ์สด' ? 'Sales ไลฟ์สด' : dept}
-              </button>
-            ))}
+          <div className="overflow-x-auto pb-1">
+            <div className="flex gap-2">
+              {(['ไลฟ์สด', 'Creative', 'การตลาด', 'Sales Admin', 'Store Retail', 'สต๊อค&จัดซื้อ', 'แพค', 'บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'ผู้จัดการไลฟ์สด'] as const).map((dept) => (
+                <button
+                  key={dept}
+                  onClick={() => setAdjustRankDept(dept)}
+                  className={`px-5 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${
+                    adjustRankDept === dept
+                      ? 'bg-[#1E3A5F] text-white'
+                      : 'bg-white text-[#374151] border border-[#E2E8F0] hover:border-[#1E3A5F]'
+                  }`}
+                >
+                  {dept === 'ไลฟ์สด' ? 'Sales ไลฟ์สด' : dept}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* ไลฟ์สด section */}
