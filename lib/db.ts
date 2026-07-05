@@ -312,6 +312,48 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS live_staff (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL UNIQUE,
+      rank_name  TEXT NOT NULL,
+      rank_emoji TEXT NOT NULL,
+      rank_order INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL
+    )
+  `)
+
+  {
+    const now = new Date().toISOString()
+    const seed = [
+      ['ls-001', 'เอิร์น', 'Junior Live Sales', '🥉', 1],
+      ['ls-002', 'ต้น', 'Junior Live Sales', '🥉', 1],
+      ['ls-003', 'อาลีฟ', 'Junior Live Sales', '🥉', 1],
+      ['ls-004', 'มัส', 'Junior Live Sales', '🥉', 1],
+      ['ls-005', 'เดียร์', 'Junior Live Sales', '🥉', 1],
+      ['ls-006', 'กันต์', 'Live Sales', '🥈', 2],
+      ['ls-007', 'คิง', 'Live Sales', '🥈', 2],
+      ['ls-008', 'จ๊าบ', 'Live Sales', '🥈', 2],
+      ['ls-009', 'แบม', 'Live Sales', '🥈', 2],
+      ['ls-010', 'เฉิน', 'Live Sales', '🥈', 2],
+      ['ls-011', 'ขวัญ', 'Senior Live Sales', '🥇', 3],
+      ['ls-012', 'จ๊ะ', 'Senior Live Sales', '🥇', 3],
+      ['ls-013', 'เลย์', 'Senior Live Sales', '🥇', 3],
+      ['ls-014', 'ไข่เจีย', 'Senior Live Sales', '🥇', 3],
+      ['ls-015', 'มายด์', 'Senior Live Sales', '🥇', 3],
+      ['ls-016', 'เก็ท', 'Senior Live Sales', '🥇', 3],
+      ['ls-017', 'นีล', 'Expert Live Sales', '🏅', 4],
+      ['ls-018', 'หนิง', 'Expert Live Sales', '🏅', 4],
+      ['ls-019', 'บิว', 'Expert Live Sales', '🏅', 4],
+    ] as const
+    for (const [id, name, rank_name, rank_emoji, rank_order] of seed) {
+      await db.execute({
+        sql: 'INSERT OR IGNORE INTO live_staff (id, name, rank_name, rank_emoji, rank_order, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [id, name, rank_name, rank_emoji, rank_order, now],
+      })
+    }
+  }
+
   g.dbReady = true
 }
 

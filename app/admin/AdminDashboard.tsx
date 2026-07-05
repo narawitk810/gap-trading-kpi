@@ -140,6 +140,14 @@ type MeetingReport = {
   created_at: string
 }
 
+type LiveStaffMember = {
+  id: string
+  name: string
+  rank_name: string
+  rank_emoji: string
+  rank_order: number
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString('th-TH', {
@@ -392,7 +400,7 @@ export default function AdminDashboard() {
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'live-staff'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -429,6 +437,10 @@ export default function AdminDashboard() {
   const [acknowledgingEquipId, setAcknowledgingEquipId] = useState<string | null>(null)
   const [meetingReports, setMeetingReports] = useState<MeetingReport[]>([])
   const [loadingMeetings, setLoadingMeetings] = useState(false)
+  const [liveStaff, setLiveStaff] = useState<LiveStaffMember[]>([])
+  const [loadingLiveStaff, setLoadingLiveStaff] = useState(false)
+  const [savingRankId, setSavingRankId] = useState<string | null>(null)
+  const [rankSavedId, setRankSavedId] = useState<string | null>(null)
 
   async function handleAnalyze(entry: KPIEntry) {
     const base = BASE_RATES[entry.department]
@@ -791,6 +803,18 @@ export default function AdminDashboard() {
     finally { setLoadingMeetings(false) }
   }, [])
 
+  const fetchLiveStaff = useCallback(async () => {
+    setLoadingLiveStaff(true)
+    try {
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`)
+      if (res.ok) {
+        const data = await res.json()
+        setLiveStaff(data.staff || [])
+      }
+    } catch { /* silent */ }
+    finally { setLoadingLiveStaff(false) }
+  }, [])
+
   const fetchEquipment = useCallback(async () => {
     setLoadingEquipment(true)
     try {
@@ -1044,6 +1068,16 @@ export default function AdminDashboard() {
             }`}
           >
             รหัสแผนก
+          </button>
+          <button
+            onClick={() => { setActiveTab('live-staff'); fetchLiveStaff() }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'live-staff'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            ไลฟ์สด
           </button>
         </div>
       </div>
@@ -2440,6 +2474,86 @@ export default function AdminDashboard() {
                       <td className="px-5 py-3 text-center text-gray-500">{row.quarter}</td>
                       <td className="px-5 py-3 text-right text-gray-400 text-xs">
                         {new Date(row.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ไลฟ์สด Tab */}
+      {activeTab === 'live-staff' && (
+        <div className="max-w-6xl mx-auto px-4 pb-10">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#E2E8F0]">
+              <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศไลฟ์สด</h2>
+              <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงานไลฟ์แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+            </div>
+            {loadingLiveStaff ? (
+              <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : liveStaff.length === 0 ? (
+              <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
+                    <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
+                    <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
+                    <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                    <th className="px-5 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {liveStaff.map((s, i) => (
+                    <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
+                      <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.name}</td>
+                      <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
+                      <td className="px-5 py-3">
+                        <select
+                          value={`${s.rank_order}|${s.rank_name}|${s.rank_emoji}`}
+                          disabled={savingRankId === s.id}
+                          onChange={async (e) => {
+                            const parts = e.target.value.split('|')
+                            const newOrder = Number(parts[0])
+                            const newName = parts[1]
+                            const newEmoji = parts[2]
+                            setSavingRankId(s.id)
+                            try {
+                              const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: s.id, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder }),
+                              })
+                              if (res.ok) {
+                                setLiveStaff((prev) =>
+                                  prev.map((x) => x.id === s.id ? { ...x, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder } : x)
+                                )
+                                setRankSavedId(s.id)
+                                setTimeout(() => setRankSavedId((prev) => prev === s.id ? null : prev), 2000)
+                              } else {
+                                alert('บันทึกไม่สำเร็จ')
+                              }
+                            } catch { alert('เกิดข้อผิดพลาด') }
+                            finally { setSavingRankId(null) }
+                          }}
+                          className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white disabled:opacity-60"
+                        >
+                          <option value="1|Junior Live Sales|🥉">🥉 Junior Live Sales</option>
+                          <option value="2|Live Sales|🥈">🥈 Live Sales</option>
+                          <option value="3|Senior Live Sales|🥇">🥇 Senior Live Sales</option>
+                          <option value="4|Expert Live Sales|🏅">🏅 Expert Live Sales</option>
+                          <option value="5|Master Live Sales|🏆">🏆 Master Live Sales</option>
+                          <option value="6|Elite Live Sales|💠">💠 Elite Live Sales</option>
+                          <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
+                          <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
+                        </select>
+                      </td>
+                      <td className="px-5 py-3 text-right w-24">
+                        {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
+                        {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
                       </td>
                     </tr>
                   ))}

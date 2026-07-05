@@ -84,6 +84,14 @@ interface FormData {
 
 type PageState = 'form' | 'confirm' | 'submitting' | 'success'
 
+interface LiveStaffMember {
+  id: string
+  name: string
+  rank_name: string
+  rank_emoji: string
+  rank_order: number
+}
+
 function ConfirmRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -227,6 +235,15 @@ export default function Home() {
 
   const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
+  const [liveStaff, setLiveStaff] = useState<LiveStaffMember[]>([])
+
+  useEffect(() => {
+    if (formData.department !== 'ไลฟ์สด') return
+    fetch('/api/live-staff')
+      .then((r) => r.json())
+      .then((d) => setLiveStaff(d.staff || []))
+      .catch(() => {})
+  }, [formData.department])
 
   useEffect(() => {
     if (loadDraft()) setHasDraft(true)
@@ -285,7 +302,7 @@ export default function Home() {
     const e: Record<string, string> = {}
     if (!formData.department) e.department = 'กรุณาเลือกแผนก'
     if (!formData.date) e.date = 'กรุณาเลือกวันที่'
-    if (!formData.nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
+    if (!formData.nickname.trim()) e.nickname = formData.department === 'ไลฟ์สด' ? 'กรุณาเลือกชื่อ' : 'กรุณากรอกชื่อเล่น'
     if (CHANNEL_DEPTS.includes(formData.department) && formData.channelName.length === 0) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
@@ -591,17 +608,50 @@ export default function Home() {
 
         {/* Nickname + Channel */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-          <InputField label="ชื่อเล่น" required error={errors.nickname}>
-            <input
-              type="text"
-              value={formData.nickname}
-              onChange={(e) => {
-                setFormData((prev) => ({ ...prev, nickname: e.target.value }))
-                setErrors((prev) => ({ ...prev, nickname: '' }))
-              }}
-              placeholder="ชื่อเล่นของคุณ"
-              className={inputClass}
-            />
+          <InputField label={formData.department === 'ไลฟ์สด' ? 'เลือกชื่อ' : 'ชื่อเล่น'} required error={errors.nickname}>
+            {formData.department === 'ไลฟ์สด' ? (
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-[#E2E8F0]">
+                {liveStaff.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-gray-400">กำลังโหลด...</div>
+                ) : liveStaff.map((m, i) => {
+                  const isNewRank = i === 0 || liveStaff[i - 1].rank_order !== m.rank_order
+                  return (
+                    <div key={m.id}>
+                      {isNewRank && (
+                        <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 border-b border-[#E2E8F0] sticky top-0">
+                          {m.rank_emoji} {m.rank_name}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, nickname: m.name }))
+                          setErrors((prev) => ({ ...prev, nickname: '' }))
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm border-b border-[#E2E8F0] transition-colors ${
+                          formData.nickname === m.name
+                            ? 'bg-[#1E3A5F] text-white font-semibold'
+                            : 'text-[#374151] hover:bg-gray-50'
+                        }`}
+                      >
+                        {m.name}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <input
+                type="text"
+                value={formData.nickname}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, nickname: e.target.value }))
+                  setErrors((prev) => ({ ...prev, nickname: '' }))
+                }}
+                placeholder="ชื่อเล่นของคุณ"
+                className={inputClass}
+              />
+            )}
           </InputField>
           {formData.department === 'การตลาด' && (
             <InputField label="ช่องที่ ROI ต่ำกว่า 15" required error={errors.channelName}>
