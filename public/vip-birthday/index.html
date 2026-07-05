@@ -363,6 +363,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
       <div class="field"><label>เบอร์โทร <span class="required">*</span></label><input id="f-phone" type="tel" placeholder="08X-XXX-XXXX"></div>
       <div class="field"><label>อีเมล</label><input id="f-email" type="email" placeholder="example@email.com"></div>
       <div class="field"><label>LINE ID</label><input id="f-line" type="text" placeholder="@lineid"></div>
+      <div class="field"><label>TikTok Channel</label><input id="f-tiktok" type="text" placeholder="@tiktok"></div>
+      <div class="field"><label>ผู้ดูแล</label><input id="f-manager" type="text" placeholder="ชื่อพนักงานที่รับผิดชอบ"></div>
       <div class="field"><label>ที่อยู่จัดส่ง</label><textarea id="f-address" placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"></textarea></div>
       <div class="field"><label>ของขวัญที่ต้องการ</label>
         <div class="gift-opts" id="gift-opts">
@@ -567,6 +569,8 @@ function openAddSheet(editId) {
       document.getElementById('f-phone').value = v.phone||'';
       document.getElementById('f-email').value = v.email||'';
       document.getElementById('f-line').value = v.line||'';
+      document.getElementById('f-tiktok').value = v.tiktok||'';
+      document.getElementById('f-manager').value = v.manager||'';
       document.getElementById('f-address').value = v.address||'';
       document.getElementById('f-note').value = v.note||'';
       document.getElementById('f-day').value = v.day||'';
@@ -608,6 +612,8 @@ function saveVIP() {
     year: document.getElementById('f-year').value||'',
     phone, email: document.getElementById('f-email').value.trim(),
     line: document.getElementById('f-line').value.trim(),
+    tiktok: document.getElementById('f-tiktok').value.trim(),
+    manager: document.getElementById('f-manager').value.trim(),
     address: document.getElementById('f-address').value.trim(),
     note: document.getElementById('f-note').value.trim(),
     gifts: [...selectedGifts],
@@ -771,6 +777,8 @@ function openDetail(id) {
       ${v.phone?`<div class="detail-key">โทร</div><div class="detail-val"><a href="tel:${v.phone}" style="color:var(--purple)">${v.phone}</a></div>`:''}
       ${v.email?`<div class="detail-key">อีเมล</div><div class="detail-val" style="word-break:break-all">${v.email}</div>`:''}
       ${v.line?`<div class="detail-key">LINE</div><div class="detail-val">${v.line}</div>`:''}
+      ${v.tiktok?`<div class="detail-key">TikTok</div><div class="detail-val">${v.tiktok}</div>`:''}
+      ${v.manager?`<div class="detail-key">ผู้ดูแล</div><div class="detail-val">${v.manager}</div>`:''}
       ${v.address?`<div class="detail-key">ที่อยู่</div><div class="detail-val">${v.address}</div>`:''}
       ${v.gifts&&v.gifts.length?`<div class="detail-divider"></div><div class="detail-key">ของขวัญ</div><div class="detail-val">${v.gifts.map(g=>GIFT_LABELS[g]||g).join(', ')}</div>`:''}
       ${v.note?`<div class="detail-key">หมายเหตุ</div><div class="detail-val">${v.note}</div>`:''}
