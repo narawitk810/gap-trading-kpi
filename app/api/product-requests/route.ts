@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const isPublic = searchParams.get('public') === 'true'
   if (isPublic) {
     const result = await db.execute(
-      `SELECT id, nickname, description, status, created_at, approved_at
+      `SELECT id, nickname, description, status, created_at, approved_at, rejected_reason
        FROM product_requests
        ORDER BY created_at DESC
        LIMIT 200`
@@ -62,6 +62,19 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ id }, { status: 201 })
 }
 
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  if (searchParams.get('key') !== ADMIN_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const body = await request.json()
+  if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  await ensureSchema()
+  const db = getDb()
+  await db.execute({ sql: 'DELETE FROM product_requests WHERE id = ?', args: [body.id] })
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   if (searchParams.get('key') !== ADMIN_KEY) {
@@ -75,6 +88,14 @@ export async function PATCH(request: NextRequest) {
 
   await ensureSchema()
   const db = getDb()
+
+  if (body.action === 'reject') {
+    await db.execute({
+      sql: `UPDATE product_requests SET status = 'rejected', rejected_reason = ? WHERE id = ?`,
+      args: [body.reason || '', body.id],
+    })
+    return NextResponse.json({ ok: true })
+  }
 
   const now = new Date().toISOString()
   await db.execute({

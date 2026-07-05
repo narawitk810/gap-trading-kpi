@@ -57,6 +57,9 @@ export async function ensureSchema(): Promise<void> {
       approved_at TEXT
     )
   `)
+  try {
+    await db.execute(`ALTER TABLE product_requests ADD COLUMN rejected_reason TEXT`)
+  } catch { /* column already exists */ }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS complaints (

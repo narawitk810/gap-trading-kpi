@@ -48,6 +48,7 @@ type ProductRequest = {
   status: string
   created_at: string
   approved_at: string | null
+  rejected_reason: string | null
 }
 
 type Complaint = {
@@ -463,6 +464,10 @@ export default function AdminDashboard() {
   const [productRequests, setProductRequests] = useState<ProductRequest[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
   const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null)
+  const [rejectModal, setRejectModal] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [productImageModal, setProductImageModal] = useState<string | null>(null)
   const [complaints, setComplaints] = useState<Complaint[]>([])
   const [loadingComplaints, setLoadingComplaints] = useState(false)
   const [reviewingId, setReviewingId] = useState<string | null>(null)
@@ -517,6 +522,38 @@ export default function AdminDashboard() {
     } finally {
       setApprovingId(null)
     }
+  }
+
+  async function handleDeleteRequest(id: string) {
+    if (!confirm('ยืนยันลบคำขอนี้?')) return
+    setDeletingRequestId(id)
+    try {
+      const res = await fetch(`/api/product-requests?key=${ADMIN_KEY}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) setProductRequests((prev) => prev.filter((r) => r.id !== id))
+      else alert('เกิดข้อผิดพลาด')
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setDeletingRequestId(null) }
+  }
+
+  async function handleRejectRequest(id: string, reason: string) {
+    try {
+      const res = await fetch(`/api/product-requests?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'reject', reason }),
+      })
+      if (res.ok) {
+        setProductRequests((prev) =>
+          prev.map((r) => r.id === id ? { ...r, status: 'rejected', rejected_reason: reason } : r)
+        )
+        setRejectModal(null)
+        setRejectReason('')
+      } else alert('เกิดข้อผิดพลาด')
+    } catch { alert('เกิดข้อผิดพลาด') }
   }
 
   const fetchComplaints = useCallback(async () => {
@@ -1213,7 +1250,7 @@ export default function AdminDashboard() {
 
       {/* Product Requests Tab */}
       {activeTab === 'requests' && (
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
           {loadingRequests ? (
             <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
           ) : productRequests.length === 0 ? (
@@ -1221,48 +1258,131 @@ export default function AdminDashboard() {
               ยังไม่มีคำขอสินค้า
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {productRequests.map((req) => (
-                <div key={req.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  {req.image_data && (
-                    <img
-                      src={req.image_data}
-                      alt="สินค้า"
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-[#1E3A5F] text-sm">{req.nickname}</p>
-                        <p className="text-xs text-gray-400">{formatDateTime(req.created_at)}</p>
-                      </div>
-                      {req.status === 'approved' ? (
-                        <span className="shrink-0 inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2.5 py-1 rounded-full">
-                          ✅ อนุมัติแล้ว
-                        </span>
-                      ) : (
-                        <span className="shrink-0 inline-flex items-center gap-1 bg-amber-50 text-amber-600 text-xs font-bold px-2.5 py-1 rounded-full">
-                          🟡 รอดำเนินการ
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-[#374151]">{req.description}</p>
-                    {req.approved_at && (
-                      <p className="text-xs text-[#16A34A]">อนุมัติเมื่อ {formatDateTime(req.approved_at)}</p>
-                    )}
-                    {req.status === 'pending' && (
-                      <button
-                        onClick={() => handleApprove(req.id)}
-                        disabled={approvingId === req.id}
-                        className="w-full mt-1 bg-[#16A34A] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-[#15803d] disabled:opacity-60 transition-colors"
-                      >
-                        {approvingId === req.id ? 'กำลังอนุมัติ...' : 'อนุมัติ'}
-                      </button>
-                    )}
-                  </div>
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[720px]">
+                  <thead>
+                    <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                      <th className="text-left px-4 py-3">วันที่</th>
+                      <th className="text-left px-4 py-3">ชื่อเล่น</th>
+                      <th className="text-left px-4 py-3">รายละเอียดสินค้า</th>
+                      <th className="text-center px-4 py-3">สถานะ</th>
+                      <th className="text-center px-4 py-3">รูป</th>
+                      <th className="text-center px-4 py-3">การดำเนินการ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productRequests.map((req, idx) => (
+                      <tr key={req.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                        <td className="px-4 py-3 whitespace-nowrap text-gray-600 text-xs">
+                          <div>{formatDateTime(req.created_at).split(' ')[0]}</div>
+                          <div className="text-gray-400">{formatDateTime(req.created_at).split(' ').slice(1).join(' ')}</div>
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-[#374151] text-xs whitespace-nowrap">{req.nickname}</td>
+                        <td className="px-4 py-3 text-[#374151] text-xs max-w-[220px]">
+                          <span className="block">{req.description}</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            {req.status === 'approved' ? (
+                              <span className="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap bg-[#16A34A]/10 text-[#16A34A]">อนุมัติแล้ว</span>
+                            ) : req.status === 'rejected' ? (
+                              <span className="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap bg-[#DC2626]/10 text-[#DC2626]">ไม่อนุมัติ</span>
+                            ) : (
+                              <span className="text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap bg-yellow-50 text-yellow-700">รอดำเนินการ</span>
+                            )}
+                            {req.status === 'rejected' && req.rejected_reason && (
+                              <span className="text-[10px] text-gray-400 max-w-[120px] text-center leading-tight">{req.rejected_reason}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {req.image_data && (
+                            <img
+                              src={req.image_data}
+                              alt="สินค้า"
+                              onClick={() => setProductImageModal(req.image_data)}
+                              className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                            />
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {req.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(req.id)}
+                                  disabled={approvingId === req.id}
+                                  className="bg-[#16A34A] text-white px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#15803d] disabled:opacity-60"
+                                >
+                                  {approvingId === req.id ? '...' : 'อนุมัติ'}
+                                </button>
+                                <button
+                                  onClick={() => { setRejectModal(req.id); setRejectReason('') }}
+                                  className="bg-red-50 text-[#DC2626] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-red-100"
+                                >
+                                  ไม่อนุมัติ
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => handleDeleteRequest(req.id)}
+                              disabled={deletingRequestId === req.id}
+                              className="border border-[#E2E8F0] text-gray-400 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 disabled:opacity-60"
+                            >
+                              {deletingRequestId === req.id ? '...' : 'ลบ'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Reject reason modal */}
+          {rejectModal && (
+            <div
+              className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+              onClick={(e) => { if (e.target === e.currentTarget) { setRejectModal(null); setRejectReason('') } }}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+                <h2 className="font-bold text-[#1E3A5F] text-base">ระบุเหตุผลที่ไม่อนุมัติ</h2>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                  placeholder="เช่น สินค้าหมดสต็อก / ไม่อยู่ในแผน..."
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#DC2626] resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setRejectModal(null); setRejectReason('') }}
+                    className="flex-1 border border-[#E2E8F0] text-gray-500 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5F6F8]"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    onClick={() => handleRejectRequest(rejectModal, rejectReason)}
+                    disabled={!rejectReason.trim()}
+                    className="flex-1 bg-[#DC2626] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+                  >
+                    ยืนยันไม่อนุมัติ
+                  </button>
                 </div>
-              ))}
+              </div>
+            </div>
+          )}
+
+          {/* Product image modal */}
+          {productImageModal && (
+            <div
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={() => setProductImageModal(null)}
+            >
+              <img src={productImageModal} alt="สินค้า" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl" />
             </div>
           )}
         </div>

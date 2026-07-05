@@ -12,6 +12,7 @@ type ProductRequest = {
   status: string
   created_at: string
   approved_at: string | null
+  rejected_reason: string | null
 }
 
 function formatDateTime(iso: string) {
@@ -29,6 +30,7 @@ type PublicProductRequest = {
   status: string
   created_at: string
   approved_at: string | null
+  rejected_reason: string | null
 }
 
 function StatusContent() {
@@ -137,6 +139,10 @@ function StatusContent() {
                           <span className="shrink-0 inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2.5 py-1 rounded-full">
                             ✅ อนุมัติแล้ว
                           </span>
+                        ) : req.status === 'rejected' ? (
+                          <span className="shrink-0 inline-flex items-center gap-1 bg-[#DC2626]/10 text-[#DC2626] text-xs font-bold px-2.5 py-1 rounded-full">
+                            ❌ ไม่อนุมัติ
+                          </span>
                         ) : (
                           <span className="shrink-0 inline-flex items-center gap-1 bg-amber-50 text-amber-600 text-xs font-bold px-2.5 py-1 rounded-full">
                             🟡 รอดำเนินการ
@@ -147,6 +153,11 @@ function StatusContent() {
                       {req.approved_at && (
                         <p className="text-xs text-[#16A34A] mt-0.5">
                           อนุมัติเมื่อ {formatDateTime(req.approved_at)}
+                        </p>
+                      )}
+                      {req.status === 'rejected' && req.rejected_reason && (
+                        <p className="text-xs text-[#DC2626] mt-0.5">
+                          เหตุผล: {req.rejected_reason}
                         </p>
                       )}
                       <p className="text-[10px] text-gray-300 mt-1">#{req.id}</p>
@@ -191,6 +202,10 @@ function StatusContent() {
                     {req.status === 'approved' ? (
                       <span className="inline-flex items-center bg-[#16A34A]/10 text-[#16A34A] text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
                         อนุมัติแล้ว
+                      </span>
+                    ) : req.status === 'rejected' ? (
+                      <span className="inline-flex items-center bg-[#DC2626]/10 text-[#DC2626] text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                        ไม่อนุมัติ
                       </span>
                     ) : (
                       <span className="inline-flex items-center bg-amber-50 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
