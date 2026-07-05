@@ -783,21 +783,23 @@ export default function Home() {
         )}
 
 
-        <Link
-          href="/break"
-          className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 hover:bg-amber-100 transition-colors"
-        >
-          <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0 text-white text-sm">
-            ☕
-          </div>
-          <div>
-            <p className="text-xs font-bold text-amber-700">จองเวลาพัก</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">สูงสุด 3 คนต่อชั่วโมง</p>
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-amber-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+        {['Creative', 'การตลาด', 'บัญชี', 'ธุรการ', 'บุคคล'].includes(formData.department) && (
+          <Link
+            href="/break"
+            className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 hover:bg-amber-100 transition-colors"
+          >
+            <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0 text-white text-sm">
+              ☕
+            </div>
+            <div>
+              <p className="text-xs font-bold text-amber-700">จองเวลาพัก</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">สูงสุด 3 คนต่อชั่วโมง</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-amber-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
 
         <Link
           href="/meeting-report"
@@ -816,23 +818,6 @@ export default function Home() {
           </svg>
         </Link>
 
-        {formData.department === 'บุคคล' && (
-          <Link
-            href="/break"
-            className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 hover:bg-amber-100 transition-colors"
-          >
-            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
-              ☕
-            </div>
-            <div>
-              <p className="text-sm font-bold text-amber-700">จองเวลาพัก (ทดลองใช้)</p>
-              <p className="text-xs text-gray-400 mt-0.5">สูงสุด 3 คนต่อชั่วโมง — กดเพื่อทดสอบระบบ</p>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
 
         {(formData.department === 'บุคคล' || formData.department === 'ผู้จัดการไลฟ์สด') && (
           <Link
