@@ -620,7 +620,7 @@ export default function Home() {
 
         {/* Nickname + Channel */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-          <InputField label={formData.department === 'ไลฟ์สด' ? 'เลือกชื่อ' : 'ชื่อเล่น'} required error={errors.nickname}>
+          <InputField label={formData.department === 'ไลฟ์สด' ? 'เลือกชื่อ (สิทธิพิเศษเริ่มใช้ 2570)' : 'ชื่อเล่น'} required error={errors.nickname}>
             {formData.department === 'ไลฟ์สด' ? (
               !pickerOpen && formData.nickname ? (
                 <div className="flex items-center gap-3 pt-0.5">

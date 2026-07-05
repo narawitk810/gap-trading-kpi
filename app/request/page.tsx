@@ -231,7 +231,7 @@ export default function RequestPage() {
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2">
-              เลือกชื่อ <span className="text-[#DC2626]">*</span>
+              เลือกชื่อ (สิทธิพิเศษเริ่มใช้ 2570) <span className="text-[#DC2626]">*</span>
             </label>
             {!pickerOpen && nickname ? (
               <div className="flex items-center gap-3 pt-0.5">
