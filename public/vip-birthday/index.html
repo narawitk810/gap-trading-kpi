@@ -460,11 +460,10 @@ async function loadDb() {
   renderHome(); renderCustomers(); renderGifts(); renderReport();
 }
 
-async function apiSave(vip) {
-  const existing = db.find(x => x.id === vip.id);
+async function apiSave(vip, isUpdate) {
   try {
     await fetch('/api/vip', {
-      method: existing ? 'PUT' : 'POST',
+      method: isUpdate ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vip),
     });
@@ -666,7 +665,7 @@ function saveVIP() {
   document.getElementById('add-overlay').classList.remove('open');
   showToast(editingId ? 'อัปเดตข้อมูลแล้ว' : 'เพิ่ม VIP สำเร็จ');
   renderHome(); renderCustomers(); renderGifts(); renderReport();
-  apiSave(vip);
+  apiSave(vip, !!editingId);
 }
 function deleteVIP() {
   if(!confirm('ลบข้อมูลลูกค้ารายนี้?')) return;
