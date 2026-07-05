@@ -126,7 +126,7 @@ const CHANNEL_LIST = [
   'corgi card TCG', 'mojiko card TCG',
 ]
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
-const TAX_INVOICE_DEPTS = ['บัญชี', 'สต๊อค&จัดซื้อ', 'ธุรการ']
+const TAX_INVOICE_DEPTS = ['บัญชี&การเงิน', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน']
 const TCG_DEPTS = ['ผู้จัดการหน้าร้าน']
 const PROMO_THRESHOLD_DEPTS = ['การตลาด']
@@ -783,7 +783,7 @@ export default function Home() {
         )}
 
 
-        {['Creative', 'การตลาด', 'บัญชี', 'ธุรการ', 'บุคคล'].includes(formData.department) && (
+        {['Creative', 'การตลาด', 'บัญชี&การเงิน', 'ธุรการ', 'บุคคล'].includes(formData.department) && (
           <Link
             href="/break"
             className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 hover:bg-amber-100 transition-colors"

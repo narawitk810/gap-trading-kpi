@@ -3,7 +3,7 @@ export const DEPARTMENTS = [
   'sale admin',
   'การตลาด',
   'Creative',
-  'บัญชี',
+  'บัญชี&การเงิน',
   'ธุรการ',
   'บุคคล',
   'สต๊อค&จัดซื้อ',
