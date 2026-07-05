@@ -21,6 +21,30 @@ const WORKFLOW_ITEMS = [
     description: 'ค้นหาเอกสารทางบัญชี',
     color: 'violet',
   },
+  {
+    icon: '📦',
+    title: 'ตรวจสต๊อก',
+    description: 'เช็คจากแผนกสต๊อค',
+    color: 'orange',
+  },
+  {
+    icon: '🧾',
+    title: 'บันทึกค่าใช้จ่าย',
+    description: 'ใบสำคัญจ่าย',
+    color: 'red',
+  },
+  {
+    icon: '💵',
+    title: 'ปิดเงินสด',
+    description: 'สรุปเงินสดวันนี้',
+    color: 'green',
+  },
+  {
+    icon: '🏦',
+    title: 'กระทบยอดแบงก์',
+    description: 'อัพสเตทเมนต์',
+    color: 'blue',
+  },
 ]
 
 export default function WorkflowPage() {
