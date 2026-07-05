@@ -420,11 +420,20 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
       {/* Header */}
-      <div className="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md">
+      <div className="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md relative">
         <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
         <p className="text-sm mt-1" style={{ opacity: 0.75 }}>
           บันทึก KPI รายวัน
         </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors opacity-70"
+          title="รีเฟรชหน้า"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-10">
