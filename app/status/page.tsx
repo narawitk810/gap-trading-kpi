@@ -204,9 +204,16 @@ function StatusContent() {
                         อนุมัติแล้ว
                       </span>
                     ) : req.status === 'rejected' ? (
-                      <span className="inline-flex items-center bg-[#DC2626]/10 text-[#DC2626] text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
-                        ไม่อนุมัติ
-                      </span>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className="inline-flex items-center bg-[#DC2626]/10 text-[#DC2626] text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                          ไม่อนุมัติ
+                        </span>
+                        {req.rejected_reason && (
+                          <p className="text-[10px] text-[#DC2626] text-right leading-tight max-w-[100px]">
+                            {req.rejected_reason}
+                          </p>
+                        )}
+                      </div>
                     ) : (
                       <span className="inline-flex items-center bg-amber-50 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
                         รอดำเนินการ
