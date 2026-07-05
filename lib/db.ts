@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 9
+const SCHEMA_VERSION = 10
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -359,6 +359,7 @@ export async function ensureSchema(): Promise<void> {
       ['sa-001', 'พลอย', 'Sales Admin', '🥈', 2, 'Sales Admin'],
       ['stk-001', 'เดียร์ (สต๊อค)', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
       ['stk-002', 'เตย', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
+      ['pack-001', 'เฟิร์น', 'Fulfillment', '🥈', 2, 'แพค'],
     ]
     for (const [id, name, rank_name, rank_emoji, rank_order, department] of seed) {
       await db.execute({
