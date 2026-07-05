@@ -11,6 +11,17 @@ export async function GET(request: NextRequest) {
   await ensureSchema()
   const db = getDb()
 
+  const isPublic = searchParams.get('public') === 'true'
+  if (isPublic) {
+    const result = await db.execute(
+      `SELECT id, nickname, description, status, created_at, approved_at
+       FROM product_requests
+       ORDER BY created_at DESC
+       LIMIT 100`
+    )
+    return NextResponse.json(result.rows)
+  }
+
   if (key === ADMIN_KEY) {
     const result = await db.execute(
       'SELECT * FROM product_requests ORDER BY created_at DESC'

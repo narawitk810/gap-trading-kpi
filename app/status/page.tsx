@@ -22,6 +22,24 @@ function formatDateTime(iso: string) {
   })
 }
 
+function getTodayDate() {
+  const now = new Date()
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
+type PublicProductRequest = {
+  id: string
+  nickname: string
+  description: string
+  status: string
+  created_at: string
+  approved_at: string | null
+}
+
 function StatusContent() {
   const searchParams = useSearchParams()
   const [nickname, setNickname] = useState(searchParams.get('nickname') || '')
@@ -29,12 +47,22 @@ function StatusContent() {
   const [requests, setRequests] = useState<ProductRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(!!searchParams.get('nickname'))
+  const [publicRequests, setPublicRequests] = useState<PublicProductRequest[]>([])
+  const [publicLoading, setPublicLoading] = useState(true)
 
   useEffect(() => {
     if (searchParams.get('nickname')) {
       fetchRequests(searchParams.get('nickname')!)
     }
   }, [searchParams])
+
+  useEffect(() => {
+    fetch('/api/product-requests?public=true')
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setPublicRequests(data) })
+      .catch(() => {})
+      .finally(() => setPublicLoading(false))
+  }, [])
 
   async function fetchRequests(name: string) {
     if (!name.trim()) return
@@ -57,6 +85,8 @@ function StatusContent() {
     setSearchNickname(nickname)
     fetchRequests(nickname)
   }
+
+  const todayRequests = publicRequests.filter((r) => r.created_at.startsWith(getTodayDate()))
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
@@ -136,6 +166,52 @@ function StatusContent() {
             )}
           </div>
         )}
+
+        {/* ตารางคำขอสินค้าทั้งหมดวันนี้ */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-[#1E3A5F]">คำขอสินค้าสำหรับไลฟ์วันนี้</h2>
+              <p className="text-xs text-gray-400 mt-0.5">ทุกคนมองเห็น</p>
+            </div>
+            {!publicLoading && (
+              <span className="text-xs font-semibold text-gray-400">{todayRequests.length} รายการ</span>
+            )}
+          </div>
+          {publicLoading ? (
+            <div className="py-8 text-center text-sm text-gray-400">กำลังโหลด...</div>
+          ) : todayRequests.length === 0 ? (
+            <div className="py-8 text-center text-sm text-gray-400">ยังไม่มีคำขอสินค้าสำหรับวันนี้</div>
+          ) : (
+            <div className="divide-y divide-[#E2E8F0]">
+              <div className="grid grid-cols-[1fr_2fr_auto] gap-x-3 px-4 py-2 bg-[#F5F6F8]">
+                <p className="text-xs font-semibold text-gray-500">ผู้ขอ</p>
+                <p className="text-xs font-semibold text-gray-500">รายละเอียดสินค้า</p>
+                <p className="text-xs font-semibold text-gray-500 text-right">สถานะ</p>
+              </div>
+              {todayRequests.map((req) => (
+                <div key={req.id} className="grid grid-cols-[1fr_2fr_auto] gap-x-3 px-4 py-3 items-start">
+                  <div>
+                    <p className="text-xs font-semibold text-[#374151] truncate">{req.nickname}</p>
+                    <p className="text-[10px] text-gray-300 mt-0.5">{formatDateTime(req.created_at)}</p>
+                  </div>
+                  <p className="text-xs text-[#374151] leading-relaxed">{req.description}</p>
+                  <div className="flex justify-end">
+                    {req.status === 'approved' ? (
+                      <span className="inline-flex items-center bg-[#16A34A]/10 text-[#16A34A] text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                        อนุมัติแล้ว
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center bg-amber-50 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                        รอดำเนินการ
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <Link
           href="/request"
