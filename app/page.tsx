@@ -693,7 +693,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '👑 ' : ''}${m.name}` : `${m.is_head ? '👑 ' : ''}${m.name}`}
+                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
                             </button>
                           ))}
                         </div>
@@ -748,7 +748,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '👑 ' : ''}${m.name}` : `${m.is_head ? '👑 ' : ''}${m.name}`}
+                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
                             </button>
                           ))}
                         </div>

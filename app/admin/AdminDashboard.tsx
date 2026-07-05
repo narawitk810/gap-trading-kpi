@@ -2673,7 +2673,7 @@ export default function AdminDashboard() {
                   <tbody>
                     {liveStaff.map((s, i) => (
                       <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '👑 ' : ''}{s.name}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '⚜️ ' : ''}{s.name}</td>
                         <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
                         <td className="px-5 py-3">
                           <select
@@ -2721,7 +2721,7 @@ export default function AdminDashboard() {
                             onClick={() => toggleHead(s, setLiveStaff)}
                             title={s.is_head ? 'ถอด Head' : 'ตั้งเป็น Head'}
                             className={`text-lg mr-2 disabled:opacity-40 transition-opacity ${s.is_head ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
-                          >👑</button>
+                          >⚜️</button>
                           {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
                         </td>
@@ -2810,7 +2810,7 @@ export default function AdminDashboard() {
                   <tbody>
                     {creativeStaff.map((s, i) => (
                       <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
-                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '👑 ' : ''}{s.name}</td>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '⚜️ ' : ''}{s.name}</td>
                         <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
                         <td className="px-5 py-3">
                           <select
@@ -2858,7 +2858,7 @@ export default function AdminDashboard() {
                             onClick={() => toggleHead(s, setCreativeStaff)}
                             title={s.is_head ? 'ถอด Head' : 'ตั้งเป็น Head'}
                             className={`text-lg mr-2 disabled:opacity-40 transition-opacity ${s.is_head ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
-                          >👑</button>
+                          >⚜️</button>
                           {savingCreativeRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {creativeRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
                         </td>
