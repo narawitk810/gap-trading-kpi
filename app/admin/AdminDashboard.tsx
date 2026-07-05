@@ -441,6 +441,10 @@ export default function AdminDashboard() {
   const [loadingLiveStaff, setLoadingLiveStaff] = useState(false)
   const [savingRankId, setSavingRankId] = useState<string | null>(null)
   const [rankSavedId, setRankSavedId] = useState<string | null>(null)
+  const [newStaffName, setNewStaffName] = useState('')
+  const [newStaffRank, setNewStaffRank] = useState('1|Junior Live Sales|🥉')
+  const [addingStaff, setAddingStaff] = useState(false)
+  const [addStaffError, setAddStaffError] = useState('')
 
   async function handleAnalyze(entry: KPIEntry) {
     const base = BASE_RATES[entry.department]
@@ -2491,6 +2495,59 @@ export default function AdminDashboard() {
             <div className="px-5 py-4 border-b border-[#E2E8F0]">
               <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศไลฟ์สด</h2>
               <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงานไลฟ์แต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+            </div>
+            <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
+              <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
+              <div className="flex gap-2 flex-wrap items-start">
+                <input
+                  type="text"
+                  placeholder="ชื่อเล่น"
+                  value={newStaffName}
+                  onChange={(e) => { setNewStaffName(e.target.value); setAddStaffError('') }}
+                  className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white w-32 focus:outline-none focus:border-[#1E3A5F]"
+                />
+                <select
+                  value={newStaffRank}
+                  onChange={(e) => setNewStaffRank(e.target.value)}
+                  className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
+                >
+                  <option value="1|Junior Live Sales|🥉">🥉 Junior Live Sales</option>
+                  <option value="2|Live Sales|🥈">🥈 Live Sales</option>
+                  <option value="3|Senior Live Sales|🥇">🥇 Senior Live Sales</option>
+                  <option value="4|Expert Live Sales|🏅">🏅 Expert Live Sales</option>
+                  <option value="5|Master Live Sales|🏆">🏆 Master Live Sales</option>
+                  <option value="6|Elite Live Sales|💠">💠 Elite Live Sales</option>
+                  <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
+                  <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
+                </select>
+                <button
+                  disabled={addingStaff || !newStaffName.trim()}
+                  onClick={async () => {
+                    const parts = newStaffRank.split('|')
+                    setAddingStaff(true)
+                    setAddStaffError('')
+                    try {
+                      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: newStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2] }),
+                      })
+                      const data = await res.json()
+                      if (res.ok) {
+                        setLiveStaff((prev) => [...prev, data.staff].sort((a, b) => a.rank_order - b.rank_order || a.name.localeCompare(b.name, 'th')))
+                        setNewStaffName('')
+                      } else {
+                        setAddStaffError(data.error || 'เพิ่มไม่สำเร็จ')
+                      }
+                    } catch { setAddStaffError('เกิดข้อผิดพลาด') }
+                    finally { setAddingStaff(false) }
+                  }}
+                  className="px-4 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
+                >
+                  {addingStaff ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
+                </button>
+              </div>
+              {addStaffError && <p className="text-[#DC2626] text-xs mt-1.5">{addStaffError}</p>}
             </div>
             {loadingLiveStaff ? (
               <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>

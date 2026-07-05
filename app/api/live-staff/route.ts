@@ -10,6 +10,31 @@ export async function GET() {
   return NextResponse.json({ staff: result.rows })
 }
 
+export async function POST(req: NextRequest) {
+  const url = new URL(req.url)
+  if (url.searchParams.get('key') !== ADMIN_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  await ensureSchema()
+  const db = getDb()
+  const body = await req.json()
+  const { name, rank_name, rank_emoji, rank_order } = body
+  if (!name?.trim() || !rank_name || !rank_emoji || rank_order === undefined) {
+    return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
+  }
+  const id = `ls-${Date.now()}`
+  const now = new Date().toISOString()
+  try {
+    await db.execute({
+      sql: 'INSERT INTO live_staff (id, name, rank_name, rank_emoji, rank_order, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [id, name.trim(), rank_name, rank_emoji, Number(rank_order), now],
+    })
+  } catch {
+    return NextResponse.json({ error: 'ชื่อนี้มีอยู่แล้ว' }, { status: 409 })
+  }
+  return NextResponse.json({ ok: true, staff: { id, name: name.trim(), rank_name, rank_emoji, rank_order: Number(rank_order), created_at: now } })
+}
+
 export async function PATCH(req: NextRequest) {
   const url = new URL(req.url)
   if (url.searchParams.get('key') !== ADMIN_KEY) {
