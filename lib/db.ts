@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 8
+const SCHEMA_VERSION = 9
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -357,7 +357,7 @@ export async function ensureSchema(): Promise<void> {
       ['cs-003', 'แก๊ง', 'Senior Creative', '🥇', 3, 'Creative'],
       ['mkt-001', 'เกอร์', 'Junior Marketing', '🥉', 1, 'การตลาด'],
       ['sa-001', 'พลอย', 'Sales Admin', '🥈', 2, 'Sales Admin'],
-      ['stk-001', 'เดียร์', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
+      ['stk-001', 'เดียร์ (สต๊อค)', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
       ['stk-002', 'เตย', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
     ]
     for (const [id, name, rank_name, rank_emoji, rank_order, department] of seed) {
@@ -373,6 +373,7 @@ export async function ensureSchema(): Promise<void> {
 
   await db.execute(`UPDATE live_staff SET department='Sales Admin' WHERE department='sale admin'`)
   await db.execute(`UPDATE kpi_entries SET department='Sales Admin' WHERE department='sale admin'`)
+  await db.execute(`UPDATE live_staff SET name='เดียร์ (สต๊อค)' WHERE id='stk-001' AND name='เดียร์'`)
 
   g.dbVersion = SCHEMA_VERSION
 }
