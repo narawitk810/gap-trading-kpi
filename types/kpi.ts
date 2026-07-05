@@ -1,6 +1,7 @@
 export const DEPARTMENTS = [
   'ไลฟ์สด',
   'sale admin',
+  'Store Retail',
   'การตลาด',
   'Creative',
   'บัญชี&การเงิน',
