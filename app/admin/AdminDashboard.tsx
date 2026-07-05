@@ -446,7 +446,7 @@ export default function AdminDashboard() {
   const [newStaffRank, setNewStaffRank] = useState('1|Junior Live Sales|🥉')
   const [addingStaff, setAddingStaff] = useState(false)
   const [addStaffError, setAddStaffError] = useState('')
-  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative'>('ไลฟ์สด')
+  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative' | 'การตลาด'>('ไลฟ์สด')
   const [creativeStaff, setCreativeStaff] = useState<LiveStaffMember[]>([])
   const [loadingCreativeStaff, setLoadingCreativeStaff] = useState(false)
   const [savingCreativeRankId, setSavingCreativeRankId] = useState<string | null>(null)
@@ -455,6 +455,14 @@ export default function AdminDashboard() {
   const [newCreativeStaffRank, setNewCreativeStaffRank] = useState('1|Junior Creative|🥉')
   const [addingCreativeStaff, setAddingCreativeStaff] = useState(false)
   const [addCreativeStaffError, setAddCreativeStaffError] = useState('')
+  const [marketingStaff, setMarketingStaff] = useState<LiveStaffMember[]>([])
+  const [loadingMarketingStaff, setLoadingMarketingStaff] = useState(false)
+  const [savingMarketingRankId, setSavingMarketingRankId] = useState<string | null>(null)
+  const [marketingRankSavedId, setMarketingRankSavedId] = useState<string | null>(null)
+  const [newMarketingStaffName, setNewMarketingStaffName] = useState('')
+  const [newMarketingStaffRank, setNewMarketingStaffRank] = useState('1|Junior Marketing|🥉')
+  const [addingMarketingStaff, setAddingMarketingStaff] = useState(false)
+  const [addMarketingStaffError, setAddMarketingStaffError] = useState('')
   const [savingHeadId, setSavingHeadId] = useState<string | null>(null)
   const [rankUnlocked, setRankUnlocked] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -881,6 +889,18 @@ export default function AdminDashboard() {
     finally { setLoadingCreativeStaff(false) }
   }, [])
 
+  const fetchMarketingStaff = useCallback(async () => {
+    setLoadingMarketingStaff(true)
+    try {
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}&department=การตลาด`)
+      if (res.ok) {
+        const data = await res.json()
+        setMarketingStaff(data.staff || [])
+      }
+    } catch { /* silent */ }
+    finally { setLoadingMarketingStaff(false) }
+  }, [])
+
   const fetchEquipment = useCallback(async () => {
     setLoadingEquipment(true)
     try {
@@ -1136,7 +1156,7 @@ export default function AdminDashboard() {
             รหัสแผนก
           </button>
           <button
-            onClick={() => { setActiveTab('adjust-rank'); fetchLiveStaff(); fetchCreativeStaff() }}
+            onClick={() => { setActiveTab('adjust-rank'); fetchLiveStaff(); fetchCreativeStaff(); fetchMarketingStaff() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'adjust-rank'
                 ? 'bg-white text-[#1E3A5F]'
@@ -2581,7 +2601,7 @@ export default function AdminDashboard() {
           </div>
           {/* Department toggle */}
           <div className="flex gap-2">
-            {(['ไลฟ์สด', 'Creative'] as const).map((dept) => (
+            {(['ไลฟ์สด', 'Creative', 'การตลาด'] as const).map((dept) => (
               <button
                 key={dept}
                 onClick={() => setAdjustRankDept(dept)}
@@ -2743,6 +2763,162 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* Marketing section */}
+          {adjustRankDept === 'การตลาด' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศ การตลาด</h2>
+                <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศพนักงานการตลาดแต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/30">
+                <p className="text-xs font-semibold text-[#374151] mb-2">⚜️ Head ของแผนก</p>
+                <div className="flex flex-wrap gap-2">
+                  {marketingStaff.map((s) => (
+                    <button
+                      key={s.id}
+                      disabled={savingHeadId === s.id}
+                      onClick={() => toggleHead(s, setMarketingStaff)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                        s.is_head
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {s.is_head ? `⚜️ ${s.name}` : s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
+                <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
+                <div className="flex gap-2 flex-wrap items-start">
+                  <input
+                    type="text"
+                    placeholder="ชื่อเล่น"
+                    value={newMarketingStaffName}
+                    onChange={(e) => { setNewMarketingStaffName(e.target.value); setAddMarketingStaffError('') }}
+                    className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white w-32 focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                  <select
+                    value={newMarketingStaffRank}
+                    onChange={(e) => setNewMarketingStaffRank(e.target.value)}
+                    className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
+                  >
+                    <option value="1|Junior Marketing|🥉">🥉 Junior Marketing</option>
+                    <option value="2|Marketing|🥈">🥈 Marketing</option>
+                    <option value="3|Senior Marketing|🥇">🥇 Senior Marketing</option>
+                    <option value="4|Expert Marketing|🏅">🏅 Expert Marketing</option>
+                    <option value="5|Master Marketing|🏆">🏆 Master Marketing</option>
+                    <option value="6|Elite Marketing|💠">💠 Elite Marketing</option>
+                    <option value="7|Legend Marketing|💎">💎 Legend Marketing</option>
+                    <option value="8|Grandmaster Marketing|👑">👑 Grandmaster Marketing</option>
+                  </select>
+                  <button
+                    disabled={addingMarketingStaff || !newMarketingStaffName.trim()}
+                    onClick={async () => {
+                      const parts = newMarketingStaffRank.split('|')
+                      setAddingMarketingStaff(true)
+                      setAddMarketingStaffError('')
+                      try {
+                        const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: newMarketingStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2], department: 'การตลาด' }),
+                        })
+                        const data = await res.json()
+                        if (res.ok) {
+                          setMarketingStaff((prev) => [...prev, data.staff].sort((a, b) => a.rank_order - b.rank_order || a.name.localeCompare(b.name, 'th')))
+                          setNewMarketingStaffName('')
+                        } else {
+                          setAddMarketingStaffError(data.error || 'เพิ่มไม่สำเร็จ')
+                        }
+                      } catch { setAddMarketingStaffError('เกิดข้อผิดพลาด') }
+                      finally { setAddingMarketingStaff(false) }
+                    }}
+                    className="px-4 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    {addingMarketingStaff ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
+                  </button>
+                </div>
+                {addMarketingStaffError && <p className="text-[#DC2626] text-xs mt-1.5">{addMarketingStaffError}</p>}
+              </div>
+              {loadingMarketingStaff ? (
+                <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+              ) : marketingStaff.length === 0 ? (
+                <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
+                      <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
+                      <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
+                      <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="px-5 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {marketingStaff.map((s, i) => (
+                      <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '⚜️ ' : ''}{s.name}</td>
+                        <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
+                        <td className="px-5 py-3">
+                          <select
+                            value={`${s.rank_order}|${s.rank_name}|${s.rank_emoji}`}
+                            disabled={savingMarketingRankId === s.id}
+                            onChange={async (e) => {
+                              const parts = e.target.value.split('|')
+                              const newOrder = Number(parts[0])
+                              const newName = parts[1]
+                              const newEmoji = parts[2]
+                              setSavingMarketingRankId(s.id)
+                              try {
+                                const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: s.id, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder }),
+                                })
+                                if (res.ok) {
+                                  setMarketingStaff((prev) =>
+                                    prev.map((x) => x.id === s.id ? { ...x, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder } : x)
+                                  )
+                                  setMarketingRankSavedId(s.id)
+                                  setTimeout(() => setMarketingRankSavedId((prev) => prev === s.id ? null : prev), 2000)
+                                } else {
+                                  alert('บันทึกไม่สำเร็จ')
+                                }
+                              } catch { alert('เกิดข้อผิดพลาด') }
+                              finally { setSavingMarketingRankId(null) }
+                            }}
+                            className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white disabled:opacity-60"
+                          >
+                            <option value="1|Junior Marketing|🥉">🥉 Junior Marketing</option>
+                            <option value="2|Marketing|🥈">🥈 Marketing</option>
+                            <option value="3|Senior Marketing|🥇">🥇 Senior Marketing</option>
+                            <option value="4|Expert Marketing|🏅">🏅 Expert Marketing</option>
+                            <option value="5|Master Marketing|🏆">🏆 Master Marketing</option>
+                            <option value="6|Elite Marketing|💠">💠 Elite Marketing</option>
+                            <option value="7|Legend Marketing|💎">💎 Legend Marketing</option>
+                            <option value="8|Grandmaster Marketing|👑">👑 Grandmaster Marketing</option>
+                          </select>
+                        </td>
+                        <td className="px-5 py-3 text-right w-32">
+                          <button
+                            disabled={savingHeadId === s.id}
+                            onClick={() => toggleHead(s, setMarketingStaff)}
+                            title={s.is_head ? 'ถอด Head' : 'ตั้งเป็น Head'}
+                            className={`text-lg mr-2 disabled:opacity-40 transition-opacity ${s.is_head ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
+                          >⚜️</button>
+                          {savingMarketingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
+                          {marketingRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
                         </td>
                       </tr>
                     ))}
