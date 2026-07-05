@@ -1,7 +1,22 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+
+interface LiveStaffMember {
+  id: string; name: string; rank_name: string; rank_emoji: string; rank_order: number
+}
+
+const ALL_RANKS = [
+  { rank_order: 1, rank_name: 'Junior Live Sales', rank_emoji: '🥉' },
+  { rank_order: 2, rank_name: 'Live Sales', rank_emoji: '🥈' },
+  { rank_order: 3, rank_name: 'Senior Live Sales', rank_emoji: '🥇' },
+  { rank_order: 4, rank_name: 'Expert Live Sales', rank_emoji: '🏅' },
+  { rank_order: 5, rank_name: 'Master Live Sales', rank_emoji: '🏆' },
+  { rank_order: 6, rank_name: 'Elite Live Sales', rank_emoji: '💠' },
+  { rank_order: 7, rank_name: 'Legend Live Sales', rank_emoji: '💎' },
+  { rank_order: 8, rank_name: 'Grandmaster Live Sales', rank_emoji: '👑' },
+]
 
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -46,6 +61,15 @@ export default function RequestPage() {
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [liveStaff, setLiveStaff] = useState<LiveStaffMember[]>([])
+  const [pickerOpen, setPickerOpen] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/live-staff')
+      .then((r) => r.json())
+      .then((d) => setLiveStaff(d.staff || []))
+      .catch(() => {})
+  }, [])
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -66,7 +90,7 @@ export default function RequestPage() {
 
   function validate() {
     const e: Record<string, string> = {}
-    if (!nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
+    if (!nickname.trim()) e.nickname = 'กรุณาเลือกชื่อ'
     if (!description.trim()) e.description = 'กรุณาระบุรายละเอียดสินค้า'
     if (!imageData) e.image = 'กรุณาแนบรูปสินค้า'
     setErrors(e)
@@ -132,6 +156,7 @@ export default function RequestPage() {
               setErrors({})
               setPageState('form')
               setSubmittedId('')
+              setPickerOpen(true)
             }}
             className="w-full border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm"
           >
@@ -206,18 +231,60 @@ export default function RequestPage() {
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2">
-              ชื่อเล่น <span className="text-[#DC2626]">*</span>
+              เลือกชื่อ <span className="text-[#DC2626]">*</span>
             </label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={(e) => {
-                setNickname(e.target.value)
-                setErrors((prev) => ({ ...prev, nickname: '' }))
-              }}
-              placeholder="ชื่อเล่นของคุณ"
-              className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-            />
+            {!pickerOpen && nickname ? (
+              <div className="flex items-center gap-3 pt-0.5">
+                <span className="px-4 py-2 rounded-full bg-[#1E3A5F] text-white text-sm font-semibold">
+                  ✓ {nickname}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="text-xs text-[#1E3A5F] underline underline-offset-2"
+                >
+                  เปลี่ยน
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {liveStaff.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-gray-400">กำลังโหลด...</div>
+                ) : ALL_RANKS.map((rank) => {
+                  const members = liveStaff.filter((s) => s.rank_order === rank.rank_order)
+                  const isEmpty = members.length === 0
+                  return (
+                    <div key={rank.rank_order} className={isEmpty ? 'opacity-40' : ''}>
+                      <p className="text-xs font-semibold text-gray-400 mb-1.5">
+                        {rank.rank_emoji} {rank.rank_name}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {isEmpty ? (
+                          <span className="text-xs text-gray-300 italic">— ยังไม่มีสมาชิก</span>
+                        ) : members.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              setNickname(m.name)
+                              setErrors((prev) => ({ ...prev, nickname: '' }))
+                              setPickerOpen(false)
+                            }}
+                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                              nickname === m.name
+                                ? 'bg-[#1E3A5F] text-white border-[#1E3A5F] font-semibold'
+                                : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                            }`}
+                          >
+                            {nickname === m.name ? `✓ ${m.name}` : m.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             {errors.nickname && (
               <p className="text-[#DC2626] text-xs mt-1">{errors.nickname}</p>
             )}
