@@ -170,7 +170,7 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> | 
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
     }
   }
-  if (entry.department === 'sale admin') {
+  if (entry.department === 'Sales Admin') {
     return {
       'ยอดขาย (บาท)': ex.sales_amount ? Number(ex.sales_amount) : '',
     }
@@ -271,7 +271,7 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   }
   const dept = entry.department
 
-  if ((dept === 'ไลฟ์สด' || dept === 'sale admin') && (ex.live_hours || ex.sales_amount)) {
+  if ((dept === 'ไลฟ์สด' || dept === 'Sales Admin') && (ex.live_hours || ex.sales_amount)) {
     return (
       <div className="bg-blue-50 rounded-xl p-3 space-y-2">
         <p className="text-xs font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
@@ -446,7 +446,7 @@ export default function AdminDashboard() {
   const [newStaffRank, setNewStaffRank] = useState('1|Junior Live Sales|🥉')
   const [addingStaff, setAddingStaff] = useState(false)
   const [addStaffError, setAddStaffError] = useState('')
-  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative' | 'การตลาด' | 'sale admin' | 'Store Retail'>('ไลฟ์สด')
+  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative' | 'การตลาด' | 'Sales Admin' | 'Store Retail'>('ไลฟ์สด')
   const [creativeStaff, setCreativeStaff] = useState<LiveStaffMember[]>([])
   const [loadingCreativeStaff, setLoadingCreativeStaff] = useState(false)
   const [savingCreativeRankId, setSavingCreativeRankId] = useState<string | null>(null)
@@ -2641,7 +2641,7 @@ export default function AdminDashboard() {
           </div>
           {/* Department toggle */}
           <div className="flex gap-2">
-            {(['ไลฟ์สด', 'Creative', 'การตลาด', 'sale admin', 'Store Retail'] as const).map((dept) => (
+            {(['ไลฟ์สด', 'Creative', 'การตลาด', 'Sales Admin', 'Store Retail'] as const).map((dept) => (
               <button
                 key={dept}
                 onClick={() => setAdjustRankDept(dept)}
@@ -2969,7 +2969,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Sale Admin section */}
-          {adjustRankDept === 'sale admin' && (
+          {adjustRankDept === 'Sales Admin' && (
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-[#E2E8F0]">
                 <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศ Sale Admin</h2>
@@ -3028,7 +3028,7 @@ export default function AdminDashboard() {
                         const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ name: newSaleAdminStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2], department: 'sale admin' }),
+                          body: JSON.stringify({ name: newSaleAdminStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2], department: 'Sales Admin' }),
                         })
                         const data = await res.json()
                         if (res.ok) {

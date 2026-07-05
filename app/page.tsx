@@ -127,7 +127,7 @@ function InputField({
 const inputClass =
   'w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]'
 
-const CHANNEL_DEPTS = ['ไลฟ์สด', 'sale admin', 'การตลาด', 'Creative']
+const CHANNEL_DEPTS = ['ไลฟ์สด', 'Sales Admin', 'การตลาด', 'Creative']
 const CHANNEL_LIST = [
   'gap7cardbreak', 'pokedex', 'nanatoshop', 'jokercardshop',
   'ninjabearcardshop', 'rabbitcardshop', 'littleponycardshop', 'stadiumbreaks',
@@ -135,7 +135,7 @@ const CHANNEL_LIST = [
   'pandacollectorshop', 'huskkycardshop', 'kingdomcardshop',
   'corgi card TCG', 'mojiko card TCG',
 ]
-const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
+const LIVE_DEPTS = ['ไลฟ์สด', 'Sales Admin']
 const ALL_RANKS = [
   { rank_order: 1, rank_name: 'Junior Live Sales', rank_emoji: '🥉' },
   { rank_order: 2, rank_name: 'Live Sales', rank_emoji: '🥈' },
@@ -234,7 +234,7 @@ function buildExtraDataPayload(dept: string, extra: ExtraData, channelEntries: R
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
   }
-  if (dept === 'sale admin') {
+  if (dept === 'Sales Admin') {
     const payload: Record<string, unknown> = {}
     if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
@@ -333,7 +333,7 @@ export default function Home() {
   }, [formData.department])
 
   useEffect(() => {
-    if (formData.department !== 'sale admin') return
+    if (formData.department !== 'Sales Admin') return
     setSaleAdminPickerOpen(!formData.nickname)
     setLoadingSaleAdmin(true)
     fetch('/api/live-staff?department=sale admin')
@@ -720,7 +720,7 @@ export default function Home() {
 
         {/* Nickname + Channel */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-          <InputField label={(formData.department === 'ไลฟ์สด' || formData.department === 'Creative' || formData.department === 'การตลาด' || formData.department === 'sale admin' || formData.department === 'Store Retail') ? 'เลือกชื่อ (สิทธิพิเศษเริ่มใช้ 2570)' : 'ชื่อเล่น'} required error={errors.nickname}>
+          <InputField label={(formData.department === 'ไลฟ์สด' || formData.department === 'Creative' || formData.department === 'การตลาด' || formData.department === 'Sales Admin' || formData.department === 'Store Retail') ? 'เลือกชื่อ (สิทธิพิเศษเริ่มใช้ 2570)' : 'ชื่อเล่น'} required error={errors.nickname}>
             {formData.department === 'ไลฟ์สด' ? (
               !pickerOpen && formData.nickname ? (
                 <div className="flex items-center gap-3 pt-0.5">
@@ -884,7 +884,7 @@ export default function Home() {
                   })}
                 </div>
               )
-            ) : formData.department === 'sale admin' ? (
+            ) : formData.department === 'Sales Admin' ? (
               !saleAdminPickerOpen && formData.nickname ? (
                 <div className="flex items-center gap-3 pt-0.5">
                   <span className="px-4 py-2 rounded-full bg-[#1E3A5F] text-white text-sm font-semibold">
@@ -1071,7 +1071,7 @@ export default function Home() {
               </div>
             </InputField>
           )}
-          {['ไลฟ์สด', 'sale admin', 'Creative'].includes(formData.department) && (
+          {['ไลฟ์สด', 'Sales Admin', 'Creative'].includes(formData.department) && (
             <InputField label="ช่องที่ดูแล" required error={errors.channelName}>
               <div className="flex flex-wrap gap-2 pt-0.5">
                 {CHANNEL_LIST.map((ch) => {
