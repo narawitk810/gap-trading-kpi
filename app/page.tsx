@@ -135,6 +135,16 @@ const CHANNEL_LIST = [
   'corgi card TCG', 'mojiko card TCG',
 ]
 const LIVE_DEPTS = ['ไลฟ์สด', 'sale admin']
+const ALL_RANKS = [
+  { rank_order: 1, rank_name: 'Junior Live Sales', rank_emoji: '🥉' },
+  { rank_order: 2, rank_name: 'Live Sales', rank_emoji: '🥈' },
+  { rank_order: 3, rank_name: 'Senior Live Sales', rank_emoji: '🥇' },
+  { rank_order: 4, rank_name: 'Expert Live Sales', rank_emoji: '🏅' },
+  { rank_order: 5, rank_name: 'Master Live Sales', rank_emoji: '🏆' },
+  { rank_order: 6, rank_name: 'Elite Live Sales', rank_emoji: '💠' },
+  { rank_order: 7, rank_name: 'Legend Live Sales', rank_emoji: '💎' },
+  { rank_order: 8, rank_name: 'Grandmaster Live Sales', rank_emoji: '👑' },
+]
 const TAX_INVOICE_DEPTS = ['บัญชี&การเงิน', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน']
 const TCG_DEPTS = ['ผู้จัดการหน้าร้าน']
@@ -236,9 +246,11 @@ export default function Home() {
   const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
   const [liveStaff, setLiveStaff] = useState<LiveStaffMember[]>([])
+  const [pickerOpen, setPickerOpen] = useState(true)
 
   useEffect(() => {
     if (formData.department !== 'ไลฟ์สด') return
+    setPickerOpen(!formData.nickname)
     fetch('/api/live-staff')
       .then((r) => r.json())
       .then((d) => setLiveStaff(d.staff || []))
@@ -610,36 +622,58 @@ export default function Home() {
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
           <InputField label={formData.department === 'ไลฟ์สด' ? 'เลือกชื่อ' : 'ชื่อเล่น'} required error={errors.nickname}>
             {formData.department === 'ไลฟ์สด' ? (
-              <div className="max-h-56 overflow-y-auto rounded-xl border border-[#E2E8F0]">
-                {liveStaff.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-gray-400">กำลังโหลด...</div>
-                ) : liveStaff.map((m, i) => {
-                  const isNewRank = i === 0 || liveStaff[i - 1].rank_order !== m.rank_order
-                  return (
-                    <div key={m.id}>
-                      {isNewRank && (
-                        <div className="px-3 py-1.5 bg-gray-50 text-xs font-semibold text-gray-500 border-b border-[#E2E8F0] sticky top-0">
-                          {m.rank_emoji} {m.rank_name}
+              !pickerOpen && formData.nickname ? (
+                <div className="flex items-center gap-3 pt-0.5">
+                  <span className="px-4 py-2 rounded-full bg-[#1E3A5F] text-white text-sm font-semibold">
+                    ✓ {formData.nickname}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    className="text-xs text-[#1E3A5F] underline underline-offset-2"
+                  >
+                    เปลี่ยน
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {liveStaff.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-gray-400">กำลังโหลด...</div>
+                  ) : ALL_RANKS.map((rank) => {
+                    const members = liveStaff.filter((s) => s.rank_order === rank.rank_order)
+                    const isEmpty = members.length === 0
+                    return (
+                      <div key={rank.rank_order} className={isEmpty ? 'opacity-40' : ''}>
+                        <p className="text-xs font-semibold text-gray-400 mb-1.5">
+                          {rank.rank_emoji} {rank.rank_name}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {isEmpty ? (
+                            <span className="text-xs text-gray-300 italic">— ยังไม่มีสมาชิก</span>
+                          ) : members.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({ ...prev, nickname: m.name }))
+                                setErrors((prev) => ({ ...prev, nickname: '' }))
+                                setPickerOpen(false)
+                              }}
+                              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                                formData.nickname === m.name
+                                  ? 'bg-[#1E3A5F] text-white border-[#1E3A5F] font-semibold'
+                                  : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                              }`}
+                            >
+                              {formData.nickname === m.name ? `✓ ${m.name}` : m.name}
+                            </button>
+                          ))}
                         </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData((prev) => ({ ...prev, nickname: m.name }))
-                          setErrors((prev) => ({ ...prev, nickname: '' }))
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-sm border-b border-[#E2E8F0] transition-colors ${
-                          formData.nickname === m.name
-                            ? 'bg-[#1E3A5F] text-white font-semibold'
-                            : 'text-[#374151] hover:bg-gray-50'
-                        }`}
-                      >
-                        {m.name}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
             ) : (
               <input
                 type="text"
