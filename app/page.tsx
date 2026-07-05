@@ -232,7 +232,10 @@ export default function Home() {
     if (loadDraft()) setHasDraft(true)
     try {
       const saved = localStorage.getItem(DEPT_KEY)
-      if (saved) setFormData(prev => ({ ...prev, department: saved }))
+      if (saved) {
+        setFormData(prev => ({ ...prev, department: saved }))
+        if (isCodeVerifiedLocally(saved)) setCodeVerified(true)
+      }
     } catch { /* */ }
   }, [])
 
