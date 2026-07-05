@@ -24,6 +24,12 @@
   --platinum-light: #F1EFE8;
   --diamond: #185FA5;
   --diamond-light: #E6F1FB;
+  --silver: #64748B;    --silver-light: #F1F5F9;
+  --elite: #047857;     --elite-light: #D1FAE5;
+  --legend: #6D28D9;    --legend-light: #EDE9FE;
+  --mythic: #7C2D92;    --mythic-light: #F3E8FF;
+  --infinity: #1D4ED8;  --infinity-light: #DBEAFE;
+  --immortal: #92400E;  --immortal-light: #FEF3C7;
   --green: #0F6E56;
   --green-light: #E1F5EE;
   --amber: #854F0B;
@@ -82,16 +88,28 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 .vip-item:only-child { border-radius: var(--radius); }
 .vip-item:active { background: var(--bg); }
 .avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
-.av-gold { background: var(--gold-light); color: var(--gold); }
+.av-silver   { background: var(--silver-light);   color: var(--silver); }
+.av-gold     { background: var(--gold-light);     color: var(--gold); }
 .av-platinum { background: var(--platinum-light); color: var(--platinum); }
-.av-diamond { background: var(--diamond-light); color: var(--diamond); }
+.av-diamond  { background: var(--diamond-light);  color: var(--diamond); }
+.av-elite    { background: var(--elite-light);    color: var(--elite); }
+.av-legend   { background: var(--legend-light);   color: var(--legend); }
+.av-mythic   { background: var(--mythic-light);   color: var(--mythic); }
+.av-infinity { background: var(--infinity-light); color: var(--infinity); }
+.av-immortal { background: var(--immortal-light); color: var(--immortal); }
 .vip-info { flex: 1; min-width: 0; }
 .vip-name { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .vip-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .tier-badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; flex-shrink: 0; }
-.tier-gold { background: var(--gold-light); color: var(--gold); }
+.tier-silver   { background: var(--silver-light);   color: var(--silver); }
+.tier-gold     { background: var(--gold-light);     color: var(--gold); }
 .tier-platinum { background: var(--platinum-light); color: var(--platinum); }
-.tier-diamond { background: var(--diamond-light); color: var(--diamond); }
+.tier-diamond  { background: var(--diamond-light);  color: var(--diamond); }
+.tier-elite    { background: var(--elite-light);    color: var(--elite); }
+.tier-legend   { background: var(--legend-light);   color: var(--legend); }
+.tier-mythic   { background: var(--mythic-light);   color: var(--mythic); }
+.tier-infinity { background: var(--infinity-light); color: var(--infinity); }
+.tier-immortal { background: var(--immortal-light); color: var(--immortal); }
 
 .gift-status { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -126,10 +144,17 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 
 .tier-selector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 .tier-opt { border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); background: var(--bg); }
-.tier-opt.selected-gold { border-color: var(--gold); background: var(--gold-light); color: var(--gold); }
+.tier-opt.selected-silver   { border-color: var(--silver);   background: var(--silver-light);   color: var(--silver); }
+.tier-opt.selected-gold     { border-color: var(--gold);     background: var(--gold-light);     color: var(--gold); }
 .tier-opt.selected-platinum { border-color: var(--platinum); background: var(--platinum-light); color: var(--platinum); }
-.tier-opt.selected-diamond { border-color: var(--diamond); background: var(--diamond-light); color: var(--diamond); }
+.tier-opt.selected-diamond  { border-color: var(--diamond);  background: var(--diamond-light);  color: var(--diamond); }
+.tier-opt.selected-elite    { border-color: var(--elite);    background: var(--elite-light);    color: var(--elite); }
+.tier-opt.selected-legend   { border-color: var(--legend);   background: var(--legend-light);   color: var(--legend); }
+.tier-opt.selected-mythic   { border-color: var(--mythic);   background: var(--mythic-light);   color: var(--mythic); }
+.tier-opt.selected-infinity { border-color: var(--infinity); background: var(--infinity-light); color: var(--infinity); }
+.tier-opt.selected-immortal { border-color: var(--immortal); background: var(--immortal-light); color: var(--immortal); }
 .tier-opt-label { font-size: 10px; margin-top: 2px; }
+.tier-opt-amount { font-size: 9px; color: inherit; opacity: 0.75; margin-top: 1px; }
 
 .notify-opts { display: flex; flex-wrap: wrap; gap: 8px; }
 .notify-opt { border: 1.5px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--text-muted); }
@@ -263,9 +288,15 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
       </div>
       <div class="filter-row" id="filter-row">
         <div class="filter-chip active" data-filter="all" onclick="setFilter(this)">ทั้งหมด</div>
-        <div class="filter-chip" data-filter="Diamond" onclick="setFilter(this)">Diamond</div>
-        <div class="filter-chip" data-filter="Platinum" onclick="setFilter(this)">Platinum</div>
-        <div class="filter-chip" data-filter="Gold" onclick="setFilter(this)">Gold</div>
+        <div class="filter-chip" data-filter="Immortal" onclick="setFilter(this)">👑 Immortal</div>
+        <div class="filter-chip" data-filter="Infinity" onclick="setFilter(this)">🌌 Infinity</div>
+        <div class="filter-chip" data-filter="Mythic"   onclick="setFilter(this)">🔮 Mythic</div>
+        <div class="filter-chip" data-filter="Legend"   onclick="setFilter(this)">⭐ Legend</div>
+        <div class="filter-chip" data-filter="Elite"    onclick="setFilter(this)">🛡️ Elite</div>
+        <div class="filter-chip" data-filter="Diamond"  onclick="setFilter(this)">💠 Diamond</div>
+        <div class="filter-chip" data-filter="Platinum" onclick="setFilter(this)">💎 Platinum</div>
+        <div class="filter-chip" data-filter="Gold"     onclick="setFilter(this)">🥇 Gold</div>
+        <div class="filter-chip" data-filter="Silver"   onclick="setFilter(this)">🥈 Silver</div>
         <div class="filter-chip" data-filter="birthday-month" onclick="setFilter(this)">เดือนนี้</div>
       </div>
       <div class="section" style="padding-top:12px">
@@ -343,9 +374,15 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
       </div>
       <div class="field"><label>ระดับ VIP <span class="required">*</span></label>
         <div class="tier-selector">
-          <div class="tier-opt" data-tier="Gold" onclick="selectTier('Gold')">🥇<div class="tier-opt-label">Gold</div></div>
-          <div class="tier-opt" data-tier="Platinum" onclick="selectTier('Platinum')">💎<div class="tier-opt-label">Platinum</div></div>
-          <div class="tier-opt" data-tier="Diamond" onclick="selectTier('Diamond')">💠<div class="tier-opt-label">Diamond</div></div>
+          <div class="tier-opt" data-tier="Silver"   onclick="selectTier('Silver')">🥈<div class="tier-opt-label">Silver</div><div class="tier-opt-amount">(0 บาท)</div></div>
+          <div class="tier-opt" data-tier="Gold"     onclick="selectTier('Gold')">🥇<div class="tier-opt-label">Gold</div><div class="tier-opt-amount">(25,000 บาท)</div></div>
+          <div class="tier-opt" data-tier="Platinum" onclick="selectTier('Platinum')">💎<div class="tier-opt-label">Platinum</div><div class="tier-opt-amount">(100,000 บาท)</div></div>
+          <div class="tier-opt" data-tier="Diamond"  onclick="selectTier('Diamond')">💠<div class="tier-opt-label">Diamond</div><div class="tier-opt-amount">(300,000 บาท)</div></div>
+          <div class="tier-opt" data-tier="Elite"    onclick="selectTier('Elite')">🛡️<div class="tier-opt-label">Elite</div><div class="tier-opt-amount">(700,000 บาท)</div></div>
+          <div class="tier-opt" data-tier="Legend"   onclick="selectTier('Legend')">⭐<div class="tier-opt-label">Legend</div><div class="tier-opt-amount">(1.5M บาท)</div></div>
+          <div class="tier-opt" data-tier="Mythic"   onclick="selectTier('Mythic')">🔮<div class="tier-opt-label">Mythic</div><div class="tier-opt-amount">(3M บาท)</div></div>
+          <div class="tier-opt" data-tier="Infinity" onclick="selectTier('Infinity')">🌌<div class="tier-opt-label">Infinity</div><div class="tier-opt-amount">(5M บาท)</div></div>
+          <div class="tier-opt" data-tier="Immortal" onclick="selectTier('Immortal')">👑<div class="tier-opt-label">Immortal</div><div class="tier-opt-amount">(10M บาท)</div></div>
         </div>
       </div>
       <div class="field"><label>วันเกิด <span class="required">*</span></label>
@@ -698,8 +735,8 @@ function deleteVIP() {
 }
 
 function avatarInitials(v) { return (v.firstname[0]||'')+(v.lastname[0]||''); }
-function tierClass(t) { return {Gold:'av-gold',Platinum:'av-platinum',Diamond:'av-diamond'}[t]||'av-platinum'; }
-function tierBadge(t) { return {Gold:'tier-gold',Platinum:'tier-platinum',Diamond:'tier-diamond'}[t]||'tier-platinum'; }
+function tierClass(t) { return {Silver:'av-silver',Gold:'av-gold',Platinum:'av-platinum',Diamond:'av-diamond',Elite:'av-elite',Legend:'av-legend',Mythic:'av-mythic',Infinity:'av-infinity',Immortal:'av-immortal'}[t]||'av-silver'; }
+function tierBadge(t) { return {Silver:'tier-silver',Gold:'tier-gold',Platinum:'tier-platinum',Diamond:'tier-diamond',Elite:'tier-elite',Legend:'tier-legend',Mythic:'tier-mythic',Infinity:'tier-infinity',Immortal:'tier-immortal'}[t]||'tier-silver'; }
 function daysUntilBirthday(day,month) {
   const now = new Date(); const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
   let next = new Date(now.getFullYear(),month-1,day);
@@ -888,7 +925,7 @@ function renderReport() {
     return `<div class="month-row"><div class="month-label">${MONTHS[i+1]}</div><div class="month-bar-bg"><div class="month-bar" style="width:${pct}%"></div></div><div class="month-count">${c}</div></div>`;
   }).join('');
 
-  const tiers = ['Diamond','Platinum','Gold'];
+  const tiers = ['Immortal','Infinity','Mythic','Legend','Elite','Diamond','Platinum','Gold','Silver'];
   document.getElementById('tier-breakdown').innerHTML = tiers.map(t=>{
     const c = db.filter(v=>v.tier===t).length;
     const pct = total?Math.round(c/total*100):0;
