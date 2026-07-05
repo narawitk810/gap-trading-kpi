@@ -1,4 +1,4 @@
-const CACHE = 'vip-birthday-v1';
+const CACHE = 'vip-birthday-v2';
 const ASSETS = ['/vip-birthday/index.html'];
 
 self.addEventListener('install', e => {
