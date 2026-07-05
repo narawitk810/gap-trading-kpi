@@ -745,6 +745,24 @@ export default function Home() {
           </Link>
         )}
 
+        {formData.department === 'บัญชี&การเงิน' && (
+          <Link
+            href="/workflow"
+            className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl p-4 hover:bg-emerald-100 transition-colors"
+          >
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              📋
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-800">Workflow รายวัน</p>
+              <p className="text-xs text-gray-400 mt-0.5">บันทึกการขาย · บันทึกการซื้อ · ค้นเอกสาร</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-emerald-600 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
         {VIP_BIRTHDAY_DEPTS.includes(formData.department) && (
           <Link
             href="/vip-birthday/index.html"
