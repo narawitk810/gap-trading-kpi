@@ -723,14 +723,16 @@ export default function Home() {
                     <div className="py-4 text-center text-xs text-gray-400">ไม่พบข้อมูลพนักงาน — กรุณาแจ้ง Admin</div>
                   ) : CREATIVE_RANKS.map((rank) => {
                     const members = creativeStaff.filter((s) => s.rank_order === rank.rank_order)
-                    if (members.length === 0) return null
+                    const isEmpty = members.length === 0
                     return (
-                      <div key={rank.rank_order}>
+                      <div key={rank.rank_order} className={isEmpty ? 'opacity-40' : ''}>
                         <p className="text-xs font-semibold text-gray-400 mb-1.5">
                           {rank.rank_emoji} {rank.rank_name}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {members.map((m) => (
+                          {isEmpty ? (
+                            <span className="text-xs text-gray-300 italic">— ยังไม่มีสมาชิก</span>
+                          ) : members.map((m) => (
                             <button
                               key={m.id}
                               type="button"
