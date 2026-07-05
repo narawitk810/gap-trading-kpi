@@ -2591,7 +2591,7 @@ export default function AdminDashboard() {
                     : 'bg-white text-[#374151] border border-[#E2E8F0] hover:border-[#1E3A5F]'
                 }`}
               >
-                {dept === 'ไลฟ์สด' ? 'ปรับตำแหน่ง' : dept}
+                {dept === 'ไลฟ์สด' ? 'Sales ไลฟ์สด' : dept}
               </button>
             ))}
           </div>
