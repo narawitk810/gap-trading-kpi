@@ -118,6 +118,13 @@ const STAGES: { status: DisbursementStatus; label: string; icon: string; color: 
   },
 ]
 
+const NEXT_STAGE: Partial<Record<DisbursementStatus, DisbursementStatus>> = {
+  pending_approval: 'approved',
+  approved: 'ordered',
+  ordered: 'payment_recorded',
+  payment_recorded: 'monthly_closed',
+}
+
 function formatDate(dateStr: string) {
   if (!dateStr) return '-'
   const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
@@ -298,6 +305,8 @@ export default function DisbursementDashboard() {
         body: JSON.stringify(body),
       })
       if (res.ok) {
+        const next = NEXT_STAGE[selected.status]
+        if (next) setSelectedStage(next)
         closeModal()
         await load()
       } else {
