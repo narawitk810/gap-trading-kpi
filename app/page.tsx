@@ -788,7 +788,7 @@ export default function Home() {
                 ⚠️
               </div>
               <div>
-                <p className="text-sm font-bold text-[#DC2626]">แจ้งสินค้าต้อง Restock</p>
+                <p className="text-sm font-bold text-[#DC2626]">แจ้งสินค้าต้อง Restock (เฉพาะบอสที่สั่งได้)</p>
                 <p className="text-xs text-gray-400 mt-0.5">แนบรูปสินค้า → Admin รับทราบและสั่งซื้อด่วน</p>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#DC2626] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2244,7 +2244,7 @@ export default function Home() {
                     className="flex items-center gap-2 bg-[#DC2626]/5 border border-[#DC2626]/20 rounded-xl px-3 py-2.5 hover:bg-[#DC2626]/10 transition-colors"
                   >
                     <span className="text-base">⚠️</span>
-                    <p className="text-xs font-bold text-[#DC2626]">แจ้งสินค้าต้อง Restock</p>
+                    <p className="text-xs font-bold text-[#DC2626]">แจ้งสินค้าต้อง Restock (เฉพาะบอสที่สั่งได้)</p>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-[#DC2626] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
