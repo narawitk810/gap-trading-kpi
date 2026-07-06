@@ -325,7 +325,7 @@ export default function StockArrivalPage() {
                     type="number"
                     value={thbBasePrice}
                     onChange={(e) => setThbBasePrice(e.target.value)}
-                    placeholder="กรอกราคาบาทที่เห็นในแอป"
+                    placeholder="ราคาหน่วยบาทที่เห็นในแอป หารจำนวนที่สั่ง"
                     className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
                   />
                 </div>
