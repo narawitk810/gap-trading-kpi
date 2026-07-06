@@ -32,6 +32,18 @@ async function compressImage(file: File): Promise<string> {
 type DisbursementStatus = 'pending_approval' | 'approved' | 'ordered' | 'payment_recorded' | 'monthly_closed'
 type ModalState = 'detail' | 'action_form' | 'confirm' | 'submitting'
 
+type EquipmentRequest = {
+  id: string
+  nickname: string
+  request_type: 'damaged' | 'new'
+  action: string
+  description: string
+  image_data: string
+  status: 'pending' | 'acknowledged'
+  created_at: string
+  acknowledged_at: string | null
+}
+
 type Disbursement = {
   id: string
   requester: string
@@ -123,6 +135,8 @@ export default function DisbursementDashboard() {
   const [selected, setSelected] = useState<Disbursement | null>(null)
   const [modalState, setModalState] = useState<ModalState>('detail')
   const [selectedStage, setSelectedStage] = useState<DisbursementStatus>('pending_approval')
+  const [equipmentItems, setEquipmentItems] = useState<EquipmentRequest[]>([])
+  const [selectedEquipment, setSelectedEquipment] = useState<EquipmentRequest | null>(null)
 
   // Action form state
   const [approvedBy, setApprovedBy] = useState('')
@@ -143,8 +157,12 @@ export default function DisbursementDashboard() {
   async function load() {
     setLoading(true)
     try {
-      const res = await fetch('/api/disbursements')
-      if (res.ok) setItems(await res.json())
+      const [disbRes, eqRes] = await Promise.all([
+        fetch('/api/disbursements'),
+        fetch('/api/equipment/all'),
+      ])
+      if (disbRes.ok) setItems(await disbRes.json())
+      if (eqRes.ok) setEquipmentItems(await eqRes.json())
     } finally {
       setLoading(false)
     }
@@ -310,34 +328,143 @@ export default function DisbursementDashboard() {
                 {' · '}{(grouped[selectedStage] || []).length} รายการ
               </p>
 
-              {(grouped[selectedStage] || []).length === 0 ? (
+              {(grouped[selectedStage] || []).length === 0 && !(selectedStage === 'pending_approval' && equipmentItems.length > 0) ? (
                 <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการในสถานะนี้</div>
               ) : (
-                (grouped[selectedStage] || []).map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => openItem(item)}
-                    className="w-full bg-white rounded-xl p-3 text-left shadow-sm hover:shadow-md transition-shadow border border-[#E2E8F0] active:bg-gray-50"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                <>
+                  {(grouped[selectedStage] || []).map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => openItem(item)}
+                      className="w-full bg-white rounded-xl p-3 text-left shadow-sm hover:shadow-md transition-shadow border border-[#E2E8F0] active:bg-gray-50"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-orange-700">
+                            {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
+                          </p>
+                          <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-orange-700">
-                          {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
-                        </p>
-                        <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))
+                    </button>
+                  ))}
+
+                  {selectedStage === 'pending_approval' && equipmentItems.length > 0 && (
+                    <>
+                      <p className="text-xs font-semibold text-gray-400 px-1 pt-3 pb-1">
+                        🔧 รายการอุปกรณ์จากพนักงาน · {equipmentItems.length} รายการ
+                      </p>
+                      {equipmentItems.map((eq) => (
+                        <button
+                          key={eq.id}
+                          onClick={() => setSelectedEquipment(eq)}
+                          className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
+                        >
+                          <div className="flex items-start gap-3">
+                            {eq.image_data && (
+                              <img
+                                src={eq.image_data}
+                                alt="รูปอุปกรณ์"
+                                className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                  eq.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {eq.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
+                                </span>
+                                {eq.action ? (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                    {eq.action}
+                                  </span>
+                                ) : null}
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 ${
+                                  eq.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
+                                }`}>
+                                  {eq.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </>
               )}
             </>
           )}
         </div>
       </div>
+
+      {/* Equipment detail modal */}
+      {selectedEquipment && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="bg-[#1E3A5F] text-white px-5 py-4 rounded-t-2xl flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-base">รายละเอียดอุปกรณ์</h2>
+                <p className="text-xs text-white/60 mt-0.5 font-mono">{selectedEquipment.id}</p>
+              </div>
+              <button onClick={() => setSelectedEquipment(null)} className="text-white/70 hover:text-white text-xl leading-none">×</button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-base font-bold text-[#374151]">{selectedEquipment.nickname}</p>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  selectedEquipment.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                }`}>
+                  {selectedEquipment.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
+                </span>
+                {selectedEquipment.action ? (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                    {selectedEquipment.action}
+                  </span>
+                ) : null}
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  selectedEquipment.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
+                }`}>
+                  {selectedEquipment.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                </span>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">คำอธิบาย</p>
+                <p className="text-sm text-[#374151] whitespace-pre-wrap">{selectedEquipment.description}</p>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">วันที่แจ้ง</p>
+                <p className="text-sm font-semibold text-[#374151]">{formatDate(selectedEquipment.created_at)}</p>
+              </div>
+
+              {selectedEquipment.image_data && (
+                <img
+                  src={selectedEquipment.image_data}
+                  alt="รูปอุปกรณ์"
+                  className="w-full max-h-64 object-contain rounded-xl border border-[#E2E8F0]"
+                />
+              )}
+
+              <button
+                onClick={() => setSelectedEquipment(null)}
+                className="w-full border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {selected && (
