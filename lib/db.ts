@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 14
+const SCHEMA_VERSION = 15
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -379,6 +379,33 @@ export async function ensureSchema(): Promise<void> {
   await db.execute(`UPDATE live_staff SET department='Sales Admin' WHERE department='sale admin'`)
   await db.execute(`UPDATE kpi_entries SET department='Sales Admin' WHERE department='sale admin'`)
   await db.execute(`UPDATE live_staff SET name='เดียร์ (สต๊อค)' WHERE id='stk-001' AND name='เดียร์'`)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS disbursements (
+      id                    TEXT PRIMARY KEY,
+      requester             TEXT NOT NULL,
+      item_list             TEXT NOT NULL,
+      requested_amount      REAL NOT NULL,
+      request_doc           TEXT NOT NULL DEFAULT '',
+      request_date          TEXT NOT NULL,
+      approved_by           TEXT NOT NULL DEFAULT '',
+      transfer_amount       REAL,
+      payment_slip          TEXT NOT NULL DEFAULT '',
+      approved_at           TEXT NOT NULL DEFAULT '',
+      ordered_by            TEXT NOT NULL DEFAULT '',
+      actual_amount         REAL,
+      order_note            TEXT NOT NULL DEFAULT '',
+      ordered_at            TEXT NOT NULL DEFAULT '',
+      payment_note          TEXT NOT NULL DEFAULT '',
+      remaining_note        TEXT NOT NULL DEFAULT '',
+      payment_recorded_at   TEXT NOT NULL DEFAULT '',
+      close_month           TEXT NOT NULL DEFAULT '',
+      closed_by             TEXT NOT NULL DEFAULT '',
+      closed_at             TEXT NOT NULL DEFAULT '',
+      status                TEXT NOT NULL DEFAULT 'pending_approval',
+      created_at            TEXT NOT NULL
+    )
+  `)
 
   g.dbVersion = SCHEMA_VERSION
 }
