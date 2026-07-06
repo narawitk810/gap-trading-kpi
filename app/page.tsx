@@ -1647,7 +1647,7 @@ export default function Home() {
               🧾
             </div>
             <div>
-              <p className="text-sm font-bold text-[#1E3A5F]">รวมใบกำกับภาษีซื้อ</p>
+              <p className="text-sm font-bold text-[#1E3A5F]">รวมใบกำกับภาษีซื้อ (เฉพาะของบอส)</p>
               <p className="text-xs text-gray-400 mt-0.5">อัปโหลดใบกำกับ → สรุป VAT ซื้อรายเดือน</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
