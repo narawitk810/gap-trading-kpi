@@ -376,9 +376,7 @@ export default function DisbursementDashboard() {
         <div className="overflow-x-auto px-4 py-4 border-b border-[#E2E8F0] bg-white">
           <div className="flex items-center w-max">
             {STAGES.map((stage, idx) => {
-              const count = stage.status === 'pending_approval'
-                ? pendingEquipment.length + (grouped['pending_approval'] || []).length
-                : (grouped[stage.status] || []).length
+              const count = stage.status === 'pending_approval' ? pendingEquipment.length : (grouped[stage.status] || []).length
               const isActive = selectedStage === stage.status
               return (
                 <div key={stage.status} className="flex items-center">
@@ -416,14 +414,12 @@ export default function DisbursementDashboard() {
               <p className="text-xs font-semibold text-gray-500 px-1">
                 {STAGES.find((s) => s.status === selectedStage)?.icon}{' '}
                 {STAGES.find((s) => s.status === selectedStage)?.label}
-                {' · '}{selectedStage === 'pending_approval'
-                  ? pendingEquipment.length + (grouped['pending_approval'] || []).length
-                  : (grouped[selectedStage] || []).length} รายการ
+                {' · '}{selectedStage === 'pending_approval' ? pendingEquipment.length : (grouped[selectedStage] || []).length} รายการ
               </p>
 
               {selectedStage === 'pending_approval' ? (
-                pendingEquipment.length === 0 && (grouped['pending_approval'] || []).length === 0 ? (
-                  <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการรอดำเนินการ</div>
+                pendingEquipment.length === 0 ? (
+                  <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการอุปกรณ์</div>
                 ) : (
                   <>
                     {pendingEquipment.map((eq) => (
@@ -458,26 +454,6 @@ export default function DisbursementDashboard() {
                               </span>
                             </div>
                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                    {(grouped['pending_approval'] || []).map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => openItem(item)}
-                        className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-orange-700">
-                              {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
-                            </p>
-                            <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
                           </div>
                         </div>
                       </button>
