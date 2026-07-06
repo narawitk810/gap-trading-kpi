@@ -1538,7 +1538,7 @@ export default function Home() {
           )}
           {['ไลฟ์สด', 'Sales Admin', 'Creative'].includes(formData.department) && (
             <InputField label="ช่องที่ดูแล" required error={errors.channelName}>
-              <div className="flex flex-wrap gap-2 pt-0.5">
+              <div className="flex gap-2 pt-0.5 overflow-x-auto pb-2">
                 {CHANNEL_LIST.map((ch) => {
                   const selected = formData.channelName.includes(ch)
                   return (
