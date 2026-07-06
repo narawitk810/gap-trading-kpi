@@ -268,6 +268,26 @@ export default function DisbursementDashboard() {
     return Object.keys(e).length === 0
   }
 
+  async function handleSkipApprove(id: string) {
+    if (!confirm('ย้ายสถานะไปบัญชีอนุมัติแล้วโดยไม่กรอกข้อมูล?')) return
+    try {
+      const res = await fetch(`/api/disbursements/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'skip_to_approved' }),
+      })
+      if (res.ok) {
+        setSelectedStage('approved')
+        closeModal()
+        await load()
+      } else {
+        alert('เกิดข้อผิดพลาด')
+      }
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    }
+  }
+
   async function handleClearSlip(id: string) {
     if (!confirm('ยืนยันลบสลิปการโอน?')) return
     try {
@@ -740,6 +760,14 @@ export default function DisbursementDashboard() {
                       className={`w-full py-3 rounded-xl font-semibold text-sm ${STAGES.find((s) => s.status === selected.status)?.actionColor}`}
                     >
                       {STAGES.find((s) => s.status === selected.status)?.actionLabel} →
+                    </button>
+                  )}
+                  {selected.status === 'pending_approval' && (
+                    <button
+                      onClick={() => handleSkipApprove(selected.id)}
+                      className="w-full border border-gray-300 text-gray-500 py-2.5 rounded-xl text-sm font-semibold"
+                    >
+                      ย้ายไปอนุมัติโดยตรง
                     </button>
                   )}
                 </>

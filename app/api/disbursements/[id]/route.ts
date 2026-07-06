@@ -73,6 +73,11 @@ export async function PATCH(
             WHERE id=? AND status='payment_recorded'`,
       args: [body.close_month.trim(), body.closed_by.trim(), now, params.id],
     })
+  } else if (action === 'skip_to_approved') {
+    await db.execute({
+      sql: `UPDATE disbursements SET status='approved' WHERE id=? AND status='pending_approval'`,
+      args: [params.id],
+    })
   } else if (action === 'clear_slip') {
     await db.execute({
       sql: `UPDATE disbursements SET payment_slip='' WHERE id=?`,
