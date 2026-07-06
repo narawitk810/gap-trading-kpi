@@ -122,6 +122,7 @@ export default function DisbursementDashboard() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Disbursement | null>(null)
   const [modalState, setModalState] = useState<ModalState>('detail')
+  const [selectedStage, setSelectedStage] = useState<DisbursementStatus>('pending_approval')
 
   // Action form state
   const [approvedBy, setApprovedBy] = useState('')
@@ -262,55 +263,80 @@ export default function DisbursementDashboard() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-10">
+      <div className="max-w-lg mx-auto pb-10">
 
-        {loading ? (
-          <div className="text-center py-16 text-gray-400 text-sm">กำลังโหลด...</div>
-        ) : (
-          STAGES.map((stage) => {
-            const stageItems = grouped[stage.status] || []
-            return (
-              <div key={stage.status} className={`rounded-2xl border p-4 shadow-sm ${stage.color}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{stage.icon}</span>
-                    <span className="text-sm font-bold text-[#374151]">{stage.label}</span>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${stage.badge}`}>
-                    {stageItems.length} รายการ
-                  </span>
+        {/* Horizontal pipeline strip */}
+        <div className="overflow-x-auto px-4 py-4 border-b border-[#E2E8F0] bg-white">
+          <div className="flex items-center w-max">
+            {STAGES.map((stage, idx) => {
+              const count = (grouped[stage.status] || []).length
+              const isActive = selectedStage === stage.status
+              return (
+                <div key={stage.status} className="flex items-center">
+                  <button
+                    onClick={() => setSelectedStage(stage.status)}
+                    className={`flex flex-col items-center px-2.5 py-2 rounded-2xl border-2 w-[80px] transition-all active:scale-95 ${
+                      isActive
+                        ? stage.color + ' shadow-sm'
+                        : 'bg-[#F5F6F8] border-[#E2E8F0]'
+                    }`}
+                  >
+                    <span className="text-2xl">{stage.icon}</span>
+                    <span className="text-[9px] font-bold text-center text-[#374151] leading-tight mt-1 h-7 flex items-center">
+                      {stage.label}
+                    </span>
+                    <span className={`text-sm font-bold mt-0.5 tabular-nums ${count > 0 ? 'text-orange-700' : 'text-gray-300'}`}>
+                      {count}
+                    </span>
+                  </button>
+                  {idx < STAGES.length - 1 && (
+                    <span className="text-gray-300 text-2xl px-0.5 font-light select-none leading-none">›</span>
+                  )}
                 </div>
+              )
+            })}
+          </div>
+        </div>
 
-                {stageItems.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-3">ไม่มีรายการ</p>
-                ) : (
-                  <div className="space-y-2">
-                    {stageItems.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => openItem(item)}
-                        className="w-full bg-white rounded-xl p-3 text-left shadow-sm hover:shadow-md transition-shadow border border-white/60 active:bg-gray-50"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-orange-700">
-                              {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
-                            </p>
-                            <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })
-        )}
+        {/* Item list for selected stage */}
+        <div className="px-4 pt-4 space-y-3 pb-10">
+          {loading ? (
+            <div className="text-center py-16 text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : (
+            <>
+              <p className="text-xs font-semibold text-gray-500 px-1">
+                {STAGES.find((s) => s.status === selectedStage)?.icon}{' '}
+                {STAGES.find((s) => s.status === selectedStage)?.label}
+                {' · '}{(grouped[selectedStage] || []).length} รายการ
+              </p>
+
+              {(grouped[selectedStage] || []).length === 0 ? (
+                <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการในสถานะนี้</div>
+              ) : (
+                (grouped[selectedStage] || []).map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => openItem(item)}
+                    className="w-full bg-white rounded-xl p-3 text-left shadow-sm hover:shadow-md transition-shadow border border-[#E2E8F0] active:bg-gray-50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-orange-700">
+                          {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
+                        </p>
+                        <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Modal */}
