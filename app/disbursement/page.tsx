@@ -429,7 +429,7 @@ export default function DisbursementDashboard() {
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 ${
                                   eq.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
                                 }`}>
-                                  {eq.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                                  {eq.status === 'pending' ? 'รอดำเนินการ' : 'รอดำเนินการ'}
                                 </span>
                               </div>
                               <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
@@ -488,7 +488,7 @@ export default function DisbursementDashboard() {
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                       selectedEquipment.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
                     }`}>
-                      {selectedEquipment.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                      {selectedEquipment.status === 'pending' ? 'รอดำเนินการ' : 'รอดำเนินการ'}
                     </span>
                   </div>
                   <div>
