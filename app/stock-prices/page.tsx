@@ -60,6 +60,9 @@ export default function StockPricesPage() {
   const [pmCommission, setPmCommission] = useState('')
   const [pmSubmitting, setPmSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingItem, setEditingItem] = useState<StockPrice | null>(null)
+  const [editForm, setEditForm] = useState({ product_name: '', quantity: '', packs_per_box: '', cost: '', note: '' })
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
@@ -74,6 +77,30 @@ export default function StockPricesPage() {
     const interval = setInterval(fetchData, 30_000)
     return () => clearInterval(interval)
   }, [fetchData])
+
+  async function handleEditSave() {
+    if (!editingItem) return
+    setSavingEdit(true)
+    try {
+      const res = await fetch('/api/stock-arrival', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingItem.id, ...editForm }),
+      })
+      if (res.ok) {
+        setItems((prev) => prev.map((r) =>
+          r.id === editingItem.id
+            ? { ...r, product_name: editForm.product_name, quantity: editForm.quantity, packs_per_box: editForm.packs_per_box, cost: editForm.cost, note: editForm.note || null }
+            : r
+        ))
+        setEditingItem(null)
+      } else {
+        const err = await res.json()
+        alert(err.error || 'แก้ไขไม่สำเร็จ — กรุณาลองอีกครั้ง')
+      }
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setSavingEdit(false) }
+  }
 
   async function handleDelete(id: string) {
     if (!confirm('ยืนยันลบรายการนี้?')) return
@@ -281,6 +308,15 @@ export default function StockPricesPage() {
                                 รอดำเนินการ
                               </span>
                               <button
+                                onClick={() => {
+                                  setEditingItem(r)
+                                  setEditForm({ product_name: r.product_name, quantity: r.quantity, packs_per_box: r.packs_per_box, cost: r.cost, note: r.note || '' })
+                                }}
+                                className="text-xs text-[#1E3A5F] bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100"
+                              >
+                                แก้ไข
+                              </button>
+                              <button
                                 onClick={() => handleDelete(r.id)}
                                 disabled={deletingId === r.id}
                                 className="text-xs text-[#DC2626] bg-red-50 px-2 py-0.5 rounded-full hover:bg-red-100 disabled:opacity-60"
@@ -351,6 +387,81 @@ export default function StockPricesPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Pending Item Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="px-5 py-4 border-b border-[#E2E8F0]">
+              <h2 className="font-bold text-[#1E3A5F] text-base">แก้ไขข้อมูลสินค้า</h2>
+              <p className="text-xs text-gray-400 mt-0.5">รอดำเนินการ — แก้ไขได้ก่อน Admin ดำเนินการ</p>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">ชื่อสินค้า / LOT</label>
+                <input
+                  type="text"
+                  value={editForm.product_name}
+                  onChange={(e) => setEditForm((f) => ({ ...f, product_name: e.target.value }))}
+                  className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">จำนวน</label>
+                <input
+                  type="text"
+                  value={editForm.quantity}
+                  onChange={(e) => setEditForm((f) => ({ ...f, quantity: e.target.value }))}
+                  className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แพ็คต่อกล่อง</label>
+                <input
+                  type="text"
+                  value={editForm.packs_per_box}
+                  onChange={(e) => setEditForm((f) => ({ ...f, packs_per_box: e.target.value }))}
+                  className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">ต้นทุน/กล่อง (บาท)</label>
+                <input
+                  type="text"
+                  value={editForm.cost}
+                  onChange={(e) => setEditForm((f) => ({ ...f, cost: e.target.value }))}
+                  className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">หมายเหตุ</label>
+                <textarea
+                  value={editForm.note}
+                  onChange={(e) => setEditForm((f) => ({ ...f, note: e.target.value }))}
+                  rows={2}
+                  className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm resize-none"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-[#E2E8F0] flex gap-3">
+              <button
+                onClick={() => setEditingItem(null)}
+                disabled={savingEdit}
+                className="flex-1 border border-[#E2E8F0] text-[#374151] py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleEditSave}
+                disabled={savingEdit || !editForm.product_name.trim() || !editForm.quantity.trim() || !editForm.packs_per_box.trim() || !editForm.cost.trim()}
+                className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+              >
+                {savingEdit ? 'กำลังบันทึก...' : 'บันทึก'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pricing Modal */}
       {pricingModal && (() => {

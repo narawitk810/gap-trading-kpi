@@ -56,17 +56,30 @@ export async function DELETE(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  if (searchParams.get('key') !== ADMIN_KEY) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const isAdmin = searchParams.get('key') === ADMIN_KEY
   const body = await request.json()
   if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
   await ensureSchema()
   const db = getDb()
-  const now = new Date().toISOString()
-  await db.execute({
-    sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ?, pricing_data = ? WHERE id = ?`,
-    args: [now, body.pricing ? JSON.stringify(body.pricing) : null, body.id],
+
+  if (isAdmin) {
+    const now = new Date().toISOString()
+    await db.execute({
+      sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ?, pricing_data = ? WHERE id = ?`,
+      args: [now, body.pricing ? JSON.stringify(body.pricing) : null, body.id],
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  const { product_name, quantity, packs_per_box, cost, note } = body
+  if (!product_name?.trim() || !quantity?.trim() || !packs_per_box?.trim() || !cost?.trim()) {
+    return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
+  }
+  const result = await db.execute({
+    sql: `UPDATE stock_arrivals SET product_name=?, quantity=?, packs_per_box=?, cost=?, note=? WHERE id=? AND status='pending'`,
+    args: [product_name.trim(), quantity.trim(), packs_per_box.trim(), cost.trim(), note?.trim() || null, body.id],
   })
+  if ((result.rowsAffected ?? 0) === 0)
+    return NextResponse.json({ error: 'ไม่สามารถแก้ไขได้ — Admin ดำเนินการแล้ว' }, { status: 403 })
   return NextResponse.json({ ok: true })
 }
