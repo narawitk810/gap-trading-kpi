@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 15
+const SCHEMA_VERSION = 16
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -403,9 +403,12 @@ export async function ensureSchema(): Promise<void> {
       closed_by             TEXT NOT NULL DEFAULT '',
       closed_at             TEXT NOT NULL DEFAULT '',
       status                TEXT NOT NULL DEFAULT 'pending_approval',
+      equipment_id          TEXT NOT NULL DEFAULT '',
       created_at            TEXT NOT NULL
     )
   `)
+
+  try { await db.execute(`ALTER TABLE disbursements ADD COLUMN equipment_id TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   g.dbVersion = SCHEMA_VERSION
 }

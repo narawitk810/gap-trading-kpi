@@ -436,6 +436,7 @@ export default function AdminDashboard() {
   const [equipmentRequests, setEquipmentRequests] = useState<EquipmentRequest[]>([])
   const [loadingEquipment, setLoadingEquipment] = useState(false)
   const [acknowledgingEquipId, setAcknowledgingEquipId] = useState<string | null>(null)
+  const [equipDisbursements, setEquipDisbursements] = useState<{ equipment_id: string; status: string }[]>([])
   const [meetingReports, setMeetingReports] = useState<MeetingReport[]>([])
   const [loadingMeetings, setLoadingMeetings] = useState(false)
   const [liveStaff, setLiveStaff] = useState<LiveStaffMember[]>([])
@@ -1080,8 +1081,15 @@ export default function AdminDashboard() {
   const fetchEquipment = useCallback(async () => {
     setLoadingEquipment(true)
     try {
-      const res = await fetch(`/api/equipment?key=${ADMIN_KEY}`)
-      if (res.ok) setEquipmentRequests(await res.json())
+      const [eqRes, disbRes] = await Promise.all([
+        fetch(`/api/equipment?key=${ADMIN_KEY}`),
+        fetch('/api/disbursements'),
+      ])
+      if (eqRes.ok) setEquipmentRequests(await eqRes.json())
+      if (disbRes.ok) {
+        const disbs: { equipment_id: string; status: string }[] = await disbRes.json()
+        setEquipDisbursements(disbs.filter((d) => d.equipment_id))
+      }
     } catch { /* silent */ }
     finally { setLoadingEquipment(false) }
   }, [])
@@ -2174,13 +2182,21 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
-                      <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${
-                        r.status === 'pending'
-                          ? 'bg-red-50 text-[#DC2626]'
-                          : 'bg-[#16A34A]/10 text-[#16A34A]'
-                      }`}>
-                        {r.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
-                      </span>
+                      {(() => {
+                        const disburse = equipDisbursements.find((d) => d.equipment_id === r.id)
+                        const statusMap: Record<string, { label: string; cls: string }> = {
+                          approved: { label: 'บัญชีอนุมัติแล้ว', cls: 'bg-green-100 text-green-700' },
+                          ordered: { label: 'สั่งซื้อแล้ว', cls: 'bg-blue-100 text-blue-700' },
+                          payment_recorded: { label: 'บันทึกจ่ายแล้ว', cls: 'bg-indigo-100 text-indigo-700' },
+                          monthly_closed: { label: 'ปิดงบเดือน', cls: 'bg-gray-100 text-gray-600' },
+                        }
+                        const s = disburse ? statusMap[disburse.status] : null
+                        return (
+                          <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-full ${s ? s.cls : 'bg-red-50 text-[#DC2626]'}`}>
+                            {s ? s.label : 'รอดำเนินการ'}
+                          </span>
+                        )
+                      })()}
                     </div>
                     <p className="text-sm text-[#374151]">{r.description}</p>
                   </div>

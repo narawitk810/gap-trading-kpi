@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
 
   await db.execute({
     sql: `INSERT INTO disbursements
-          (id, requester, item_list, requested_amount, request_doc, request_date, status, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, 'approved', ?)`,
+          (id, requester, item_list, requested_amount, request_doc, request_date, status, equipment_id, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, 'approved', ?, ?)`,
     args: [
       id,
       body.requester.trim(),
@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       Number(body.amount),
       body.request_doc,
       body.request_date,
+      body.equipment_id?.trim() || '',
       now,
     ],
   })

@@ -216,6 +216,7 @@ export default function DisbursementDashboard() {
           amount: Number(eqAmount),
           request_date: today,
           request_doc: selectedEquipment.image_data || '',
+          equipment_id: selectedEquipment.id,
         }),
       })
       if (!disbRes.ok) throw new Error()
