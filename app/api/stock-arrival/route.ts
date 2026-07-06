@@ -71,13 +71,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  const { product_name, quantity, packs_per_box, cost, note } = body
+  const { product_name, quantity, packs_per_box, cost, note, old_pricing_data } = body
   if (!product_name?.trim() || !quantity?.trim() || !packs_per_box?.trim() || !cost?.trim()) {
     return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
   }
+  const oldPricingStr = old_pricing_data && Object.keys(old_pricing_data).length > 0
+    ? JSON.stringify(old_pricing_data) : null
   const result = await db.execute({
-    sql: `UPDATE stock_arrivals SET product_name=?, quantity=?, packs_per_box=?, cost=?, note=? WHERE id=? AND status='pending'`,
-    args: [product_name.trim(), quantity.trim(), packs_per_box.trim(), cost.trim(), note?.trim() || null, body.id],
+    sql: `UPDATE stock_arrivals SET product_name=?, quantity=?, packs_per_box=?, cost=?, note=?, old_pricing_data=? WHERE id=? AND status='pending'`,
+    args: [product_name.trim(), quantity.trim(), packs_per_box.trim(), cost.trim(), note?.trim() || null, oldPricingStr, body.id],
   })
   if ((result.rowsAffected ?? 0) === 0)
     return NextResponse.json({ error: 'ไม่สามารถแก้ไขได้ — Admin ดำเนินการแล้ว' }, { status: 403 })

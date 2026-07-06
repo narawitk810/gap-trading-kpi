@@ -61,7 +61,7 @@ export default function StockPricesPage() {
   const [pmSubmitting, setPmSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<StockPrice | null>(null)
-  const [editForm, setEditForm] = useState({ product_name: '', quantity: '', packs_per_box: '', cost: '', note: '' })
+  const [editForm, setEditForm] = useState({ product_name: '', quantity: '', packs_per_box: '', cost: '', note: '', old_box_system: '', old_box_external: '', old_pack_system: '', old_pack_external: '' })
   const [savingEdit, setSavingEdit] = useState(false)
 
   const fetchData = useCallback(() => {
@@ -82,15 +82,28 @@ export default function StockPricesPage() {
     if (!editingItem) return
     setSavingEdit(true)
     try {
+      const oldPricing: Record<string, string> = {}
+      if (editForm.old_box_system.trim()) oldPricing.box_price_system = editForm.old_box_system.trim()
+      if (editForm.old_box_external.trim()) oldPricing.box_price_external = editForm.old_box_external.trim()
+      if (editForm.old_pack_system.trim()) oldPricing.pack_price_system = editForm.old_pack_system.trim()
+      if (editForm.old_pack_external.trim()) oldPricing.pack_price_external = editForm.old_pack_external.trim()
       const res = await fetch('/api/stock-arrival', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingItem.id, ...editForm }),
+        body: JSON.stringify({
+          id: editingItem.id,
+          product_name: editForm.product_name,
+          quantity: editForm.quantity,
+          packs_per_box: editForm.packs_per_box,
+          cost: editForm.cost,
+          note: editForm.note,
+          old_pricing_data: Object.keys(oldPricing).length > 0 ? oldPricing : null,
+        }),
       })
       if (res.ok) {
         setItems((prev) => prev.map((r) =>
           r.id === editingItem.id
-            ? { ...r, product_name: editForm.product_name, quantity: editForm.quantity, packs_per_box: editForm.packs_per_box, cost: editForm.cost, note: editForm.note || null }
+            ? { ...r, product_name: editForm.product_name, quantity: editForm.quantity, packs_per_box: editForm.packs_per_box, cost: editForm.cost, note: editForm.note || null, old_pricing_data: Object.keys(oldPricing).length > 0 ? JSON.stringify(oldPricing) : null }
             : r
         ))
         setEditingItem(null)
@@ -310,7 +323,9 @@ export default function StockPricesPage() {
                               <button
                                 onClick={() => {
                                   setEditingItem(r)
-                                  setEditForm({ product_name: r.product_name, quantity: r.quantity, packs_per_box: r.packs_per_box, cost: r.cost, note: r.note || '' })
+                                  let old: Record<string, string> = {}
+                                  try { old = r.old_pricing_data ? JSON.parse(r.old_pricing_data) : {} } catch { old = {} }
+                                  setEditForm({ product_name: r.product_name, quantity: r.quantity, packs_per_box: r.packs_per_box, cost: r.cost, note: r.note || '', old_box_system: old.box_price_system || '', old_box_external: old.box_price_external || '', old_pack_system: old.pack_price_system || '', old_pack_external: old.pack_price_external || '' })
                                 }}
                                 className="text-xs text-[#1E3A5F] bg-blue-50 px-2 py-0.5 rounded-full hover:bg-blue-100"
                               >
@@ -441,6 +456,27 @@ export default function StockPricesPage() {
                   rows={2}
                   className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm resize-none"
                 />
+              </div>
+              <div className="pt-1 border-t border-[#E2E8F0]">
+                <p className="text-xs font-semibold text-[#374151] mb-2">ราคาเดิม (ถ้าไม่มีเว้นว่างไว้)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">ราคากล่อง (ระบบ)</label>
+                    <input type="number" value={editForm.old_box_system} onChange={(e) => setEditForm((f) => ({ ...f, old_box_system: e.target.value }))} className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm" placeholder="0" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">ราคากล่อง (ขาย)</label>
+                    <input type="number" value={editForm.old_box_external} onChange={(e) => setEditForm((f) => ({ ...f, old_box_external: e.target.value }))} className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm" placeholder="0" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">ราคาแพ็ค (ระบบ)</label>
+                    <input type="number" value={editForm.old_pack_system} onChange={(e) => setEditForm((f) => ({ ...f, old_pack_system: e.target.value }))} className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm" placeholder="0" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">ราคาแพ็ค (ขาย)</label>
+                    <input type="number" value={editForm.old_pack_external} onChange={(e) => setEditForm((f) => ({ ...f, old_pack_external: e.target.value }))} className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm" placeholder="0" />
+                  </div>
+                </div>
               </div>
             </div>
             <div className="px-5 py-4 border-t border-[#E2E8F0] flex gap-3">
