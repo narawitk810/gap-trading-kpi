@@ -2183,15 +2183,6 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                     <p className="text-sm text-[#374151]">{r.description}</p>
-                    {r.status === 'pending' && (
-                      <button
-                        onClick={() => handleAcknowledgeEquipment(r.id)}
-                        disabled={acknowledgingEquipId === r.id}
-                        className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
-                      >
-                        {acknowledgingEquipId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
