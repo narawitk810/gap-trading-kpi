@@ -31,6 +31,7 @@ async function compressImage(file: File): Promise<string> {
 
 type DisbursementStatus = 'pending_approval' | 'approved' | 'ordered' | 'payment_recorded' | 'monthly_closed'
 type ModalState = 'detail' | 'action_form' | 'confirm' | 'submitting'
+type EqModalState = 'detail' | 'approve_form' | 'approve_confirm' | 'approve_submitting'
 
 type EquipmentRequest = {
   id: string
@@ -137,6 +138,9 @@ export default function DisbursementDashboard() {
   const [selectedStage, setSelectedStage] = useState<DisbursementStatus>('pending_approval')
   const [equipmentItems, setEquipmentItems] = useState<EquipmentRequest[]>([])
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentRequest | null>(null)
+  const [eqModalState, setEqModalState] = useState<EqModalState>('detail')
+  const [eqAmount, setEqAmount] = useState('')
+  const [eqAmountError, setEqAmountError] = useState('')
 
   // Action form state
   const [approvedBy, setApprovedBy] = useState('')
@@ -182,6 +186,43 @@ export default function DisbursementDashboard() {
 
   function closeModal() {
     setSelected(null)
+  }
+
+  function openEquipment(eq: EquipmentRequest) {
+    setSelectedEquipment(eq)
+    setEqModalState('detail')
+    setEqAmount('')
+    setEqAmountError('')
+  }
+
+  async function handleEqApprove() {
+    if (!selectedEquipment) return
+    setEqModalState('approve_submitting')
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const disbRes = await fetch('/api/disbursements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requester: selectedEquipment.nickname,
+          item_list: selectedEquipment.description,
+          amount: Number(eqAmount),
+          request_date: today,
+          request_doc: selectedEquipment.image_data || '',
+        }),
+      })
+      if (!disbRes.ok) throw new Error()
+      await fetch('/api/equipment/acknowledge', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedEquipment.id }),
+      })
+      setSelectedEquipment(null)
+      await load()
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      setEqModalState('approve_form')
+    }
   }
 
   async function handleSlipFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -361,7 +402,7 @@ export default function DisbursementDashboard() {
                       {equipmentItems.map((eq) => (
                         <button
                           key={eq.id}
-                          onClick={() => setSelectedEquipment(eq)}
+                          onClick={() => openEquipment(eq)}
                           className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
                         >
                           <div className="flex items-start gap-3">
@@ -405,62 +446,155 @@ export default function DisbursementDashboard() {
         </div>
       </div>
 
-      {/* Equipment detail modal */}
+      {/* Equipment modal */}
       {selectedEquipment && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="bg-[#1E3A5F] text-white px-5 py-4 rounded-t-2xl flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-base">รายละเอียดอุปกรณ์</h2>
+                <h2 className="font-bold text-base">
+                  {eqModalState === 'detail' ? 'รายละเอียดอุปกรณ์'
+                    : eqModalState === 'approve_form' ? 'กรอกยอดที่ขออนุมัติ'
+                    : eqModalState === 'approve_confirm' ? 'ยืนยันการอนุมัติ'
+                    : 'กำลังบันทึก...'}
+                </h2>
                 <p className="text-xs text-white/60 mt-0.5 font-mono">{selectedEquipment.id}</p>
               </div>
-              <button onClick={() => setSelectedEquipment(null)} className="text-white/70 hover:text-white text-xl leading-none">×</button>
+              {eqModalState !== 'approve_submitting' && (
+                <button
+                  onClick={() => eqModalState === 'detail' ? setSelectedEquipment(null) : setEqModalState('detail')}
+                  className="text-white/70 hover:text-white text-xl leading-none"
+                >×</button>
+              )}
             </div>
 
             <div className="px-5 py-4 space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-base font-bold text-[#374151]">{selectedEquipment.nickname}</p>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  selectedEquipment.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
-                }`}>
-                  {selectedEquipment.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
-                </span>
-                {selectedEquipment.action ? (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                    {selectedEquipment.action}
-                  </span>
-                ) : null}
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  selectedEquipment.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
-                }`}>
-                  {selectedEquipment.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
-                </span>
-              </div>
 
-              <div>
-                <p className="text-xs text-gray-500 mb-0.5">คำอธิบาย</p>
-                <p className="text-sm text-[#374151] whitespace-pre-wrap">{selectedEquipment.description}</p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500 mb-0.5">วันที่แจ้ง</p>
-                <p className="text-sm font-semibold text-[#374151]">{formatDate(selectedEquipment.created_at)}</p>
-              </div>
-
-              {selectedEquipment.image_data && (
-                <img
-                  src={selectedEquipment.image_data}
-                  alt="รูปอุปกรณ์"
-                  className="w-full max-h-64 object-contain rounded-xl border border-[#E2E8F0]"
-                />
+              {/* Detail view */}
+              {eqModalState === 'detail' && (
+                <>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-base font-bold text-[#374151]">{selectedEquipment.nickname}</p>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      selectedEquipment.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {selectedEquipment.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
+                    </span>
+                    {selectedEquipment.action ? (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        {selectedEquipment.action}
+                      </span>
+                    ) : null}
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      selectedEquipment.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
+                    }`}>
+                      {selectedEquipment.status === 'pending' ? 'รอดำเนินการ' : 'รับทราบแล้ว'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">คำอธิบาย</p>
+                    <p className="text-sm text-[#374151] whitespace-pre-wrap">{selectedEquipment.description}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">วันที่แจ้ง</p>
+                    <p className="text-sm font-semibold text-[#374151]">{formatDate(selectedEquipment.created_at)}</p>
+                  </div>
+                  {selectedEquipment.image_data && (
+                    <img src={selectedEquipment.image_data} alt="รูปอุปกรณ์"
+                      className="w-full max-h-64 object-contain rounded-xl border border-[#E2E8F0]" />
+                  )}
+                  {selectedEquipment.status === 'pending' ? (
+                    <div className="flex gap-3">
+                      <button onClick={() => setSelectedEquipment(null)}
+                        className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
+                        ปิด
+                      </button>
+                      <button onClick={() => setEqModalState('approve_form')}
+                        className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm">
+                        อนุมัติ →
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setSelectedEquipment(null)}
+                      className="w-full border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
+                      ปิด
+                    </button>
+                  )}
+                </>
               )}
 
-              <button
-                onClick={() => setSelectedEquipment(null)}
-                className="w-full border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm"
-              >
-                ปิด
-              </button>
+              {/* Approve form */}
+              {eqModalState === 'approve_form' && (
+                <>
+                  <div className="bg-[#F5F6F8] rounded-xl p-3 text-sm space-y-1">
+                    <p className="font-semibold text-[#374151]">{selectedEquipment.nickname}</p>
+                    <p className="text-gray-500 text-xs">{selectedEquipment.description}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                      ยอดที่ขอเบิก <span className="text-[#DC2626]">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number" min="0" step="0.01" value={eqAmount}
+                        onChange={(e) => { setEqAmount(e.target.value); setEqAmountError('') }}
+                        placeholder="0.00"
+                        className={inputClass + ' pr-10'}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+                    </div>
+                    {eqAmountError && <p className="text-[#DC2626] text-xs mt-1">{eqAmountError}</p>}
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => setEqModalState('detail')}
+                      className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
+                      ยกเลิก
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!eqAmount || isNaN(Number(eqAmount)) || Number(eqAmount) <= 0) {
+                          setEqAmountError('กรุณากรอกยอดที่ถูกต้อง')
+                          return
+                        }
+                        setEqModalState('approve_confirm')
+                      }}
+                      className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm"
+                    >
+                      ตรวจสอบ →
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Approve confirm */}
+              {eqModalState === 'approve_confirm' && (
+                <>
+                  <div className="bg-[#F5F6F8] rounded-xl p-3 text-sm space-y-2">
+                    <p className="font-semibold text-[#374151]">ยืนยันการอนุมัติ</p>
+                    <p className="text-gray-600">ผู้ขอ: <span className="font-semibold">{selectedEquipment.nickname}</span></p>
+                    <p className="text-gray-600">รายการ: <span className="font-semibold">{selectedEquipment.description}</span></p>
+                    <p className="text-gray-600">ยอด: <span className="font-semibold text-green-700">
+                      {Number(eqAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
+                    </span></p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => setEqModalState('approve_form')}
+                      className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
+                      แก้ไข
+                    </button>
+                    <button onClick={handleEqApprove}
+                      className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm">
+                      ยืนยันอนุมัติ
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Submitting */}
+              {eqModalState === 'approve_submitting' && (
+                <p className="text-center text-gray-500 text-sm py-4">กำลังบันทึก...</p>
+              )}
+
             </div>
           </div>
         </div>
