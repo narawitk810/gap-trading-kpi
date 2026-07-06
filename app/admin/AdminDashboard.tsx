@@ -2945,7 +2945,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setLiveStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -3107,7 +3107,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setStockPurchasingStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -3269,7 +3269,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setPackStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -3425,7 +3425,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setAccountingStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -3583,7 +3583,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setAdministrationStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -3739,7 +3739,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setHrStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -3899,7 +3899,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setLiveManagerStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -4061,7 +4061,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setStoreRetailStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -4223,7 +4223,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setSaleAdminStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -4385,7 +4385,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setMarketingStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
@@ -4547,7 +4547,7 @@ export default function AdminDashboard() {
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setCreativeStaff)}
                             title="ลบพนักงานนี้"
-                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
                         </td>
                       </tr>
