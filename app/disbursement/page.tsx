@@ -371,7 +371,7 @@ export default function DisbursementDashboard() {
         <div className="overflow-x-auto px-4 py-4 border-b border-[#E2E8F0] bg-white">
           <div className="flex items-center w-max">
             {STAGES.map((stage, idx) => {
-              const count = (grouped[stage.status] || []).length
+              const count = stage.status === 'pending_approval' ? equipmentItems.length : (grouped[stage.status] || []).length
               const isActive = selectedStage === stage.status
               return (
                 <div key={stage.status} className="flex items-center">
@@ -409,10 +409,53 @@ export default function DisbursementDashboard() {
               <p className="text-xs font-semibold text-gray-500 px-1">
                 {STAGES.find((s) => s.status === selectedStage)?.icon}{' '}
                 {STAGES.find((s) => s.status === selectedStage)?.label}
-                {' · '}{(grouped[selectedStage] || []).length} รายการ
+                {' · '}{selectedStage === 'pending_approval' ? equipmentItems.length : (grouped[selectedStage] || []).length} รายการ
               </p>
 
-              {(grouped[selectedStage] || []).length === 0 && !(selectedStage === 'pending_approval' && equipmentItems.length > 0) ? (
+              {selectedStage === 'pending_approval' ? (
+                equipmentItems.length === 0 ? (
+                  <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการอุปกรณ์</div>
+                ) : (
+                  <>
+                    {equipmentItems.map((eq) => (
+                      <button
+                        key={eq.id}
+                        onClick={() => openEquipment(eq)}
+                        className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
+                      >
+                        <div className="flex items-start gap-3">
+                          {eq.image_data && (
+                            <img
+                              src={eq.image_data}
+                              alt="รูปอุปกรณ์"
+                              className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                eq.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                              }`}>
+                                {eq.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
+                              </span>
+                              {eq.action ? (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                  {eq.action}
+                                </span>
+                              ) : null}
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-red-100 text-red-600">
+                                รอดำเนินการ
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </>
+                )
+              ) : (grouped[selectedStage] || []).length === 0 ? (
                 <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการในสถานะนี้</div>
               ) : (
                 <>
@@ -436,50 +479,6 @@ export default function DisbursementDashboard() {
                       </div>
                     </button>
                   ))}
-
-                  {selectedStage === 'pending_approval' && equipmentItems.length > 0 && (
-                    <>
-                      <p className="text-xs font-semibold text-gray-400 px-1 pt-3 pb-1">
-                        🔧 รายการอุปกรณ์จากพนักงาน · {equipmentItems.length} รายการ
-                      </p>
-                      {equipmentItems.map((eq) => (
-                        <button
-                          key={eq.id}
-                          onClick={() => openEquipment(eq)}
-                          className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
-                        >
-                          <div className="flex items-start gap-3">
-                            {eq.image_data && (
-                              <img
-                                src={eq.image_data}
-                                alt="รูปอุปกรณ์"
-                                className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
-                              />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
-                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                                  eq.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
-                                }`}>
-                                  {eq.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
-                                </span>
-                                {eq.action ? (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                    {eq.action}
-                                  </span>
-                                ) : null}
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-red-100 text-red-600">
-                                  รอดำเนินการ
-                                </span>
-                              </div>
-                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </>
-                  )}
                 </>
               )}
             </>

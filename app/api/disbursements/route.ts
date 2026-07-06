@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   await db.execute({
     sql: `INSERT INTO disbursements
           (id, requester, item_list, requested_amount, request_doc, request_date, status, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, 'pending_approval', ?)`,
+          VALUES (?, ?, ?, ?, ?, ?, 'approved', ?)`,
     args: [
       id,
       body.requester.trim(),
