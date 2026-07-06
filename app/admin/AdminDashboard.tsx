@@ -528,6 +528,7 @@ export default function AdminDashboard() {
   const [addingLiveManagerStaff, setAddingLiveManagerStaff] = useState(false)
   const [addLiveManagerStaffError, setAddLiveManagerStaffError] = useState('')
   const [savingHeadId, setSavingHeadId] = useState<string | null>(null)
+  const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null)
   const [rankUnlocked, setRankUnlocked] = useState(() => {
     if (typeof window === 'undefined') return false
     const expiry = localStorage.getItem('rankUnlockedExpiry')
@@ -535,6 +536,21 @@ export default function AdminDashboard() {
   })
   const [rankCodeInput, setRankCodeInput] = useState('')
   const [rankCodeError, setRankCodeError] = useState('')
+
+  async function deleteStaff(s: LiveStaffMember, staffSetter: React.Dispatch<React.SetStateAction<LiveStaffMember[]>>) {
+    if (!window.confirm(`ยืนยันลบ "${s.name}" ออกจากระบบ?\nการกระทำนี้ไม่สามารถย้อนกลับได้`)) return
+    setDeletingStaffId(s.id)
+    try {
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: s.id }),
+      })
+      if (res.ok) staffSetter((prev) => prev.filter((x) => x.id !== s.id))
+      else alert('ลบไม่สำเร็จ — กรุณาลองอีกครั้ง')
+    } catch { alert('เกิดข้อผิดพลาด — กรุณาลองอีกครั้ง') }
+    finally { setDeletingStaffId(null) }
+  }
 
   async function toggleHead(s: LiveStaffMember, staffSetter: React.Dispatch<React.SetStateAction<LiveStaffMember[]>>) {
     setSavingHeadId(s.id)
@@ -2925,6 +2941,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {rankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setLiveStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3081,6 +3103,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingStockPurchasingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {stockPurchasingRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setStockPurchasingStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3237,6 +3265,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingPackRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {packRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setPackStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3387,6 +3421,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingAccountingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {accountingRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setAccountingStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3539,6 +3579,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingAdministrationRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {administrationRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setAdministrationStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3689,6 +3735,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingHrRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {hrRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setHrStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3843,6 +3895,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingLiveManagerRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {liveManagerRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setLiveManagerStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -3999,6 +4057,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingStoreRetailRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {storeRetailRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setStoreRetailStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -4155,6 +4219,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingSaleAdminRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {saleAdminRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setSaleAdminStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -4311,6 +4381,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingMarketingRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {marketingRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setMarketingStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}
@@ -4467,6 +4543,12 @@ export default function AdminDashboard() {
                           >⚜️</button>
                           {savingCreativeRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
                           {creativeRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setCreativeStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-40 hover:opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
                         </td>
                       </tr>
                     ))}

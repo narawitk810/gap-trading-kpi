@@ -40,6 +40,19 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true, staff: { id, name: name.trim(), rank_name, rank_emoji, rank_order: Number(rank_order), department, created_at: now } })
 }
 
+export async function DELETE(req: NextRequest) {
+  const url = new URL(req.url)
+  if (url.searchParams.get('key') !== ADMIN_KEY) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  await ensureSchema()
+  const db = getDb()
+  const { id } = await req.json()
+  if (!id) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
+  await db.execute({ sql: 'DELETE FROM live_staff WHERE id=?', args: [id] })
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(req: NextRequest) {
   const url = new URL(req.url)
   if (url.searchParams.get('key') !== ADMIN_KEY) {
