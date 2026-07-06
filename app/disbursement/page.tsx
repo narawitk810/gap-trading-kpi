@@ -72,7 +72,7 @@ type Disbursement = {
 const STAGES: { status: DisbursementStatus; label: string; icon: string; color: string; badge: string; actionLabel: string; actionColor: string }[] = [
   {
     status: 'pending_approval',
-    label: 'จัดซื้อขอเบิก',
+    label: 'รายการเบิกจากทุกแผนก',
     icon: '📋',
     color: 'bg-amber-50 border-amber-200',
     badge: 'bg-amber-100 text-amber-700',
