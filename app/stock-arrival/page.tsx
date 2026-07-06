@@ -319,7 +319,7 @@ export default function StockArrivalPage() {
               <div className="mt-3 p-3 bg-[#F0FDF4] rounded-xl border border-[#BBF7D0] space-y-2">
                 <div>
                   <label className="block text-xs font-semibold text-[#374151] mb-1">
-                    ราคาสินค้าต่อกล่อง (บาท) จากจีน
+                    ราคาสินค้าต่อกล่อง(บาท)จากจีน (หากสั่งมาเป็นลัง ต้องหารให้ได้ราคาต่อ 1 กล่อง)
                   </label>
                   <input
                     type="number"
