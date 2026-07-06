@@ -261,6 +261,21 @@ export default function DisbursementDashboard() {
     return Object.keys(e).length === 0
   }
 
+  async function handleClearSlip(id: string) {
+    if (!confirm('ยืนยันลบสลิปการโอน?')) return
+    try {
+      await fetch(`/api/disbursements/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_slip' }),
+      })
+      setItems((prev) => prev.map((i) => i.id === id ? { ...i, payment_slip: '' } : i))
+      if (selected?.id === id) setSelected((prev) => prev ? { ...prev, payment_slip: '' } : prev)
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    }
+  }
+
   async function handleActionSubmit() {
     if (!selected) return
     setModalState('submitting')
@@ -636,18 +651,18 @@ export default function DisbursementDashboard() {
                   {(['approved', 'ordered', 'payment_recorded', 'monthly_closed'] as DisbursementStatus[]).includes(selected.status) && (
                     <div className="border-t border-[#E2E8F0] pt-3 space-y-2 text-sm">
                       <p className="text-xs font-semibold text-green-700">✅ บัญชีอนุมัติแล้ว</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <p className="text-xs text-gray-500">ผู้อนุมัติ</p>
-                          <p className="font-semibold text-[#374151]">{selected.approved_by}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-500">ยอดโอน</p>
-                          <p className="font-semibold text-[#374151]">{formatMoney(selected.transfer_amount)}</p>
-                        </div>
+                      <div>
+                        <p className="text-xs text-gray-500">ผู้อนุมัติ</p>
+                        <p className="font-semibold text-[#374151]">{selected.approved_by}</p>
                       </div>
                       {selected.payment_slip && (
-                        <img src={selected.payment_slip} alt="สลิป" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                        <div className="space-y-2">
+                          <img src={selected.payment_slip} alt="สลิป" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                          <button onClick={() => handleClearSlip(selected.id)}
+                            className="w-full border border-red-200 text-red-600 py-2 rounded-xl text-xs font-semibold">
+                            ลบสลิปการโอน
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
