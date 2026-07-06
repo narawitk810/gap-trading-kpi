@@ -67,6 +67,7 @@ type Disbursement = {
   closed_by: string
   closed_at: string
   status: DisbursementStatus
+  equipment_id: string
   created_at: string
 }
 
@@ -345,6 +346,9 @@ export default function DisbursementDashboard() {
     return acc
   }, {} as Record<DisbursementStatus, Disbursement[]>)
 
+  const linkedEquipmentIds = new Set(items.map((d) => d.equipment_id).filter(Boolean))
+  const pendingEquipment = equipmentItems.filter((eq) => !linkedEquipmentIds.has(eq.id))
+
   const inputClass = 'w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]'
 
   return (
@@ -372,7 +376,7 @@ export default function DisbursementDashboard() {
         <div className="overflow-x-auto px-4 py-4 border-b border-[#E2E8F0] bg-white">
           <div className="flex items-center w-max">
             {STAGES.map((stage, idx) => {
-              const count = stage.status === 'pending_approval' ? equipmentItems.length : (grouped[stage.status] || []).length
+              const count = stage.status === 'pending_approval' ? pendingEquipment.length : (grouped[stage.status] || []).length
               const isActive = selectedStage === stage.status
               return (
                 <div key={stage.status} className="flex items-center">
@@ -410,15 +414,15 @@ export default function DisbursementDashboard() {
               <p className="text-xs font-semibold text-gray-500 px-1">
                 {STAGES.find((s) => s.status === selectedStage)?.icon}{' '}
                 {STAGES.find((s) => s.status === selectedStage)?.label}
-                {' · '}{selectedStage === 'pending_approval' ? equipmentItems.length : (grouped[selectedStage] || []).length} รายการ
+                {' · '}{selectedStage === 'pending_approval' ? pendingEquipment.length : (grouped[selectedStage] || []).length} รายการ
               </p>
 
               {selectedStage === 'pending_approval' ? (
-                equipmentItems.length === 0 ? (
+                pendingEquipment.length === 0 ? (
                   <div className="text-center py-14 text-gray-400 text-sm">ไม่มีรายการอุปกรณ์</div>
                 ) : (
                   <>
-                    {equipmentItems.map((eq) => (
+                    {pendingEquipment.map((eq) => (
                       <button
                         key={eq.id}
                         onClick={() => openEquipment(eq)}
