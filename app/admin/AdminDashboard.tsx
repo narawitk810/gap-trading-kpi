@@ -2717,7 +2717,7 @@ export default function AdminDashboard() {
             ) : deptCodes.length === 0 ? (
               <div className="py-16 text-center text-gray-400 text-sm">ยังไม่มีข้อมูลรหัส</div>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                 <thead>
                   <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                     <th className="text-left px-5 py-3 font-semibold">แผนก</th>
@@ -2740,7 +2740,7 @@ export default function AdminDashboard() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </div>
         </div>
@@ -2878,7 +2878,7 @@ export default function AdminDashboard() {
               ) : liveStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -2951,7 +2951,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3040,7 +3040,7 @@ export default function AdminDashboard() {
               ) : stockPurchasingStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -3113,7 +3113,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3202,7 +3202,7 @@ export default function AdminDashboard() {
               ) : packStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -3275,7 +3275,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3361,7 +3361,7 @@ export default function AdminDashboard() {
               ) : accountingStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -3431,7 +3431,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3518,7 +3518,7 @@ export default function AdminDashboard() {
               ) : administrationStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -3589,7 +3589,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3675,7 +3675,7 @@ export default function AdminDashboard() {
               ) : hrStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -3745,7 +3745,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3833,7 +3833,7 @@ export default function AdminDashboard() {
               ) : liveManagerStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -3905,7 +3905,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -3994,7 +3994,7 @@ export default function AdminDashboard() {
               ) : storeRetailStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -4067,7 +4067,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -4156,7 +4156,7 @@ export default function AdminDashboard() {
               ) : saleAdminStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -4229,7 +4229,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -4318,7 +4318,7 @@ export default function AdminDashboard() {
               ) : marketingStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -4391,7 +4391,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
@@ -4480,7 +4480,7 @@ export default function AdminDashboard() {
               ) : creativeStaff.length === 0 ? (
                 <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
                   <thead>
                     <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
@@ -4553,7 +4553,7 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           )}
