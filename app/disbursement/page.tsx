@@ -426,10 +426,8 @@ export default function DisbursementDashboard() {
                                     {eq.action}
                                   </span>
                                 ) : null}
-                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 ${
-                                  eq.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
-                                }`}>
-                                  {eq.status === 'pending' ? 'รอดำเนินการ' : 'รอดำเนินการ'}
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-red-100 text-red-600">
+                                  รอดำเนินการ
                                 </span>
                               </div>
                               <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
@@ -485,10 +483,8 @@ export default function DisbursementDashboard() {
                         {selectedEquipment.action}
                       </span>
                     ) : null}
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      selectedEquipment.status === 'pending' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
-                    }`}>
-                      {selectedEquipment.status === 'pending' ? 'รอดำเนินการ' : 'รอดำเนินการ'}
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">
+                      รอดำเนินการ
                     </span>
                   </div>
                   <div>
@@ -503,23 +499,16 @@ export default function DisbursementDashboard() {
                     <img src={selectedEquipment.image_data} alt="รูปอุปกรณ์"
                       className="w-full max-h-64 object-contain rounded-xl border border-[#E2E8F0]" />
                   )}
-                  {selectedEquipment.status === 'pending' ? (
-                    <div className="flex gap-3">
-                      <button onClick={() => setSelectedEquipment(null)}
-                        className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
-                        ปิด
-                      </button>
-                      <button onClick={() => setEqModalState('approve_form')}
-                        className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm">
-                        อนุมัติ →
-                      </button>
-                    </div>
-                  ) : (
+                  <div className="flex gap-3">
                     <button onClick={() => setSelectedEquipment(null)}
-                      className="w-full border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
+                      className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
                       ปิด
                     </button>
-                  )}
+                    <button onClick={() => setEqModalState('approve_form')}
+                      className="flex-1 bg-[#16A34A] text-white py-3 rounded-xl font-semibold text-sm">
+                      อนุมัติ →
+                    </button>
+                  </div>
                 </>
               )}
 
