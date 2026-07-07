@@ -1094,6 +1094,41 @@ export default function AdminDashboard() {
     finally { setLoadingEquipment(false) }
   }, [])
 
+  const [sendingToDisbursementId, setSendingToDisbursementId] = useState<string | null>(null)
+
+  async function handleSendToDisbursement(r: EquipmentRequest) {
+    if (!confirm(`ยืนยันส่ง "${r.nickname}" เข้าระบบเบิกจ่าย?`)) return
+    setSendingToDisbursementId(r.id)
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const res = await fetch('/api/disbursements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requester: r.nickname,
+          item_list: r.description || r.request_type,
+          amount: 0,
+          request_date: today,
+          request_doc: r.image_data || '',
+          equipment_id: r.id,
+          initial_status: 'pending_approval',
+        }),
+      })
+      if (res.ok) {
+        await fetch(`/api/equipment?key=${ADMIN_KEY}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: r.id }),
+        })
+        setEquipmentRequests((prev) => prev.map((eq) => eq.id === r.id ? { ...eq, status: 'acknowledged' } : eq))
+        alert('ส่งเข้าระบบเบิกจ่ายเรียบร้อย')
+      } else {
+        alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      }
+    } catch { alert('เกิดข้อผิดพลาด') }
+    finally { setSendingToDisbursementId(null) }
+  }
+
   async function handleAcknowledgeEquipment(id: string) {
     setAcknowledgingEquipId(id)
     try {
@@ -1312,7 +1347,7 @@ export default function AdminDashboard() {
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
-            อุปกรณ์
+            แจกเบิก
             {equipmentRequests.filter((r) => r.status === 'pending').length > 0 && (
               <span className="bg-[#DC2626] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {equipmentRequests.filter((r) => r.status === 'pending').length}
@@ -2199,6 +2234,15 @@ export default function AdminDashboard() {
                       })()}
                     </div>
                     <p className="text-sm text-[#374151]">{r.description}</p>
+                    {r.status === 'pending' && !equipDisbursements.find((d) => d.equipment_id === r.id) && (
+                      <button
+                        onClick={() => handleSendToDisbursement(r)}
+                        disabled={sendingToDisbursementId === r.id}
+                        className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                      >
+                        {sendingToDisbursementId === r.id ? 'กำลังส่ง...' : '→ ส่งเข้าระบบเบิกจ่าย'}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
