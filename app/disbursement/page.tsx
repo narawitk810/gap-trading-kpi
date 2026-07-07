@@ -310,7 +310,7 @@ export default function DisbursementDashboard() {
       if (!slipData) e.slip = 'กรุณาแนบสลิปการโอน'
     } else if (selected.status === 'approved') {
       if (!orderedBy.trim()) e.orderedBy = 'กรุณากรอกชื่อผู้ดำเนินการ'
-      if (!actualAmount || isNaN(Number(actualAmount)) || Number(actualAmount) <= 0) e.actualAmount = 'กรุณากรอกยอดจริง'
+      if (actualAmount === '' || isNaN(Number(actualAmount)) || Number(actualAmount) < 0) e.actualAmount = 'กรุณากรอกยอดจริง (ใส่ 0 ได้หากไม่มีค่าใช้จ่าย)'
       if (paymentMethod === 'เบิก') {
         if (!orderDisburseSlipData) e.orderDisburseSlip = 'กรุณาแนบสลิปที่ขอเบิก'
         if (!orderPaySlipData) e.orderPaySlip = 'กรุณาแนบสลิปชำระเงิน'

@@ -36,9 +36,11 @@ export async function PATCH(
     const pm = body.payment_method as string
     if (
       !body.ordered_by?.trim() ||
-      !body.actual_amount ||
+      body.actual_amount === undefined ||
+      body.actual_amount === null ||
+      body.actual_amount === '' ||
       isNaN(Number(body.actual_amount)) ||
-      Number(body.actual_amount) <= 0 ||
+      Number(body.actual_amount) < 0 ||
       (pm !== 'เบิก' && pm !== 'สำรองจ่าย')
     ) {
       return NextResponse.json({ error: 'กรุณากรอกข้อมูลการสั่งซื้อให้ครบถ้วน' }, { status: 400 })
