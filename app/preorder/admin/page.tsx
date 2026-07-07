@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
+const PAGE_PASSWORD = 'admin12345'
 
 interface Product {
   id: string
@@ -38,10 +38,10 @@ interface ProductForm {
 const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', max_qty: '0', image_data: '' }
 
 function AdminContent() {
-  const searchParams = useSearchParams()
-  const key = searchParams.get('key') || ''
-
   const [authed, setAuthed] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+
   const [tab, setTab] = useState<'products' | 'orders'>('products')
   const [products, setProducts] = useState<Product[]>([])
   const [orders, setOrders] = useState<Order[]>([])
@@ -57,22 +57,26 @@ function AdminContent() {
 
   const imageRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (key === ADMIN_KEY) setAuthed(true)
-  }, [key])
+  function handleLogin() {
+    if (passwordInput === PAGE_PASSWORD) {
+      setAuthed(true)
+    } else {
+      setPasswordError('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่')
+    }
+  }
 
   const loadProducts = useCallback(async () => {
-    const res = await fetch(`/api/preorder-products?key=${key}`)
+    const res = await fetch(`/api/preorder-products?key=${ADMIN_KEY}`)
     if (res.ok) setProducts(await res.json())
-  }, [key])
+  }, [])
 
   const loadOrders = useCallback(async () => {
     const url = filterProductId
-      ? `/api/preorder-orders?key=${key}&product_id=${filterProductId}`
-      : `/api/preorder-orders?key=${key}`
+      ? `/api/preorder-orders?key=${ADMIN_KEY}&product_id=${filterProductId}`
+      : `/api/preorder-orders?key=${ADMIN_KEY}`
     const res = await fetch(url)
     if (res.ok) setOrders(await res.json())
-  }, [key, filterProductId])
+  }, [filterProductId])
 
   useEffect(() => {
     if (!authed) return
@@ -138,8 +142,8 @@ function AdminContent() {
         image_data: form.image_data,
       }
       const url = editingId
-        ? `/api/preorder-products/${editingId}?key=${key}`
-        : `/api/preorder-products?key=${key}`
+        ? `/api/preorder-products/${editingId}?key=${ADMIN_KEY}`
+        : `/api/preorder-products?key=${ADMIN_KEY}`
       const res = await fetch(url, {
         method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -157,7 +161,7 @@ function AdminContent() {
   }
 
   async function toggleActive(p: Product) {
-    await fetch(`/api/preorder-products/${p.id}?key=${key}`, {
+    await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: p.is_active ? 0 : 1 }),
@@ -167,7 +171,7 @@ function AdminContent() {
 
   async function deleteProduct(p: Product) {
     if (!confirm(`ลบ "${p.name}" และออเดอร์ทั้งหมดของสินค้านี้?`)) return
-    await fetch(`/api/preorder-products/${p.id}?key=${key}`, { method: 'DELETE' })
+    await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'DELETE' })
     await loadProducts()
     await loadOrders()
   }
@@ -193,13 +197,31 @@ function AdminContent() {
     return byProduct
   }
 
+  // หน้าใส่รหัสผ่าน
   if (!authed) {
     return (
       <div className="min-h-screen bg-[#F5F6F8] flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center max-w-sm w-full">
-          <p className="text-4xl mb-3">🔒</p>
-          <p className="font-bold text-[#1E3A5F] text-lg">ไม่มีสิทธิ์เข้าถึง</p>
-          <p className="text-sm text-gray-400 mt-2">กรุณาใช้ลิงก์ที่ถูกต้องจาก Admin</p>
+        <div className="bg-white rounded-2xl p-8 shadow-sm max-w-sm w-full space-y-4">
+          <p className="text-4xl text-center">🔒</p>
+          <p className="font-bold text-[#1E3A5F] text-lg text-center">Pre-Order Admin</p>
+          <p className="text-sm text-gray-400 text-center">กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน</p>
+          <div>
+            <input
+              type="password"
+              placeholder="ใส่รหัสผ่าน"
+              value={passwordInput}
+              onChange={(e) => { setPasswordInput(e.target.value); setPasswordError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+              className={`w-full border rounded-xl px-3 py-3 text-sm outline-none focus:border-[#1E3A5F] transition-colors ${passwordError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
+            />
+            {passwordError && <p className="text-xs text-[#DC2626] mt-1.5">{passwordError}</p>}
+          </div>
+          <button
+            onClick={handleLogin}
+            className="w-full bg-[#1E3A5F] text-white font-bold py-3 rounded-xl active:opacity-80 transition-opacity"
+          >
+            เข้าสู่ระบบ
+          </button>
         </div>
       </div>
     )
