@@ -181,7 +181,7 @@ export default function DisbursementDashboard() {
   const [orderedBy, setOrderedBy] = useState('')
   const [actualAmount, setActualAmount] = useState('')
   const [orderNote, setOrderNote] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'qr' | 'มีอยู่แล้ว'>('เบิก')
+  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'สำรองจ่าย_บริษัท' | 'qr' | 'มีอยู่แล้ว'>('เบิก')
   const [orderDisburseSlipData, setOrderDisburseSlipData] = useState<string | null>(null)
   const [orderDisburseSlipName, setOrderDisburseSlipName] = useState('')
   const [orderPaySlipData, setOrderPaySlipData] = useState<string | null>(null)
@@ -350,8 +350,8 @@ export default function DisbursementDashboard() {
       if (paymentMethod === 'เบิก') {
         if (!orderDisburseSlipData) e.orderDisburseSlip = 'กรุณาแนบสลิปที่ขอเบิก'
         if (!orderPaySlipData) e.orderPaySlip = 'กรุณาแนบสลิปชำระเงิน'
-      } else if (paymentMethod === 'สำรองจ่าย') {
-        if (!advanceSlipData) e.advanceSlip = 'กรุณาแนบสลิปสำรองจ่าย'
+      } else if (paymentMethod === 'สำรองจ่าย' || paymentMethod === 'สำรองจ่าย_บริษัท') {
+        if (!advanceSlipData) e.advanceSlip = 'กรุณาแนบสลิป'
       } else if (paymentMethod === 'qr') {
         if (!qrSlipData) e.qrSlip = 'กรุณาแนบ QR Code'
       }
@@ -481,7 +481,7 @@ export default function DisbursementDashboard() {
         payment_method: paymentMethod,
         order_disburse_slip: paymentMethod === 'เบิก' ? orderDisburseSlipData : '',
         order_pay_slip: paymentMethod === 'เบิก' ? orderPaySlipData : '',
-        advance_slip: paymentMethod === 'สำรองจ่าย' ? advanceSlipData : '',
+        advance_slip: (paymentMethod === 'สำรองจ่าย' || paymentMethod === 'สำรองจ่าย_บริษัท') ? advanceSlipData : '',
         order_channel: orderChannel,
         order_channel_image: orderChannelImageData,
         qr_slip: paymentMethod === 'qr' ? qrSlipData : '',
@@ -973,11 +973,13 @@ export default function DisbursementDashboard() {
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                             selected.payment_method === 'เบิก' ? 'bg-green-100 text-green-700' :
                             selected.payment_method === 'สำรองจ่าย' ? 'bg-orange-100 text-orange-700' :
+                            selected.payment_method === 'สำรองจ่าย_บริษัท' ? 'bg-blue-100 text-blue-700' :
                             selected.payment_method === 'qr' ? 'bg-purple-100 text-purple-700' :
                             'bg-gray-100 text-gray-600'
                           }`}>
                             {selected.payment_method === 'เบิก' ? 'ขอเบิก' :
-                             selected.payment_method === 'สำรองจ่าย' ? 'สำรองจ่าย' :
+                             selected.payment_method === 'สำรองจ่าย' ? 'สำรองจ่าย (บช พนักงาน)' :
+                             selected.payment_method === 'สำรองจ่าย_บริษัท' ? 'สำรองจ่าย (บช บริษัท)' :
                              selected.payment_method === 'qr' ? 'QR Code' : 'มีอยู่แล้ว'}
                           </span>
                         )}
@@ -1028,11 +1030,13 @@ export default function DisbursementDashboard() {
                           )}
                         </div>
                       )}
-                      {(selected.payment_method === 'สำรองจ่าย' || selected.payment_method === 'qr') && (
+                      {(selected.payment_method === 'สำรองจ่าย' || selected.payment_method === 'สำรองจ่าย_บริษัท' || selected.payment_method === 'qr') && (
                         <div className="space-y-2">
                           {selected.advance_slip && (
                             <div>
-                              <p className="text-xs text-gray-500 mb-1">สลิปสำรองจ่าย</p>
+                              <p className="text-xs text-gray-500 mb-1">
+                                {selected.payment_method === 'สำรองจ่าย_บริษัท' ? 'สลิปการโอน (บช บริษัท)' : 'สลิปสำรองจ่าย (บช พนักงาน)'}
+                              </p>
                               <img src={selected.advance_slip} alt="สลิปสำรองจ่าย" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
                               <button onClick={() => downloadImage(selected.advance_slip, 'advance-slip.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                             </div>
@@ -1044,7 +1048,7 @@ export default function DisbursementDashboard() {
                               <button onClick={() => downloadImage(selected.qr_slip, 'qr-code.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                             </div>
                           )}
-                          {selected.reimbursed_at ? (
+                          {selected.payment_method !== 'สำรองจ่าย_บริษัท' && (selected.reimbursed_at ? (
                             <div className="bg-green-50 rounded-xl px-3 py-2">
                               <p className="text-xs font-semibold text-green-700">
                                 ✅ {selected.payment_method === 'qr' ? 'บริษัทชำระแล้ว' : 'บริษัทจ่ายคืนแล้ว'}
@@ -1062,7 +1066,7 @@ export default function DisbursementDashboard() {
                                 ⏳ {selected.payment_method === 'qr' ? 'รอบริษัทชำระ' : 'รอบริษัทจ่ายคืน'}
                               </p>
                             </div>
-                          )}
+                          ))}
                         </div>
                       )}
                     </div>
@@ -1231,14 +1235,19 @@ export default function DisbursementDashboard() {
                             วิธีจ่ายเงิน <span className="text-[#DC2626]">*</span>
                           </label>
                           <div className="grid grid-cols-2 gap-2">
-                            {(['เบิก', 'สำรองจ่าย', 'qr', 'มีอยู่แล้ว'] as const).map((m) => (
+                            {(['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr'] as const).map((m) => (
                               <button key={m} type="button"
                                 onClick={() => { setPaymentMethod(m); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
                                 className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === m ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
-                                {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย' : m === 'qr' ? '📱 ส่ง QR' : '📦 มีอยู่แล้ว'}
+                                {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย (บช พนักงาน)' : m === 'สำรองจ่าย_บริษัท' ? '💼 สำรองจ่าย (บช บริษัท)' : '📱 ส่ง QR'}
                               </button>
                             ))}
                           </div>
+                          <button type="button"
+                            onClick={() => { setPaymentMethod('มีอยู่แล้ว'); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
+                            className={`w-full mt-2 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === 'มีอยู่แล้ว' ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                            📦 มีอยู่แล้ว
+                          </button>
                         </div>
                         {paymentMethod === 'เบิก' ? (
                           <>
@@ -1285,7 +1294,7 @@ export default function DisbursementDashboard() {
                           </>
                         ) : paymentMethod === 'สำรองจ่าย' ? (
                           <div>
-                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปสำรองจ่าย <span className="text-[#DC2626]">*</span></label>
+                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปสำรองจ่าย (บช พนักงาน) <span className="text-[#DC2626]">*</span></label>
                             <input ref={advanceSlipRef} type="file" accept="image/*" onChange={handleAdvanceSlipFile} className="hidden" />
                             {advanceSlipData ? (
                               <div className="space-y-1">
@@ -1300,6 +1309,27 @@ export default function DisbursementDashboard() {
                                 className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
                                 <span className="text-2xl">💵</span>
                                 <span className="text-xs text-gray-400">แนบสลิปสำรองจ่าย</span>
+                              </button>
+                            )}
+                            {formErrors.advanceSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.advanceSlip}</p>}
+                          </div>
+                        ) : paymentMethod === 'สำรองจ่าย_บริษัท' ? (
+                          <div>
+                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปการโอน (บช บริษัท) <span className="text-[#DC2626]">*</span></label>
+                            <input ref={advanceSlipRef} type="file" accept="image/*" onChange={handleAdvanceSlipFile} className="hidden" />
+                            {advanceSlipData ? (
+                              <div className="space-y-1">
+                                <img src={advanceSlipData} alt="สลิปการโอน" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-400 truncate">{advanceSlipName}</p>
+                                  <button type="button" onClick={() => { setAdvanceSlipData(null); setAdvanceSlipName(''); if (advanceSlipRef.current) advanceSlipRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button type="button" onClick={() => advanceSlipRef.current?.click()}
+                                className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
+                                <span className="text-2xl">💼</span>
+                                <span className="text-xs text-gray-400">แนบสลิปการโอน (บช บริษัท)</span>
                               </button>
                             )}
                             {formErrors.advanceSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.advanceSlip}</p>}
