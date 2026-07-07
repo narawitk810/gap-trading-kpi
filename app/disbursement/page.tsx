@@ -358,7 +358,7 @@ export default function DisbursementDashboard() {
       if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
-      if (['yes', 'receipt', 'cash'].includes(taxInvoiceStatus) && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปเอกสาร'
+      if (['yes', 'receipt'].includes(taxInvoiceStatus) && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปเอกสาร'
     } else if (selected.status === 'payment_recorded') {
       if (!closeMonth.trim()) e.closeMonth = 'กรุณาระบุเดือน (ปี-เดือน)'
       if (!closedBy.trim()) e.closedBy = 'กรุณากรอกชื่อผู้ปิดงบ'
@@ -1432,7 +1432,7 @@ export default function DisbursementDashboard() {
                         {['yes', 'receipt', 'cash'].includes(taxInvoiceStatus) && (
                           <div>
                             <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                              {taxInvoiceStatus === 'yes' ? 'รูปใบกำกับภาษี' : taxInvoiceStatus === 'receipt' ? 'รูปใบเสร็จรับเงิน' : 'รูปบิลเงินสด'} <span className="text-[#DC2626]">*</span>
+                              {taxInvoiceStatus === 'yes' ? 'รูปใบกำกับภาษี' : taxInvoiceStatus === 'receipt' ? 'รูปใบเสร็จรับเงิน' : 'รูปบิลเงินสด'} {taxInvoiceStatus !== 'cash' && <span className="text-[#DC2626]">*</span>}
                             </label>
                             <input ref={taxInvoiceImageRef} type="file" accept="image/*" onChange={handleTaxInvoiceImageFile} className="hidden" />
                             {taxInvoiceImageData ? (
