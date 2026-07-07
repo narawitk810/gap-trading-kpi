@@ -653,7 +653,7 @@ export default function AdminDashboard() {
   }
 
   async function handleAnalyzeKpiOverview() {
-    if (todayEntries.length === 0) return
+    if (filteredEntries.length === 0) return
     setAnalyzingKpiOverview(true)
     setKpiOverviewAnalysis(null)
     try {
@@ -661,8 +661,10 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          date: today,
-          entries: todayEntries.map((e) => ({
+          date: filters.dateFrom && filters.dateTo
+            ? `${filters.dateFrom} ถึง ${filters.dateTo}`
+            : filters.dateFrom || filters.dateTo || today,
+          entries: filteredEntries.map((e) => ({
             department: e.department,
             nickname: e.nickname,
             tasks: e.tasks,
@@ -1907,15 +1909,13 @@ export default function AdminDashboard() {
             <h2 className="text-sm font-bold text-[#1E3A5F]">
               สรุปวันนี้ — {formatDate(today)}
             </h2>
-            {todayEntries.length > 0 && (
-              <button
-                onClick={handleAnalyzeKpiOverview}
-                disabled={analyzingKpiOverview}
-                className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-3 py-1.5 hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
-              >
-                {analyzingKpiOverview ? '⏳ กำลังวิเคราะห์...' : '🤖 AI วิเคราะห์ภาพรวม'}
-              </button>
-            )}
+            <button
+              onClick={handleAnalyzeKpiOverview}
+              disabled={analyzingKpiOverview || filteredEntries.length === 0}
+              className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-3 py-1.5 hover:bg-[#F5F6F8] disabled:opacity-40 whitespace-nowrap"
+            >
+              {analyzingKpiOverview ? '⏳ กำลังวิเคราะห์...' : '🤖 AI วิเคราะห์ภาพรวม'}
+            </button>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="text-center min-w-[60px]">
