@@ -399,27 +399,6 @@ export default function DisbursementDashboard() {
     }
   }
 
-  async function handleRollbackToPending() {
-    if (!selected) return
-    if (!confirm('ยืนยันย้อนกลับสู่ขั้นตอน 1? ข้อมูลการอนุมัติจะถูกล้างทั้งหมด')) return
-    try {
-      const res = await fetch(`/api/disbursements/${selected.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'rollback_to_pending' }),
-      })
-      if (res.ok) {
-        setSelectedStage('pending_approval')
-        closeModal()
-        await load()
-      } else {
-        alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
-      }
-    } catch {
-      alert('เกิดข้อผิดพลาด กรุณาตรวจสอบการเชื่อมต่อ')
-    }
-  }
-
   async function handleRollbackToApproved() {
     if (!selected) return
     if (!confirm('ยืนยันย้อนกลับสู่ขั้นตอน 2? ข้อมูลการสั่งซื้อจะถูกล้างทั้งหมด')) return
@@ -1061,12 +1040,6 @@ export default function DisbursementDashboard() {
                   )}
 
                   {/* Rollback button */}
-                  {selected.status === 'approved' && (
-                    <button onClick={handleRollbackToPending}
-                      className="w-full py-2.5 rounded-xl font-semibold text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
-                      ↩ ย้อนกลับสู่ขั้นตอนรอดำเนินการ
-                    </button>
-                  )}
                   {selected.status === 'ordered' && (
                     <button onClick={handleRollbackToApproved}
                       className="w-full py-2.5 rounded-xl font-semibold text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
