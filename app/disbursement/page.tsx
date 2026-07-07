@@ -69,6 +69,9 @@ type Disbursement = {
   order_channel: string
   order_channel_image: string
   qr_slip: string
+  tax_invoice_status: string
+  tax_invoice_image: string
+  tax_invoice_no_reason: string
   payment_note: string
   remaining_note: string
   payment_recorded_at: string
@@ -179,6 +182,10 @@ export default function DisbursementDashboard() {
   const [orderChannelImageName, setOrderChannelImageName] = useState('')
   const [qrSlipData, setQrSlipData] = useState<string | null>(null)
   const [qrSlipName, setQrSlipName] = useState('')
+  const [taxInvoiceStatus, setTaxInvoiceStatus] = useState<'yes' | 'no' | ''>('')
+  const [taxInvoiceImageData, setTaxInvoiceImageData] = useState<string | null>(null)
+  const [taxInvoiceImageName, setTaxInvoiceImageName] = useState('')
+  const [taxInvoiceNoReason, setTaxInvoiceNoReason] = useState('')
   const [reimbursementSlipData, setReimbursementSlipData] = useState<string | null>(null)
   const [reimbursementSlipName, setReimbursementSlipName] = useState('')
   const [paymentNote, setPaymentNote] = useState('')
@@ -194,6 +201,7 @@ export default function DisbursementDashboard() {
   const reimbursementSlipRef = useRef<HTMLInputElement>(null)
   const orderChannelImageRef = useRef<HTMLInputElement>(null)
   const qrSlipRef = useRef<HTMLInputElement>(null)
+  const taxInvoiceImageRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     setLoading(true)
@@ -223,6 +231,7 @@ export default function DisbursementDashboard() {
     setReimbursementSlipData(null); setReimbursementSlipName('')
     setOrderChannel('offline'); setOrderChannelImageData(null); setOrderChannelImageName('')
     setQrSlipData(null); setQrSlipName('')
+    setTaxInvoiceStatus(''); setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); setTaxInvoiceNoReason('')
     setPaymentNote(''); setRemainingNote('')
     setCloseMonth(''); setClosedBy('')
     setFormErrors({})
@@ -314,6 +323,7 @@ export default function DisbursementDashboard() {
   const handleReimbursementSlipFile = makeImageHandler(setReimbursementSlipData, setReimbursementSlipName, 'reimbursementSlip')
   const handleOrderChannelImageFile = makeImageHandler(setOrderChannelImageData, setOrderChannelImageName, 'orderChannelImage')
   const handleQrSlipFile = makeImageHandler(setQrSlipData, setQrSlipName, 'qrSlip')
+  const handleTaxInvoiceImageFile = makeImageHandler(setTaxInvoiceImageData, setTaxInvoiceImageName, 'taxInvoiceImage')
 
   function validateAction() {
     const e: Record<string, string> = {}
@@ -336,6 +346,9 @@ export default function DisbursementDashboard() {
       if (!orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ/แคปหน้าจอ'
     } else if (selected.status === 'ordered') {
       if (!paymentNote.trim()) e.paymentNote = 'กรุณากรอกรายละเอียดการจ่าย'
+      if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะใบกำกับภาษี'
+      if (taxInvoiceStatus === 'yes' && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปใบกำกับภาษี'
+      if (taxInvoiceStatus === 'no' && !taxInvoiceNoReason.trim()) e.taxInvoiceNoReason = 'กรุณาระบุเหตุผลที่ไม่มีใบกำกับภาษี'
     } else if (selected.status === 'payment_recorded') {
       if (!closeMonth.trim()) e.closeMonth = 'กรุณาระบุเดือน (ปี-เดือน)'
       if (!closedBy.trim()) e.closedBy = 'กรุณากรอกชื่อผู้ปิดงบ'
@@ -421,7 +434,14 @@ export default function DisbursementDashboard() {
         qr_slip: paymentMethod === 'qr' ? qrSlipData : '',
       }
     } else if (selected.status === 'ordered') {
-      body = { action: 'record_payment', payment_note: paymentNote.trim(), remaining_note: remainingNote.trim() }
+      body = {
+        action: 'record_payment',
+        payment_note: paymentNote.trim(),
+        remaining_note: remainingNote.trim(),
+        tax_invoice_status: taxInvoiceStatus,
+        tax_invoice_image: taxInvoiceStatus === 'yes' ? taxInvoiceImageData : '',
+        tax_invoice_no_reason: taxInvoiceStatus === 'no' ? taxInvoiceNoReason.trim() : '',
+      }
     } else if (selected.status === 'payment_recorded') {
       body = { action: 'close_month', close_month: closeMonth.trim(), closed_by: closedBy.trim() }
     }
@@ -943,6 +963,19 @@ export default function DisbursementDashboard() {
                           <p className="text-[#374151]">{selected.remaining_note}</p>
                         </div>
                       )}
+                      {selected.tax_invoice_status && (
+                        <div className={`rounded-xl px-3 py-2 ${selected.tax_invoice_status === 'yes' ? 'bg-green-50' : 'bg-gray-50'}`}>
+                          <p className="text-xs font-semibold text-gray-700">
+                            {selected.tax_invoice_status === 'yes' ? '🧾 มีใบกำกับภาษี' : '❌ ไม่มีใบกำกับภาษี'}
+                          </p>
+                          {selected.tax_invoice_no_reason && (
+                            <p className="text-xs text-gray-500 mt-0.5">เหตุผล: {selected.tax_invoice_no_reason}</p>
+                          )}
+                          {selected.tax_invoice_image && (
+                            <img src={selected.tax_invoice_image} alt="ใบกำกับภาษี" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0] mt-2" />
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1254,6 +1287,57 @@ export default function DisbursementDashboard() {
                             placeholder="ยอดคงเหลือในบัญชี หรือหมายเหตุอื่นๆ"
                             className={inputClass} />
                         </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                            ใบกำกับภาษี <span className="text-[#DC2626]">*</span>
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['yes', 'no'] as const).map((v) => (
+                              <button key={v} type="button"
+                                onClick={() => { setTaxInvoiceStatus(v); setFormErrors((p) => ({ ...p, taxInvoiceStatus: '', taxInvoiceImage: '', taxInvoiceNoReason: '' })) }}
+                                className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${taxInvoiceStatus === v ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                                {v === 'yes' ? '🧾 มีใบกำกับภาษี' : '❌ ไม่มีใบกำกับภาษี'}
+                              </button>
+                            ))}
+                          </div>
+                          {formErrors.taxInvoiceStatus && <p className="text-[#DC2626] text-xs mt-1">{formErrors.taxInvoiceStatus}</p>}
+                        </div>
+                        {taxInvoiceStatus === 'yes' && (
+                          <div>
+                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                              รูปใบกำกับภาษี <span className="text-[#DC2626]">*</span>
+                            </label>
+                            <input ref={taxInvoiceImageRef} type="file" accept="image/*" onChange={handleTaxInvoiceImageFile} className="hidden" />
+                            {taxInvoiceImageData ? (
+                              <div className="space-y-1">
+                                <img src={taxInvoiceImageData} alt="ใบกำกับภาษี" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-400 truncate">{taxInvoiceImageName}</p>
+                                  <button type="button" onClick={() => { setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); if (taxInvoiceImageRef.current) taxInvoiceImageRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button type="button" onClick={() => taxInvoiceImageRef.current?.click()}
+                                className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
+                                <span className="text-2xl">🧾</span>
+                                <span className="text-xs text-gray-400">แนบรูปใบกำกับภาษี</span>
+                              </button>
+                            )}
+                            {formErrors.taxInvoiceImage && <p className="text-[#DC2626] text-xs mt-1">{formErrors.taxInvoiceImage}</p>}
+                          </div>
+                        )}
+                        {taxInvoiceStatus === 'no' && (
+                          <div>
+                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                              เหตุผลที่ไม่มีใบกำกับภาษี <span className="text-[#DC2626]">*</span>
+                            </label>
+                            <textarea value={taxInvoiceNoReason}
+                              onChange={(e) => { setTaxInvoiceNoReason(e.target.value); setFormErrors((p) => ({ ...p, taxInvoiceNoReason: '' })) }}
+                              placeholder="เช่น ร้านค้าไม่ออกใบกำกับ, ซื้อจากตลาด"
+                              rows={2} className={inputClass + ' resize-none'} />
+                            {formErrors.taxInvoiceNoReason && <p className="text-[#DC2626] text-xs mt-1">{formErrors.taxInvoiceNoReason}</p>}
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -1324,6 +1408,8 @@ export default function DisbursementDashboard() {
                       <>
                         <p className="text-gray-600">รายละเอียด: <span className="font-semibold">{paymentNote}</span></p>
                         {remainingNote && <p className="text-gray-600">คงเหลือ: {remainingNote}</p>}
+                        <p className="text-gray-600">ใบกำกับภาษี: <span className="font-semibold">{taxInvoiceStatus === 'yes' ? '🧾 มี' : '❌ ไม่มี'}</span></p>
+                        {taxInvoiceStatus === 'no' && taxInvoiceNoReason && <p className="text-gray-600 text-xs">เหตุผล: {taxInvoiceNoReason}</p>}
                       </>
                     )}
                     {selected.status === 'payment_recorded' && (

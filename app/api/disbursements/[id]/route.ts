@@ -92,6 +92,16 @@ export async function PATCH(
     if (!body.payment_note?.trim()) {
       return NextResponse.json({ error: 'กรุณากรอกรายละเอียดการจ่าย' }, { status: 400 })
     }
+    const tis = body.tax_invoice_status as string
+    if (!['yes', 'no'].includes(tis)) {
+      return NextResponse.json({ error: 'กรุณาระบุสถานะใบกำกับภาษี' }, { status: 400 })
+    }
+    if (tis === 'yes' && !body.tax_invoice_image) {
+      return NextResponse.json({ error: 'กรุณาแนบรูปใบกำกับภาษี' }, { status: 400 })
+    }
+    if (tis === 'no' && !body.tax_invoice_no_reason?.trim()) {
+      return NextResponse.json({ error: 'กรุณาระบุเหตุผลที่ไม่มีใบกำกับภาษี' }, { status: 400 })
+    }
     const rows = await db.execute({
       sql: `SELECT payment_method, reimbursed_at FROM disbursements WHERE id=? AND status='ordered'`,
       args: [params.id],
@@ -102,9 +112,18 @@ export async function PATCH(
     }
     await db.execute({
       sql: `UPDATE disbursements
-            SET status='payment_recorded', payment_note=?, remaining_note=?, payment_recorded_at=?
+            SET status='payment_recorded', payment_note=?, remaining_note=?, payment_recorded_at=?,
+                tax_invoice_status=?, tax_invoice_image=?, tax_invoice_no_reason=?
             WHERE id=? AND status='ordered'`,
-      args: [body.payment_note.trim(), body.remaining_note?.trim() || '', now, params.id],
+      args: [
+        body.payment_note.trim(),
+        body.remaining_note?.trim() || '',
+        now,
+        tis,
+        tis === 'yes' ? body.tax_invoice_image : '',
+        tis === 'no' ? body.tax_invoice_no_reason.trim() : '',
+        params.id,
+      ],
     })
   } else if (action === 'close_month') {
     if (!body.close_month?.trim() || !body.closed_by?.trim()) {
