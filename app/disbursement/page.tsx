@@ -36,7 +36,7 @@ type EqModalState = 'detail' | 'approve_form' | 'approve_confirm' | 'approve_sub
 type EquipmentRequest = {
   id: string
   nickname: string
-  request_type: 'damaged' | 'new'
+  request_type: 'damaged' | 'new' | 'pack' | 'ads' | 'other' | string
   action: string
   description: string
   image_data: string
@@ -671,11 +671,14 @@ export default function DisbursementDashboard() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                                eq.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
-                              }`}>
-                                {eq.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
-                              </span>
+                              {eq.request_type && eq.request_type !== 'damaged' && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                  {{ new: 'เบิกใหม่', pack: 'เบิกของแพค', ads: 'เบิกค่า Ads', other: 'เบิกอื่นๆ' }[eq.request_type] || eq.request_type}
+                                </span>
+                              )}
+                              {eq.request_type === 'damaged' && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">อุปกรณ์เสีย</span>
+                              )}
                               {eq.action ? (
                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
                                   {eq.action}
@@ -752,11 +755,14 @@ export default function DisbursementDashboard() {
                 <>
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-base font-bold text-[#374151]">{selectedEquipment.nickname}</p>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      selectedEquipment.request_type === 'new' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
-                    }`}>
-                      {selectedEquipment.request_type === 'new' ? 'เบิกใหม่' : 'อุปกรณ์เสีย'}
-                    </span>
+                    {selectedEquipment.request_type === 'damaged' && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">อุปกรณ์เสีย</span>
+                    )}
+                    {selectedEquipment.request_type && selectedEquipment.request_type !== 'damaged' && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                        {{ new: 'เบิกใหม่', pack: 'เบิกของแพค', ads: 'เบิกค่า Ads', other: 'เบิกอื่นๆ' }[selectedEquipment.request_type] || selectedEquipment.request_type}
+                      </span>
+                    )}
                     {selectedEquipment.action ? (
                       <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                         {selectedEquipment.action}
