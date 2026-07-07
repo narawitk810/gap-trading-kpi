@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 20
+const SCHEMA_VERSION = 21
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -421,6 +421,33 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN tax_invoice_status TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN tax_invoice_image TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN tax_invoice_no_reason TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS preorder_products (
+      id          TEXT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      price       REAL NOT NULL DEFAULT 0,
+      close_date  TEXT NOT NULL,
+      max_qty     INTEGER NOT NULL DEFAULT 0,
+      image_data  TEXT NOT NULL DEFAULT '',
+      is_active   INTEGER NOT NULL DEFAULT 1,
+      created_at  TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS preorder_orders (
+      id         TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      nickname   TEXT NOT NULL,
+      quantity   INTEGER NOT NULL DEFAULT 1,
+      phone      TEXT NOT NULL DEFAULT '',
+      note       TEXT NOT NULL DEFAULT '',
+      status     TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT NOT NULL
+    )
+  `)
 
   g.dbVersion = SCHEMA_VERSION
 }
