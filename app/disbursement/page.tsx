@@ -68,6 +68,7 @@ type Disbursement = {
   reimbursement_slip: string
   order_channel: string
   order_channel_image: string
+  qr_slip: string
   payment_note: string
   remaining_note: string
   payment_recorded_at: string
@@ -166,7 +167,7 @@ export default function DisbursementDashboard() {
   const [orderedBy, setOrderedBy] = useState('')
   const [actualAmount, setActualAmount] = useState('')
   const [orderNote, setOrderNote] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย'>('เบิก')
+  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'qr' | 'มีอยู่แล้ว'>('เบิก')
   const [orderDisburseSlipData, setOrderDisburseSlipData] = useState<string | null>(null)
   const [orderDisburseSlipName, setOrderDisburseSlipName] = useState('')
   const [orderPaySlipData, setOrderPaySlipData] = useState<string | null>(null)
@@ -176,6 +177,8 @@ export default function DisbursementDashboard() {
   const [orderChannel, setOrderChannel] = useState<'offline' | 'online'>('offline')
   const [orderChannelImageData, setOrderChannelImageData] = useState<string | null>(null)
   const [orderChannelImageName, setOrderChannelImageName] = useState('')
+  const [qrSlipData, setQrSlipData] = useState<string | null>(null)
+  const [qrSlipName, setQrSlipName] = useState('')
   const [reimbursementSlipData, setReimbursementSlipData] = useState<string | null>(null)
   const [reimbursementSlipName, setReimbursementSlipName] = useState('')
   const [paymentNote, setPaymentNote] = useState('')
@@ -190,6 +193,7 @@ export default function DisbursementDashboard() {
   const advanceSlipRef = useRef<HTMLInputElement>(null)
   const reimbursementSlipRef = useRef<HTMLInputElement>(null)
   const orderChannelImageRef = useRef<HTMLInputElement>(null)
+  const qrSlipRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     setLoading(true)
@@ -218,6 +222,7 @@ export default function DisbursementDashboard() {
     setAdvanceSlipData(null); setAdvanceSlipName('')
     setReimbursementSlipData(null); setReimbursementSlipName('')
     setOrderChannel('offline'); setOrderChannelImageData(null); setOrderChannelImageName('')
+    setQrSlipData(null); setQrSlipName('')
     setPaymentNote(''); setRemainingNote('')
     setCloseMonth(''); setClosedBy('')
     setFormErrors({})
@@ -308,6 +313,7 @@ export default function DisbursementDashboard() {
   const handleAdvanceSlipFile = makeImageHandler(setAdvanceSlipData, setAdvanceSlipName, 'advanceSlip')
   const handleReimbursementSlipFile = makeImageHandler(setReimbursementSlipData, setReimbursementSlipName, 'reimbursementSlip')
   const handleOrderChannelImageFile = makeImageHandler(setOrderChannelImageData, setOrderChannelImageName, 'orderChannelImage')
+  const handleQrSlipFile = makeImageHandler(setQrSlipData, setQrSlipName, 'qrSlip')
 
   function validateAction() {
     const e: Record<string, string> = {}
@@ -322,8 +328,10 @@ export default function DisbursementDashboard() {
       if (paymentMethod === 'เบิก') {
         if (!orderDisburseSlipData) e.orderDisburseSlip = 'กรุณาแนบสลิปที่ขอเบิก'
         if (!orderPaySlipData) e.orderPaySlip = 'กรุณาแนบสลิปชำระเงิน'
-      } else {
+      } else if (paymentMethod === 'สำรองจ่าย') {
         if (!advanceSlipData) e.advanceSlip = 'กรุณาแนบสลิปสำรองจ่าย'
+      } else if (paymentMethod === 'qr') {
+        if (!qrSlipData) e.qrSlip = 'กรุณาแนบ QR Code'
       }
       if (!orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ/แคปหน้าจอ'
     } else if (selected.status === 'ordered') {
@@ -410,6 +418,7 @@ export default function DisbursementDashboard() {
         advance_slip: paymentMethod === 'สำรองจ่าย' ? advanceSlipData : '',
         order_channel: orderChannel,
         order_channel_image: orderChannelImageData,
+        qr_slip: paymentMethod === 'qr' ? qrSlipData : '',
       }
     } else if (selected.status === 'ordered') {
       body = { action: 'record_payment', payment_note: paymentNote.trim(), remaining_note: remainingNote.trim() }
@@ -830,8 +839,15 @@ export default function DisbursementDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-xs font-semibold text-blue-700">🛒 ดำเนินการสั่งซื้อแล้ว</p>
                         {selected.payment_method && (
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selected.payment_method === 'เบิก' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                            {selected.payment_method === 'เบิก' ? 'ขอเบิก' : 'สำรองจ่าย'}
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            selected.payment_method === 'เบิก' ? 'bg-green-100 text-green-700' :
+                            selected.payment_method === 'สำรองจ่าย' ? 'bg-orange-100 text-orange-700' :
+                            selected.payment_method === 'qr' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {selected.payment_method === 'เบิก' ? 'ขอเบิก' :
+                             selected.payment_method === 'สำรองจ่าย' ? 'สำรองจ่าย' :
+                             selected.payment_method === 'qr' ? 'QR Code' : 'มีอยู่แล้ว'}
                           </span>
                         )}
                         {selected.order_channel && (
@@ -878,7 +894,7 @@ export default function DisbursementDashboard() {
                           )}
                         </div>
                       )}
-                      {selected.payment_method === 'สำรองจ่าย' && (
+                      {(selected.payment_method === 'สำรองจ่าย' || selected.payment_method === 'qr') && (
                         <div className="space-y-2">
                           {selected.advance_slip && (
                             <div>
@@ -886,16 +902,26 @@ export default function DisbursementDashboard() {
                               <img src={selected.advance_slip} alt="สลิปสำรองจ่าย" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
                             </div>
                           )}
+                          {selected.qr_slip && (
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">QR Code</p>
+                              <img src={selected.qr_slip} alt="QR Code" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                            </div>
+                          )}
                           {selected.reimbursed_at ? (
                             <div className="bg-green-50 rounded-xl px-3 py-2">
-                              <p className="text-xs font-semibold text-green-700">✅ บริษัทจ่ายคืนแล้ว</p>
+                              <p className="text-xs font-semibold text-green-700">
+                                ✅ {selected.payment_method === 'qr' ? 'บริษัทชำระแล้ว' : 'บริษัทจ่ายคืนแล้ว'}
+                              </p>
                               {selected.reimbursement_slip && (
-                                <img src={selected.reimbursement_slip} alt="สลิปจ่ายคืน" className="w-full max-h-32 object-cover rounded-xl border border-green-200 mt-2" />
+                                <img src={selected.reimbursement_slip} alt="สลิปยืนยัน" className="w-full max-h-32 object-cover rounded-xl border border-green-200 mt-2" />
                               )}
                             </div>
                           ) : (
                             <div className="bg-orange-50 rounded-xl px-3 py-2">
-                              <p className="text-xs font-semibold text-orange-700">⏳ รอบริษัทจ่ายคืน</p>
+                              <p className="text-xs font-semibold text-orange-700">
+                                ⏳ {selected.payment_method === 'qr' ? 'รอบริษัทชำระ' : 'รอบริษัทจ่ายคืน'}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -953,12 +979,12 @@ export default function DisbursementDashboard() {
                     >
                       {STAGES.find((s) => s.status === selected.status)?.actionLabel} →
                     </button>
-                  ) : selected.status === 'ordered' && selected.payment_method === 'สำรองจ่าย' && !selected.reimbursed_at ? (
+                  ) : selected.status === 'ordered' && ['สำรองจ่าย', 'qr'].includes(selected.payment_method) && !selected.reimbursed_at ? (
                     <button
                       onClick={() => setModalState('reimburse_form')}
                       className="w-full py-3 rounded-xl font-semibold text-sm bg-orange-500 text-white"
                     >
-                      บันทึกการจ่ายคืน →
+                      {selected.payment_method === 'qr' ? 'บันทึกบริษัทชำระแล้ว →' : 'บันทึกการจ่ายคืน →'}
                     </button>
                   ) : selected.status !== 'monthly_closed' ? (
                     <button
@@ -1066,12 +1092,12 @@ export default function DisbursementDashboard() {
                           <label className="block text-sm font-semibold text-[#374151] mb-1.5">
                             วิธีจ่ายเงิน <span className="text-[#DC2626]">*</span>
                           </label>
-                          <div className="flex gap-2">
-                            {(['เบิก', 'สำรองจ่าย'] as const).map((m) => (
+                          <div className="grid grid-cols-2 gap-2">
+                            {(['เบิก', 'สำรองจ่าย', 'qr', 'มีอยู่แล้ว'] as const).map((m) => (
                               <button key={m} type="button"
-                                onClick={() => { setPaymentMethod(m); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '' })) }}
-                                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === m ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
-                                {m === 'เบิก' ? '📄 ขอเบิก' : '💵 สำรองจ่าย'}
+                                onClick={() => { setPaymentMethod(m); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
+                                className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === m ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                                {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย' : m === 'qr' ? '📱 ส่ง QR' : '📦 มีอยู่แล้ว'}
                               </button>
                             ))}
                           </div>
@@ -1119,7 +1145,7 @@ export default function DisbursementDashboard() {
                               {formErrors.orderPaySlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.orderPaySlip}</p>}
                             </div>
                           </>
-                        ) : (
+                        ) : paymentMethod === 'สำรองจ่าย' ? (
                           <div>
                             <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปสำรองจ่าย <span className="text-[#DC2626]">*</span></label>
                             <input ref={advanceSlipRef} type="file" accept="image/*" onChange={handleAdvanceSlipFile} className="hidden" />
@@ -1139,6 +1165,32 @@ export default function DisbursementDashboard() {
                               </button>
                             )}
                             {formErrors.advanceSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.advanceSlip}</p>}
+                          </div>
+                        ) : paymentMethod === 'qr' ? (
+                          <div>
+                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">QR Code <span className="text-[#DC2626]">*</span></label>
+                            <input ref={qrSlipRef} type="file" accept="image/*" onChange={handleQrSlipFile} className="hidden" />
+                            {qrSlipData ? (
+                              <div className="space-y-1">
+                                <img src={qrSlipData} alt="QR Code" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs text-gray-400 truncate">{qrSlipName}</p>
+                                  <button type="button" onClick={() => { setQrSlipData(null); setQrSlipName(''); if (qrSlipRef.current) qrSlipRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button type="button" onClick={() => qrSlipRef.current?.click()}
+                                className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
+                                <span className="text-2xl">📱</span>
+                                <span className="text-xs text-gray-400">แนบ QR Code จากซัพพลายเออร์</span>
+                              </button>
+                            )}
+                            {formErrors.qrSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.qrSlip}</p>}
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 rounded-xl px-3 py-3">
+                            <p className="text-sm font-semibold text-gray-600">📦 ไม่ต้องชำระเงิน</p>
+                            <p className="text-xs text-gray-400 mt-0.5">สินค้ามีอยู่ในบริษัทแล้ว ดำเนินการต่อได้เลย</p>
                           </div>
                         )}
                         <div>
@@ -1262,7 +1314,9 @@ export default function DisbursementDashboard() {
                         <p className="text-gray-600">ผู้ดำเนินการ: <span className="font-semibold">{orderedBy}</span></p>
                         <p className="text-gray-600">ยอดจริง: <span className="font-semibold text-blue-700">{Number(actualAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท</span></p>
                         {orderNote && <p className="text-gray-600">หมายเหตุ: {orderNote}</p>}
-                        <p className="text-gray-600">วิธีจ่ายเงิน: <span className={`font-semibold ${paymentMethod === 'เบิก' ? 'text-green-700' : 'text-orange-600'}`}>{paymentMethod === 'เบิก' ? 'ขอเบิก' : 'สำรองจ่าย'}</span></p>
+                        <p className="text-gray-600">วิธีจ่ายเงิน: <span className={`font-semibold ${paymentMethod === 'เบิก' ? 'text-green-700' : paymentMethod === 'สำรองจ่าย' ? 'text-orange-600' : paymentMethod === 'qr' ? 'text-purple-700' : 'text-gray-600'}`}>
+                          {paymentMethod === 'เบิก' ? 'ขอเบิก' : paymentMethod === 'สำรองจ่าย' ? 'สำรองจ่าย' : paymentMethod === 'qr' ? 'ส่ง QR Code' : 'มีอยู่แล้ว'}
+                        </span></p>
                         <p className="text-gray-600">ช่องทางสั่งซื้อ: <span className="font-semibold">{orderChannel === 'offline' ? '🏪 Offline' : '🌐 Online'}</span></p>
                       </>
                     )}
@@ -1303,8 +1357,12 @@ export default function DisbursementDashboard() {
                 <>
                   <div className="space-y-3">
                     <div className="bg-orange-50 rounded-xl px-3 py-2">
-                      <p className="text-xs font-semibold text-orange-700">บันทึกการจ่ายคืนจากบริษัท</p>
-                      <p className="text-xs text-gray-500 mt-0.5">แนบสลิปที่บริษัทจ่ายคืนให้เพื่อดำเนินการขั้นตอนถัดไป</p>
+                      <p className="text-xs font-semibold text-orange-700">
+                        {selected.payment_method === 'qr' ? 'บันทึกการชำระโดยบริษัท' : 'บันทึกการจ่ายคืนจากบริษัท'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {selected.payment_method === 'qr' ? 'แนบสลิปยืนยันที่บริษัทชำระ QR แล้ว' : 'แนบสลิปที่บริษัทจ่ายคืนให้เพื่อดำเนินการขั้นตอนถัดไป'}
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-[#374151] mb-1.5">

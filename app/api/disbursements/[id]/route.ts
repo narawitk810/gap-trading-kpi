@@ -42,7 +42,7 @@ export async function PATCH(
       body.actual_amount === '' ||
       isNaN(Number(body.actual_amount)) ||
       Number(body.actual_amount) < 0 ||
-      (pm !== 'เบิก' && pm !== 'สำรองจ่าย') ||
+      !['เบิก', 'สำรองจ่าย', 'qr', 'มีอยู่แล้ว'].includes(pm) ||
       (ch !== 'offline' && ch !== 'online') ||
       !body.order_channel_image
     ) {
@@ -54,11 +54,14 @@ export async function PATCH(
     if (pm === 'สำรองจ่าย' && !body.advance_slip) {
       return NextResponse.json({ error: 'กรุณาแนบสลิปสำรองจ่าย' }, { status: 400 })
     }
+    if (pm === 'qr' && !body.qr_slip) {
+      return NextResponse.json({ error: 'กรุณาแนบ QR Code' }, { status: 400 })
+    }
     await db.execute({
       sql: `UPDATE disbursements
             SET status='ordered', ordered_by=?, actual_amount=?, order_note=?, ordered_at=?,
                 payment_method=?, order_disburse_slip=?, order_pay_slip=?, advance_slip=?,
-                order_channel=?, order_channel_image=?
+                order_channel=?, order_channel_image=?, qr_slip=?
             WHERE id=? AND status='approved'`,
       args: [
         body.ordered_by.trim(),
@@ -71,6 +74,7 @@ export async function PATCH(
         pm === 'สำรองจ่าย' ? body.advance_slip : '',
         ch,
         body.order_channel_image,
+        pm === 'qr' ? body.qr_slip : '',
         params.id,
       ],
     })
@@ -81,7 +85,7 @@ export async function PATCH(
     await db.execute({
       sql: `UPDATE disbursements
             SET reimbursed_at=?, reimbursement_slip=?
-            WHERE id=? AND status='ordered' AND payment_method='สำรองจ่าย' AND reimbursed_at=''`,
+            WHERE id=? AND status='ordered' AND (payment_method='สำรองจ่าย' OR payment_method='qr') AND reimbursed_at=''`,
       args: [now, body.reimbursement_slip, params.id],
     })
   } else if (action === 'record_payment') {
@@ -93,8 +97,8 @@ export async function PATCH(
       args: [params.id],
     })
     const row = rows.rows[0]
-    if (row && row.payment_method === 'สำรองจ่าย' && !row.reimbursed_at) {
-      return NextResponse.json({ error: 'กรุณารอการจ่ายคืนจากบริษัทก่อน' }, { status: 400 })
+    if (row && ['สำรองจ่าย', 'qr'].includes(row.payment_method as string) && !row.reimbursed_at) {
+      return NextResponse.json({ error: row.payment_method === 'qr' ? 'กรุณารอบริษัทชำระก่อน' : 'กรุณารอการจ่ายคืนจากบริษัทก่อน' }, { status: 400 })
     }
     await db.execute({
       sql: `UPDATE disbursements
@@ -119,7 +123,7 @@ export async function PATCH(
                 ordered_by='', actual_amount=NULL, order_note='', ordered_at='',
                 payment_method='', order_disburse_slip='', order_pay_slip='',
                 advance_slip='', reimbursed_at='', reimbursement_slip='',
-                order_channel='', order_channel_image=''
+                order_channel='', order_channel_image='', qr_slip=''
             WHERE id=? AND status='ordered'`,
       args: [params.id],
     })
