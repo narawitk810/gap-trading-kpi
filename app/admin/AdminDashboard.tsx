@@ -1,6 +1,5 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { DEPARTMENTS } from '@/types/kpi'
 import type { KPIEntry } from '@/types/kpi'
@@ -401,9 +400,17 @@ interface PreorderOrder { id: string; product_id: string; nickname: string; quan
 interface PreorderFormData { id?: string; name: string; description: string; price: string; close_date: string; max_qty: string; image_data: string }
 
 export default function AdminDashboard() {
-  const searchParams = useSearchParams()
-  const key = searchParams.get('key')
-  const isAuthorized = key === ADMIN_KEY
+  const [authed, setAuthed] = useState(false)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+
+  function handleLogin() {
+    if (passwordInput === 'admin12345') {
+      setAuthed(true)
+    } else {
+      setPasswordError('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่')
+    }
+  }
 
   const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
@@ -1197,7 +1204,7 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    if (isAuthorized) {
+    if (authed) {
       fetchEntries()
       fetchProductRequests()
       fetchComplaints()
@@ -1209,15 +1216,26 @@ export default function AdminDashboard() {
       fetchEquipment()
       fetchMeetings()
     }
-  }, [isAuthorized, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings])
+  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings])
 
-  if (!isAuthorized) {
+  if (!authed) {
     return (
-      <div className="min-h-screen bg-[#F5F6F8] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow p-8 text-center max-w-sm w-full">
-          <div className="text-4xl mb-4">❌</div>
-          <h2 className="text-xl font-bold text-[#1E3A5F] mb-2">ไม่มีสิทธิ์เข้าถึง</h2>
-          <p className="text-gray-500 text-sm">กรุณาตรวจสอบ URL ที่ได้รับจาก HR หรือผู้ดูแลระบบ</p>
+      <div className="min-h-screen bg-[#F5F6F8] flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl p-8 shadow-sm max-w-sm w-full space-y-4">
+          <p className="text-4xl text-center">🔒</p>
+          <p className="font-bold text-[#1E3A5F] text-lg text-center">G Admin — GAP TRADING</p>
+          <input
+            type="password"
+            placeholder="ใส่รหัสผ่าน"
+            value={passwordInput}
+            onChange={(e) => { setPasswordInput(e.target.value); setPasswordError('') }}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            className={`w-full border rounded-xl px-3 py-3 text-sm outline-none focus:border-[#1E3A5F] ${passwordError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
+          />
+          {passwordError && <p className="text-xs text-[#DC2626]">{passwordError}</p>}
+          <button onClick={handleLogin} className="w-full bg-[#1E3A5F] text-white font-bold py-3 rounded-xl">
+            เข้าสู่ระบบ
+          </button>
         </div>
       </div>
     )
