@@ -355,7 +355,7 @@ export default function DisbursementDashboard() {
       } else if (paymentMethod === 'qr') {
         if (!qrSlipData) e.qrSlip = 'กรุณาแนบ QR Code'
       }
-      if (!orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ/แคปหน้าจอ'
+      if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะใบกำกับภาษี'
       if (taxInvoiceStatus === 'yes' && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปใบกำกับภาษี'
@@ -1377,7 +1377,7 @@ export default function DisbursementDashboard() {
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            {orderChannel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'} <span className="text-[#DC2626]">*</span>
+                            {orderChannel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'} {orderChannel === 'offline' && <span className="text-[#DC2626]">*</span>}
                           </label>
                           <input ref={orderChannelImageRef} type="file" accept="image/*" onChange={handleOrderChannelImageFile} className="hidden" />
                           {orderChannelImageData ? (
