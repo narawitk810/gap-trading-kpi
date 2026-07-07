@@ -1618,8 +1618,8 @@ export default function Home() {
 
         {/* ── Department-specific fields ── */}
 
-        {/* บัญชี — ระบบเบิกจ่าย (อยู่บนสุด) */}
-        {formData.department === 'บัญชี&การเงิน' && (
+        {/* บัญชี / สต๊อค&จัดซื้อ — ระบบเบิกจ่าย (อยู่บนสุด) */}
+        {['บัญชี&การเงิน', 'สต๊อค&จัดซื้อ'].includes(formData.department) && (
           <Link
             href="/disbursement"
             className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl p-4 hover:bg-orange-100 transition-colors"
@@ -1629,7 +1629,11 @@ export default function Home() {
             </div>
             <div>
               <p className="text-sm font-bold text-orange-800">ระบบเบิกจ่าย</p>
-              <p className="text-xs text-gray-400 mt-0.5">ติดตามการเบิกจ่าย · ดำเนินการแต่ละขั้นตอน</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {formData.department === 'สต๊อค&จัดซื้อ'
+                  ? 'ยืนยันสั่งซื้อ · รายการที่บัญชีอนุมัติแล้ว'
+                  : 'ติดตามการเบิกจ่าย · ดำเนินการแต่ละขั้นตอน'}
+              </p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-orange-600 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
