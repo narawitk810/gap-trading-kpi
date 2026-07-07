@@ -1926,30 +1926,9 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="text-center min-w-[60px]">
-              <div className="text-3xl font-bold text-[#1E3A5F]">{todayEntries.length}</div>
-              <div className="text-xs text-gray-500 mt-0.5">รายการ</div>
-            </div>
-            <div className="w-px h-10 bg-[#E2E8F0] hidden sm:block" />
-            <div className="flex flex-wrap gap-2">
-              {DEPARTMENTS.filter((d) => todayByDept[d] > 0).map((dept) => (
-                <span
-                  key={dept}
-                  className="inline-flex items-center gap-1.5 bg-[#F5F6F8] border border-[#E2E8F0] rounded-full px-3 py-1 text-xs font-medium text-[#374151]"
-                >
-                  {dept}
-                  <span className="font-bold text-[#1E3A5F]">{todayByDept[dept]}</span>
-                </span>
-              ))}
-              {todayEntries.length === 0 && (
-                <p className="text-gray-400 text-sm">ยังไม่มีข้อมูลสำหรับวันนี้</p>
-              )}
-            </div>
-          </div>
 
           {kpiOverviewAnalysis && (
-            <div className="mt-5 pt-4 border-t border-[#E2E8F0] space-y-3">
+            <div className="mt-4 space-y-3">
               <p className="text-xs font-bold text-[#1E3A5F] uppercase tracking-wider">🤖 AI วิเคราะห์ภาพรวมวันนี้</p>
               <p className="text-sm text-[#374151] leading-relaxed">{kpiOverviewAnalysis.overall}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1978,6 +1957,28 @@ export default function AdminDashboard() {
               </button>
             </div>
           )}
+
+          <div className={`flex flex-wrap items-center gap-4 ${kpiOverviewAnalysis ? 'mt-4 pt-4 border-t border-[#E2E8F0]' : ''}`}>
+            <div className="text-center min-w-[60px]">
+              <div className="text-3xl font-bold text-[#1E3A5F]">{todayEntries.length}</div>
+              <div className="text-xs text-gray-500 mt-0.5">รายการ</div>
+            </div>
+            <div className="w-px h-10 bg-[#E2E8F0] hidden sm:block" />
+            <div className="flex flex-wrap gap-2">
+              {DEPARTMENTS.filter((d) => todayByDept[d] > 0).map((dept) => (
+                <span
+                  key={dept}
+                  className="inline-flex items-center gap-1.5 bg-[#F5F6F8] border border-[#E2E8F0] rounded-full px-3 py-1 text-xs font-medium text-[#374151]"
+                >
+                  {dept}
+                  <span className="font-bold text-[#1E3A5F]">{todayByDept[dept]}</span>
+                </span>
+              ))}
+              {todayEntries.length === 0 && (
+                <p className="text-gray-400 text-sm">ยังไม่มีข้อมูลสำหรับวันนี้</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
