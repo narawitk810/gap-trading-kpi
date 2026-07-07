@@ -1641,8 +1641,8 @@ export default function Home() {
           </Link>
         )}
 
-        {/* บัญชี / สต๊อค&จัดซื้อ — ลิงก์ใบกำกับภาษี */}
-        {TAX_INVOICE_DEPTS.includes(formData.department) && (
+        {/* บัญชี — ลิงก์ใบกำกับภาษี */}
+        {formData.department === 'บัญชี&การเงิน' && (
           <Link
             href="/tax-invoice"
             className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
