@@ -36,18 +36,20 @@ export async function POST(request: NextRequest) {
 
 ${deptSummary}
 
-ตอบ JSON เท่านั้น:
-{"overall":"สรุปภาพรวม 2 ประโยค","strong_depts":"แผนกที่ดี","concern_depts":"แผนกที่น่าเป็นห่วง","common_obstacles":"อุปสรรคที่พบ","recommendation":"คำแนะนำผู้บริหาร"}`
+ตอบ JSON เท่านั้น ห้าม markdown ห้าม code fence แต่ละ field ไม่เกิน 1 ประโยค:
+{"overall":"...","strong_depts":"...","concern_depts":"...","common_obstacles":"...","recommendation":"..."}`
 
   try {
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      system: 'คุณคือที่ปรึกษา HR ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น',
+      max_tokens: 2048,
+      system: 'ตอบเป็น raw JSON เท่านั้น ห้าม markdown ห้าม ```json ห้ามมีข้อความอื่น',
       messages: [{ role: 'user', content: prompt }],
     })
 
-    const text = (message.content[0] as { type: string; text: string }).text.trim()
+    const raw = (message.content[0] as { type: string; text: string }).text.trim()
+    // strip markdown code fences if present
+    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim()
 
     let result
     try {
