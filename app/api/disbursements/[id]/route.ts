@@ -89,9 +89,6 @@ export async function PATCH(
       args: [now, body.reimbursement_slip, params.id],
     })
   } else if (action === 'record_payment') {
-    if (!body.payment_note?.trim()) {
-      return NextResponse.json({ error: 'กรุณากรอกรายละเอียดการจ่าย' }, { status: 400 })
-    }
     const tis = body.tax_invoice_status as string
     if (!['yes', 'no'].includes(tis)) {
       return NextResponse.json({ error: 'กรุณาระบุสถานะใบกำกับภาษี' }, { status: 400 })

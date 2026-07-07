@@ -345,7 +345,6 @@ export default function DisbursementDashboard() {
       }
       if (!orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ/แคปหน้าจอ'
     } else if (selected.status === 'ordered') {
-      if (!paymentNote.trim()) e.paymentNote = 'กรุณากรอกรายละเอียดการจ่าย'
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะใบกำกับภาษี'
       if (taxInvoiceStatus === 'yes' && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปใบกำกับภาษี'
       if (taxInvoiceStatus === 'no' && !taxInvoiceNoReason.trim()) e.taxInvoiceNoReason = 'กรุณาระบุเหตุผลที่ไม่มีใบกำกับภาษี'
