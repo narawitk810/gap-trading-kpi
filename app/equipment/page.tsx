@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { DEPARTMENTS } from '@/types/kpi'
 
 async function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -41,6 +42,7 @@ export default function EquipmentPage() {
   const [pageState, setPageState] = useState<PageState>('select')
   const [requestType, setRequestType] = useState<RequestType>('damaged')
   const [nickname, setNickname] = useState('')
+  const [department, setDepartment] = useState('')
   const [action, setAction] = useState<'ซ่อม' | 'เบิกใหม่' | ''>('')
   const [description, setDescription] = useState('')
   const [imageData, setImageData] = useState<string | null>(null)
@@ -68,6 +70,7 @@ export default function EquipmentPage() {
   function validate() {
     const e: { [k: string]: string } = {}
     if (!nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
+    if (!department) e.department = 'กรุณาเลือกแผนก'
     if (requestType === 'damaged' && !action) e.action = 'กรุณาเลือกประเภทการดำเนินการ'
     if (!description.trim()) e.description = 'กรุณากรอกคำอธิบาย'
     if (!imageData) e.image = 'กรุณาแนบรูปภาพ'
@@ -86,7 +89,7 @@ export default function EquipmentPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nickname: nickname.trim(),
+          nickname: `${nickname.trim()} (${department})`,
           request_type: requestType,
           action: action,
           description: description.trim(),
@@ -111,6 +114,7 @@ export default function EquipmentPage() {
 
   function resetForm() {
     setNickname('')
+    setDepartment('')
     setAction('')
     setDescription('')
     setImageData(null)
@@ -164,6 +168,10 @@ export default function EquipmentPage() {
               <p className="font-semibold text-[#374151]">{nickname}</p>
             </div>
             <div>
+              <p className="text-xs text-gray-500 mb-0.5">แผนก</p>
+              <p className="font-semibold text-[#374151]">{department}</p>
+            </div>
+            <div>
               <p className="text-xs text-gray-500 mb-0.5">ประเภท</p>
               <p className="font-semibold text-[#374151]">
                 {requestType === 'damaged' ? 'อุปกรณ์เสีย' : 'เบิกอุปกรณ์ใหม่'}
@@ -215,7 +223,7 @@ export default function EquipmentPage() {
             </svg>
           </Link>
           <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
-          <p className="text-sm mt-1 opacity-75">แจ้งเกี่ยวกับอุปกรณ์</p>
+          <p className="text-sm mt-1 opacity-75">แจ้งเบิกทุกอย่าง</p>
         </div>
 
         <div className="max-w-lg mx-auto px-4 py-8 space-y-4">
@@ -265,9 +273,7 @@ export default function EquipmentPage() {
           </svg>
         </button>
         <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
-        <p className="text-sm mt-1 opacity-75">
-          {requestType === 'damaged' ? 'แจ้งอุปกรณ์เสีย' : 'เบิกอุปกรณ์ใหม่'}
-        </p>
+        <p className="text-sm mt-1 opacity-75">แจ้งเบิกทุกอย่าง</p>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4 pb-10">
@@ -284,6 +290,31 @@ export default function EquipmentPage() {
               className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
             />
             {errors.nickname && <p className="text-[#DC2626] text-xs mt-1">{errors.nickname}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-[#374151] mb-2">
+              แผนก <span className="text-[#DC2626]">*</span>
+            </label>
+            <div className="overflow-x-auto -mx-1 px-1">
+              <div className="flex gap-2 w-max pb-1">
+                {DEPARTMENTS.map((dept) => (
+                  <button
+                    key={dept}
+                    type="button"
+                    onClick={() => { setDepartment(dept); setErrors((p) => ({ ...p, department: '' })) }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition-colors ${
+                      department === dept
+                        ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                        : 'bg-white text-[#374151] border-[#E2E8F0]'
+                    }`}
+                  >
+                    {dept}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {errors.department && <p className="text-[#DC2626] text-xs mt-1">{errors.department}</p>}
           </div>
 
           {requestType === 'damaged' && (
