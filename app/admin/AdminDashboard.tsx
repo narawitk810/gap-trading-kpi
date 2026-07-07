@@ -1347,7 +1347,7 @@ export default function AdminDashboard() {
                 : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
           >
-            แจกเบิก
+            แจ้งเบิก
             {equipmentRequests.filter((r) => r.status === 'pending').length > 0 && (
               <span className="bg-[#DC2626] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                 {equipmentRequests.filter((r) => r.status === 'pending').length}
