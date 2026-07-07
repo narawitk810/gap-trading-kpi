@@ -604,7 +604,12 @@ export default function DisbursementDashboard() {
                     </span>
                   </button>
                   {idx < STAGES.length - 1 && (
-                    <span className="text-gray-300 text-2xl px-0.5 font-light select-none leading-none">›</span>
+                    <div className="flex flex-col items-center px-0.5 select-none">
+                      <span className="text-gray-300 text-2xl font-light leading-none">›</span>
+                      <span className="text-[8px] text-gray-400 font-semibold text-center leading-tight w-12">
+                        {['บัญชี(บอส)', 'จัดซื้อ', 'จัดซื้อ', 'บัญชี'][idx]}
+                      </span>
+                    </div>
                   )}
                 </div>
               )
