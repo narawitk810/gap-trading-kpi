@@ -404,8 +404,16 @@ export default function AdminDashboard() {
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState('')
 
+  useEffect(() => {
+    const expiry = localStorage.getItem('adminAuthedExpiry')
+    if (expiry && Date.now() < Number(expiry)) {
+      setAuthed(true)
+    }
+  }, [])
+
   function handleLogin() {
     if (passwordInput === 'admin12345') {
+      localStorage.setItem('adminAuthedExpiry', String(Date.now() + 10 * 24 * 60 * 60 * 1000))
       setAuthed(true)
     } else {
       setPasswordError('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่')
