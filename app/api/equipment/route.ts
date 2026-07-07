@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString()
   await db.execute({
     sql: `INSERT INTO equipment_requests (id, nickname, request_type, action, description, image_data, status, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
+          VALUES (?, ?, ?, ?, ?, ?, 'acknowledged', ?)`,
     args: [
       id,
       body.nickname.trim(),
@@ -36,6 +36,17 @@ export async function POST(request: NextRequest) {
       now,
     ],
   })
+
+  const disbId = generateId()
+  const today = now.slice(0, 10)
+  const itemLabel = body.description?.trim() || body.request_type || 'แจ้งเบิก'
+  await db.execute({
+    sql: `INSERT INTO disbursements
+          (id, requester, item_list, requested_amount, request_doc, request_date, status, equipment_id, created_at)
+          VALUES (?, ?, ?, 0, ?, ?, 'pending_approval', ?, ?)`,
+    args: [disbId, body.nickname.trim(), itemLabel, body.image_data, today, id, now],
+  })
+
   return NextResponse.json({ id }, { status: 201 })
 }
 

@@ -2234,15 +2234,6 @@ export default function AdminDashboard() {
                       })()}
                     </div>
                     <p className="text-sm text-[#374151]">{r.description}</p>
-                    {r.status === 'pending' && !equipDisbursements.find((d) => d.equipment_id === r.id) && (
-                      <button
-                        onClick={() => handleSendToDisbursement(r)}
-                        disabled={sendingToDisbursementId === r.id}
-                        className="w-full mt-1 bg-[#1E3A5F] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
-                      >
-                        {sendingToDisbursementId === r.id ? 'กำลังส่ง...' : '→ ส่งเข้าระบบเบิกจ่าย'}
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
