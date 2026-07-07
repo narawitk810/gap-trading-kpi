@@ -1187,7 +1187,7 @@ export default function DisbursementDashboard() {
                         {paymentMethod === 'เบิก' ? (
                           <>
                             <div>
-                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปที่ขอเบิก <span className="text-[#DC2626]">*</span></label>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปที่ขอเบิก <span className="text-[#DC2626]">*</span><span className="text-xs font-normal text-gray-500 ml-1">(ขอเบิกเงินให้บริษัทโอนเข้า บช. พนักงานไปซื้อ)</span></label>
                               <input ref={orderDisburseSlipRef} type="file" accept="image/*" onChange={handleOrderDisburseSlipFile} className="hidden" />
                               {orderDisburseSlipData ? (
                                 <div className="space-y-1">
@@ -1207,7 +1207,7 @@ export default function DisbursementDashboard() {
                               {formErrors.orderDisburseSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.orderDisburseSlip}</p>}
                             </div>
                             <div>
-                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปชำระเงิน <span className="text-[#DC2626]">*</span></label>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">สลิปชำระเงิน <span className="text-[#DC2626]">*</span><span className="text-xs font-normal text-gray-500 ml-1">(สลิปชำระเงินต้องเป็นชื่อเดียวกับผู้ขอเบิก)</span></label>
                               <input ref={orderPaySlipRef} type="file" accept="image/*" onChange={handleOrderPaySlipFile} className="hidden" />
                               {orderPaySlipData ? (
                                 <div className="space-y-1">
