@@ -399,7 +399,7 @@ export default function EquipmentPage() {
 
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2">
-              {requestType === 'damaged' ? 'รูปอุปกรณ์ที่เสีย' : 'รูปตัวอย่างอุปกรณ์ที่ต้องการ'}
+              {requestType === 'damaged' ? 'รูปอุปกรณ์ที่เสีย' : requestType === 'ads' ? 'รูป QR Code สำหรับโอนเงิน' : 'รูปตัวอย่างอุปกรณ์ที่ต้องการ'}
               {' '}<span className="text-[#DC2626]">*</span>
             </label>
             <input
