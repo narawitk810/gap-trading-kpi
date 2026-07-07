@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 
 interface Product {
   id: string
@@ -131,6 +132,12 @@ export default function PreorderPage() {
     <div className="min-h-screen bg-[#F5F6F8]">
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-3 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          กลับหน้าหลัก
+        </Link>
         <p className="text-xs opacity-60 mb-1">GAP TRADING</p>
         <h1 className="text-2xl font-bold">Pre-Order ไลฟ์สด</h1>
         <p className="text-sm opacity-70 mt-1">สั่งจองสินค้าล่วงหน้า · ก่อนปิดรับออเดอร์</p>
