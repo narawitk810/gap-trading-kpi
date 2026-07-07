@@ -409,6 +409,7 @@ export default function AdminDashboard() {
     if (expiry && Date.now() < Number(expiry)) {
       setAuthed(true)
     }
+    setKpiAnalysisDate(getTodayDate())
   }, [])
 
   function handleLogin() {
@@ -454,6 +455,7 @@ export default function AdminDashboard() {
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
   const [kpiOverviewAnalysis, setKpiOverviewAnalysis] = useState<{ overall: string; strong_depts: string; concern_depts: string; common_obstacles: string; recommendation: string } | null>(null)
   const [analyzingKpiOverview, setAnalyzingKpiOverview] = useState(false)
+  const [kpiAnalysisDate, setKpiAnalysisDate] = useState('')
   const [equipmentRequests, setEquipmentRequests] = useState<EquipmentRequest[]>([])
   const [loadingEquipment, setLoadingEquipment] = useState(false)
   const [acknowledgingEquipId, setAcknowledgingEquipId] = useState<string | null>(null)
@@ -653,7 +655,8 @@ export default function AdminDashboard() {
   }
 
   async function handleAnalyzeKpiOverview() {
-    if (filteredEntries.length === 0) return
+    const dateEntries = entries.filter((e) => e.date === kpiAnalysisDate)
+    if (dateEntries.length === 0) { alert('ไม่มีข้อมูล KPI ในวันที่เลือก'); return }
     setAnalyzingKpiOverview(true)
     setKpiOverviewAnalysis(null)
     try {
@@ -661,10 +664,8 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          date: filters.dateFrom && filters.dateTo
-            ? `${filters.dateFrom} ถึง ${filters.dateTo}`
-            : filters.dateFrom || filters.dateTo || today,
-          entries: filteredEntries.map((e) => ({
+          date: kpiAnalysisDate,
+          entries: dateEntries.map((e) => ({
             department: e.department,
             nickname: e.nickname,
             tasks: e.tasks,
@@ -1909,13 +1910,21 @@ export default function AdminDashboard() {
             <h2 className="text-sm font-bold text-[#1E3A5F]">
               สรุปวันนี้ — {formatDate(today)}
             </h2>
-            <button
-              onClick={handleAnalyzeKpiOverview}
-              disabled={analyzingKpiOverview || filteredEntries.length === 0}
-              className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-3 py-1.5 hover:bg-[#F5F6F8] disabled:opacity-40 whitespace-nowrap"
-            >
-              {analyzingKpiOverview ? '⏳ กำลังวิเคราะห์...' : '🤖 AI วิเคราะห์ภาพรวม'}
-            </button>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={kpiAnalysisDate}
+                onChange={(e) => { setKpiAnalysisDate(e.target.value); setKpiOverviewAnalysis(null) }}
+                className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-[#1E3A5F]"
+              />
+              <button
+                onClick={handleAnalyzeKpiOverview}
+                disabled={analyzingKpiOverview || !kpiAnalysisDate}
+                className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-3 py-1.5 hover:bg-[#F5F6F8] disabled:opacity-40 whitespace-nowrap"
+              >
+                {analyzingKpiOverview ? '⏳ กำลังวิเคราะห์...' : '🤖 AI วิเคราะห์รายวัน'}
+              </button>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="text-center min-w-[60px]">
