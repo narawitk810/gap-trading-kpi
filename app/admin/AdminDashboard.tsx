@@ -444,6 +444,8 @@ export default function AdminDashboard() {
   const [wageFilters, setWageFilters] = useState({ department: '', dateFrom: '', dateTo: '', nickname: '' })
   const [wageAnalysis, setWageAnalysis] = useState<Record<string, { score: number; estimated_wage: number; verdict: string; reason: string }>>({})
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+  const [kpiOverviewAnalysis, setKpiOverviewAnalysis] = useState<{ overall: string; strong_depts: string; concern_depts: string; common_obstacles: string; recommendation: string } | null>(null)
+  const [analyzingKpiOverview, setAnalyzingKpiOverview] = useState(false)
   const [equipmentRequests, setEquipmentRequests] = useState<EquipmentRequest[]>([])
   const [loadingEquipment, setLoadingEquipment] = useState(false)
   const [acknowledgingEquipId, setAcknowledgingEquipId] = useState<string | null>(null)
@@ -640,6 +642,31 @@ export default function AdminDashboard() {
       else alert(data.error || 'วิเคราะห์ไม่สำเร็จ')
     } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
     finally { setAnalyzingId(null) }
+  }
+
+  async function handleAnalyzeKpiOverview() {
+    if (todayEntries.length === 0) return
+    setAnalyzingKpiOverview(true)
+    setKpiOverviewAnalysis(null)
+    try {
+      const res = await fetch('/api/analyze-kpi-overview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: today,
+          entries: todayEntries.map((e) => ({
+            department: e.department,
+            nickname: e.nickname,
+            tasks: e.tasks,
+            obstacles: e.obstacles,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) setKpiOverviewAnalysis(data)
+      else alert(data.error || 'วิเคราะห์ไม่สำเร็จ')
+    } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setAnalyzingKpiOverview(false) }
   }
   const [entries, setEntries] = useState<KPIEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -1868,9 +1895,20 @@ export default function AdminDashboard() {
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         {/* Today Summary */}
         <div className="bg-white rounded-2xl shadow-sm p-5">
-          <h2 className="text-sm font-bold text-[#1E3A5F] mb-4">
-            สรุปวันนี้ — {formatDate(today)}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-[#1E3A5F]">
+              สรุปวันนี้ — {formatDate(today)}
+            </h2>
+            {todayEntries.length > 0 && (
+              <button
+                onClick={handleAnalyzeKpiOverview}
+                disabled={analyzingKpiOverview}
+                className="text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-3 py-1.5 hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
+              >
+                {analyzingKpiOverview ? '⏳ กำลังวิเคราะห์...' : '🤖 AI วิเคราะห์ภาพรวม'}
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="text-center min-w-[60px]">
               <div className="text-3xl font-bold text-[#1E3A5F]">{todayEntries.length}</div>
@@ -1892,6 +1930,37 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+
+          {kpiOverviewAnalysis && (
+            <div className="mt-5 pt-4 border-t border-[#E2E8F0] space-y-3">
+              <p className="text-xs font-bold text-[#1E3A5F] uppercase tracking-wider">🤖 AI วิเคราะห์ภาพรวมวันนี้</p>
+              <p className="text-sm text-[#374151] leading-relaxed">{kpiOverviewAnalysis.overall}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-[#F0FDF4] border border-green-200 rounded-xl p-3">
+                  <p className="text-xs font-bold text-green-700 mb-1">แผนกที่โดดเด่น</p>
+                  <p className="text-sm text-green-800">{kpiOverviewAnalysis.strong_depts || '—'}</p>
+                </div>
+                <div className="bg-[#FEF2F2] border border-red-200 rounded-xl p-3">
+                  <p className="text-xs font-bold text-red-700 mb-1">ประเด็นน่าเป็นห่วง</p>
+                  <p className="text-sm text-red-800">{kpiOverviewAnalysis.concern_depts || '—'}</p>
+                </div>
+                <div className="bg-[#FFFBEB] border border-yellow-200 rounded-xl p-3">
+                  <p className="text-xs font-bold text-yellow-700 mb-1">อุปสรรคที่พบบ่อย</p>
+                  <p className="text-sm text-yellow-800">{kpiOverviewAnalysis.common_obstacles || 'ไม่มี'}</p>
+                </div>
+                <div className="bg-[#EFF6FF] border border-blue-200 rounded-xl p-3">
+                  <p className="text-xs font-bold text-blue-700 mb-1">คำแนะนำผู้บริหาร</p>
+                  <p className="text-sm text-blue-800">{kpiOverviewAnalysis.recommendation}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setKpiOverviewAnalysis(null)}
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                ✕ ปิดผลวิเคราะห์
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
