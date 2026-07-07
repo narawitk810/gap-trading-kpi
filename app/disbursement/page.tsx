@@ -1135,9 +1135,16 @@ export default function DisbursementDashboard() {
                     {selected.status === 'pending_approval' && (
                       <>
                         <div>
-                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            ชื่อผู้อนุมัติ <span className="text-[#DC2626]">*</span>
-                          </label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-semibold text-[#374151]">
+                              ชื่อผู้อนุมัติ <span className="text-[#DC2626]">*</span>
+                            </label>
+                            <button type="button"
+                              onClick={() => { setApprovedBy('Boss'); setFormErrors((p) => ({ ...p, approvedBy: '' })) }}
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#1E3A5F] text-white">
+                              Boss
+                            </button>
+                          </div>
                           <input type="text" value={approvedBy}
                             onChange={(e) => { setApprovedBy(e.target.value); setFormErrors((p) => ({ ...p, approvedBy: '' })) }}
                             placeholder="ชื่อผู้มีอำนาจอนุมัติ"
