@@ -18,8 +18,10 @@ export async function POST(request: NextRequest) {
 
   const deptSummary = (entries as { department: string; nickname: string; tasks: string[]; obstacles: string }[])
     .map((e) => {
-      const tasks = e.tasks.filter((t: string) => t.trim()).join(', ')
-      return `- [${e.department}] ${e.nickname}: งาน = ${tasks || 'ไม่ระบุ'}${e.obstacles ? ` | อุปสรรค = ${e.obstacles}` : ''}`
+      const taskList = Array.isArray(e.tasks)
+        ? e.tasks.filter((t: string) => t.trim()).join(', ')
+        : String(e.tasks)
+      return `[${e.department}] ${e.nickname}: ${taskList || 'ไม่ระบุ'}${e.obstacles ? ` (อุปสรรค: ${e.obstacles})` : ''}`
     })
     .join('\n')
 
@@ -27,40 +29,39 @@ export async function POST(request: NextRequest) {
   for (const e of entries as { department: string }[]) {
     deptCount[e.department] = (deptCount[e.department] || 0) + 1
   }
-  const deptStat = Object.entries(deptCount).map(([d, n]) => `${d} (${n} คน)`).join(', ')
+  const deptStat = Object.entries(deptCount).map(([d, n]) => `${d}:${n}คน`).join(', ')
 
-  const prompt = `คุณคือที่ปรึกษาด้าน HR ของบริษัท GAP TRADING วิเคราะห์ KPI ภาพรวมประจำวัน ${date}
+  const prompt = `วิเคราะห์ KPI ภาพรวมของบริษัท GAP TRADING วันที่ ${date}
+พนักงาน ${entries.length} คน แผนก: ${deptStat}
 
-จำนวนพนักงานที่บันทึก KPI: ${entries.length} คน
-แผนกที่บันทึก: ${deptStat}
-
-รายละเอียดงานแต่ละคน:
 ${deptSummary}
 
-วิเคราะห์ภาพรวมทั้งองค์กรในวันนี้ ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น:
-{
-  "overall": "<สรุปภาพรวมองค์กรวันนี้ ภาษาไทย 2-3 ประโยค>",
-  "strong_depts": "<แผนกที่ทำงานได้ดี/โดดเด่น>",
-  "concern_depts": "<แผนกหรือประเด็นที่น่าเป็นห่วง>",
-  "common_obstacles": "<อุปสรรคที่พบบ่อยหรือซ้ำกันหลายคน หรือ 'ไม่มี'>",
-  "recommendation": "<คำแนะนำสั้นๆ สำหรับผู้บริหาร 1-2 ประโยค>"
-}`
+ตอบ JSON เท่านั้น:
+{"overall":"สรุปภาพรวม 2 ประโยค","strong_depts":"แผนกที่ดี","concern_depts":"แผนกที่น่าเป็นห่วง","common_obstacles":"อุปสรรคที่พบ","recommendation":"คำแนะนำผู้บริหาร"}`
 
   try {
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
+      max_tokens: 1024,
+      system: 'คุณคือที่ปรึกษา HR ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น',
       messages: [{ role: 'user', content: prompt }],
     })
 
     const text = (message.content[0] as { type: string; text: string }).text.trim()
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) throw new Error('No JSON in response')
 
-    const result = JSON.parse(jsonMatch[0])
+    let result
+    try {
+      result = JSON.parse(text)
+    } catch {
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error(`Model returned: ${text.slice(0, 200)}`)
+      result = JSON.parse(jsonMatch[0])
+    }
+
     return NextResponse.json(result)
   } catch (err) {
-    console.error('AI overview analysis error:', err)
-    return NextResponse.json({ error: 'วิเคราะห์ไม่สำเร็จ กรุณาลองใหม่' }, { status: 500 })
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('AI overview analysis error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
