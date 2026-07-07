@@ -72,7 +72,6 @@ export default function EquipmentPage() {
     if (!nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
     if (!department) e.department = 'กรุณาเลือกแผนก'
     if (requestType === 'damaged' && !action) e.action = 'กรุณาเลือกประเภทการดำเนินการ'
-    if (!description.trim()) e.description = 'กรุณากรอกคำอธิบาย'
     if (!imageData) e.image = 'กรุณาแนบรูปภาพ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -387,7 +386,6 @@ export default function EquipmentPage() {
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2">
               {requestType === 'damaged' ? 'คำอธิบายอุปกรณ์ที่เสีย' : 'คำอธิบายและเหตุผลความจำเป็น'}
-              {' '}<span className="text-[#DC2626]">*</span>
             </label>
             <textarea
               value={description}
