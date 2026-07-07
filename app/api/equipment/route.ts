@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  if (!body.nickname?.trim() || !body.request_type || !body.description?.trim() || !body.image_data) {
+  if (!body.nickname?.trim() || !body.request_type || !body.image_data) {
     return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 })
   }
   await ensureSchema()
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       body.nickname.trim(),
       body.request_type,
       body.action?.trim() || '',
-      body.description.trim(),
+      body.description?.trim() || '',
       body.image_data,
       now,
     ],
