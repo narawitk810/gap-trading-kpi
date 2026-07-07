@@ -339,8 +339,6 @@ export default function DisbursementDashboard() {
     if (!selected) return false
     if (selected.status === 'pending_approval') {
       if (!approvedBy.trim()) e.approvedBy = 'กรุณากรอกชื่อผู้อนุมัติ'
-      if (!transferAmount || isNaN(Number(transferAmount)) || Number(transferAmount) <= 0) e.transferAmount = 'กรุณากรอกยอดโอน'
-      if (!slipData) e.slip = 'กรุณาแนบสลิปการโอน'
     } else if (selected.status === 'approved') {
       if (!orderedBy.trim()) e.orderedBy = 'กรุณากรอกชื่อผู้ดำเนินการ'
       if (actualAmount === '' || isNaN(Number(actualAmount)) || Number(actualAmount) < 0) e.actualAmount = 'กรุณากรอกยอดจริง (ใส่ 0 ได้หากไม่มีค่าใช้จ่าย)'
@@ -468,7 +466,7 @@ export default function DisbursementDashboard() {
 
     let body: Record<string, unknown> = {}
     if (selected.status === 'pending_approval') {
-      body = { action: 'approve', approved_by: approvedBy.trim(), transfer_amount: Number(transferAmount), payment_slip: slipData }
+      body = { action: 'approve', approved_by: approvedBy.trim() }
     } else if (selected.status === 'approved') {
       body = {
         action: 'order',
@@ -1150,42 +1148,6 @@ export default function DisbursementDashboard() {
                             placeholder="ชื่อผู้มีอำนาจอนุมัติ"
                             className={inputClass} />
                           {formErrors.approvedBy && <p className="text-[#DC2626] text-xs mt-1">{formErrors.approvedBy}</p>}
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            ยอดที่โอน <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <div className="relative">
-                            <input type="number" min="0" step="0.01" value={transferAmount}
-                              onChange={(e) => { setTransferAmount(e.target.value); setFormErrors((p) => ({ ...p, transferAmount: '' })) }}
-                              placeholder="0.00" className={inputClass + ' pr-10'} />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
-                          </div>
-                          {formErrors.transferAmount && <p className="text-[#DC2626] text-xs mt-1">{formErrors.transferAmount}</p>}
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            สลิปการโอน <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <input ref={slipRef} type="file" accept="image/*" onChange={handleSlipFile} className="hidden" />
-                          {slipData ? (
-                            <div className="space-y-1">
-                              <img src={slipData} alt="สลิป" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs text-gray-400 truncate">{slipName}</p>
-                                <button type="button"
-                                  onClick={() => { setSlipData(null); setSlipName(''); if (slipRef.current) slipRef.current.value = '' }}
-                                  className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
-                              </div>
-                            </div>
-                          ) : (
-                            <button type="button" onClick={() => slipRef.current?.click()}
-                              className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
-                              <span className="text-2xl">🧾</span>
-                              <span className="text-xs text-gray-400">แนบสลิปการโอน</span>
-                            </button>
-                          )}
-                          {formErrors.slip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.slip}</p>}
                         </div>
                       </>
                     )}

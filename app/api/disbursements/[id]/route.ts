@@ -17,20 +17,14 @@ export async function PATCH(
   const now = new Date().toISOString()
 
   if (action === 'approve') {
-    if (
-      !body.approved_by?.trim() ||
-      !body.transfer_amount ||
-      isNaN(Number(body.transfer_amount)) ||
-      Number(body.transfer_amount) <= 0 ||
-      !body.payment_slip
-    ) {
-      return NextResponse.json({ error: 'กรุณากรอกข้อมูลการอนุมัติให้ครบถ้วน' }, { status: 400 })
+    if (!body.approved_by?.trim()) {
+      return NextResponse.json({ error: 'กรุณากรอกชื่อผู้อนุมัติ' }, { status: 400 })
     }
     await db.execute({
       sql: `UPDATE disbursements
-            SET status='approved', approved_by=?, transfer_amount=?, payment_slip=?, approved_at=?
+            SET status='approved', approved_by=?, approved_at=?
             WHERE id=? AND status='pending_approval'`,
-      args: [body.approved_by.trim(), Number(body.transfer_amount), body.payment_slip, now, params.id],
+      args: [body.approved_by.trim(), now, params.id],
     })
   } else if (action === 'order') {
     const pm = body.payment_method as string
