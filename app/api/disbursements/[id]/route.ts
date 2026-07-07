@@ -34,6 +34,7 @@ export async function PATCH(
     })
   } else if (action === 'order') {
     const pm = body.payment_method as string
+    const ch = body.order_channel as string
     if (
       !body.ordered_by?.trim() ||
       body.actual_amount === undefined ||
@@ -41,7 +42,9 @@ export async function PATCH(
       body.actual_amount === '' ||
       isNaN(Number(body.actual_amount)) ||
       Number(body.actual_amount) < 0 ||
-      (pm !== 'เบิก' && pm !== 'สำรองจ่าย')
+      (pm !== 'เบิก' && pm !== 'สำรองจ่าย') ||
+      (ch !== 'offline' && ch !== 'online') ||
+      !body.order_channel_image
     ) {
       return NextResponse.json({ error: 'กรุณากรอกข้อมูลการสั่งซื้อให้ครบถ้วน' }, { status: 400 })
     }
@@ -54,7 +57,8 @@ export async function PATCH(
     await db.execute({
       sql: `UPDATE disbursements
             SET status='ordered', ordered_by=?, actual_amount=?, order_note=?, ordered_at=?,
-                payment_method=?, order_disburse_slip=?, order_pay_slip=?, advance_slip=?
+                payment_method=?, order_disburse_slip=?, order_pay_slip=?, advance_slip=?,
+                order_channel=?, order_channel_image=?
             WHERE id=? AND status='approved'`,
       args: [
         body.ordered_by.trim(),
@@ -65,6 +69,8 @@ export async function PATCH(
         pm === 'เบิก' ? body.order_disburse_slip : '',
         pm === 'เบิก' ? body.order_pay_slip : '',
         pm === 'สำรองจ่าย' ? body.advance_slip : '',
+        ch,
+        body.order_channel_image,
         params.id,
       ],
     })
@@ -112,7 +118,8 @@ export async function PATCH(
             SET status='approved',
                 ordered_by='', actual_amount=NULL, order_note='', ordered_at='',
                 payment_method='', order_disburse_slip='', order_pay_slip='',
-                advance_slip='', reimbursed_at='', reimbursement_slip=''
+                advance_slip='', reimbursed_at='', reimbursement_slip='',
+                order_channel='', order_channel_image=''
             WHERE id=? AND status='ordered'`,
       args: [params.id],
     })

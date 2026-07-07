@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 17
+const SCHEMA_VERSION = 18
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -415,6 +415,8 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN advance_slip TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN reimbursed_at TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN reimbursement_slip TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE disbursements ADD COLUMN order_channel TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE disbursements ADD COLUMN order_channel_image TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   g.dbVersion = SCHEMA_VERSION
 }

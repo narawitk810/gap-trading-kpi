@@ -66,6 +66,8 @@ type Disbursement = {
   advance_slip: string
   reimbursed_at: string
   reimbursement_slip: string
+  order_channel: string
+  order_channel_image: string
   payment_note: string
   remaining_note: string
   payment_recorded_at: string
@@ -171,6 +173,9 @@ export default function DisbursementDashboard() {
   const [orderPaySlipName, setOrderPaySlipName] = useState('')
   const [advanceSlipData, setAdvanceSlipData] = useState<string | null>(null)
   const [advanceSlipName, setAdvanceSlipName] = useState('')
+  const [orderChannel, setOrderChannel] = useState<'offline' | 'online'>('offline')
+  const [orderChannelImageData, setOrderChannelImageData] = useState<string | null>(null)
+  const [orderChannelImageName, setOrderChannelImageName] = useState('')
   const [reimbursementSlipData, setReimbursementSlipData] = useState<string | null>(null)
   const [reimbursementSlipName, setReimbursementSlipName] = useState('')
   const [paymentNote, setPaymentNote] = useState('')
@@ -184,6 +189,7 @@ export default function DisbursementDashboard() {
   const orderPaySlipRef = useRef<HTMLInputElement>(null)
   const advanceSlipRef = useRef<HTMLInputElement>(null)
   const reimbursementSlipRef = useRef<HTMLInputElement>(null)
+  const orderChannelImageRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     setLoading(true)
@@ -211,6 +217,7 @@ export default function DisbursementDashboard() {
     setOrderPaySlipData(null); setOrderPaySlipName('')
     setAdvanceSlipData(null); setAdvanceSlipName('')
     setReimbursementSlipData(null); setReimbursementSlipName('')
+    setOrderChannel('offline'); setOrderChannelImageData(null); setOrderChannelImageName('')
     setPaymentNote(''); setRemainingNote('')
     setCloseMonth(''); setClosedBy('')
     setFormErrors({})
@@ -300,6 +307,7 @@ export default function DisbursementDashboard() {
   const handleOrderPaySlipFile = makeImageHandler(setOrderPaySlipData, setOrderPaySlipName, 'orderPaySlip')
   const handleAdvanceSlipFile = makeImageHandler(setAdvanceSlipData, setAdvanceSlipName, 'advanceSlip')
   const handleReimbursementSlipFile = makeImageHandler(setReimbursementSlipData, setReimbursementSlipName, 'reimbursementSlip')
+  const handleOrderChannelImageFile = makeImageHandler(setOrderChannelImageData, setOrderChannelImageName, 'orderChannelImage')
 
   function validateAction() {
     const e: Record<string, string> = {}
@@ -317,6 +325,7 @@ export default function DisbursementDashboard() {
       } else {
         if (!advanceSlipData) e.advanceSlip = 'กรุณาแนบสลิปสำรองจ่าย'
       }
+      if (!orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ/แคปหน้าจอ'
     } else if (selected.status === 'ordered') {
       if (!paymentNote.trim()) e.paymentNote = 'กรุณากรอกรายละเอียดการจ่าย'
     } else if (selected.status === 'payment_recorded') {
@@ -399,6 +408,8 @@ export default function DisbursementDashboard() {
         order_disburse_slip: paymentMethod === 'เบิก' ? orderDisburseSlipData : '',
         order_pay_slip: paymentMethod === 'เบิก' ? orderPaySlipData : '',
         advance_slip: paymentMethod === 'สำรองจ่าย' ? advanceSlipData : '',
+        order_channel: orderChannel,
+        order_channel_image: orderChannelImageData,
       }
     } else if (selected.status === 'ordered') {
       body = { action: 'record_payment', payment_note: paymentNote.trim(), remaining_note: remainingNote.trim() }
@@ -816,11 +827,16 @@ export default function DisbursementDashboard() {
                   {/* Step 3 info */}
                   {(['ordered', 'payment_recorded', 'monthly_closed'] as DisbursementStatus[]).includes(selected.status) && (
                     <div className="border-t border-[#E2E8F0] pt-3 space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-xs font-semibold text-blue-700">🛒 ดำเนินการสั่งซื้อแล้ว</p>
                         {selected.payment_method && (
                           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selected.payment_method === 'เบิก' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                             {selected.payment_method === 'เบิก' ? 'ขอเบิก' : 'สำรองจ่าย'}
+                          </span>
+                        )}
+                        {selected.order_channel && (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selected.order_channel === 'offline' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {selected.order_channel === 'offline' ? '🏪 Offline' : '🌐 Online'}
                           </span>
                         )}
                       </div>
@@ -838,6 +854,12 @@ export default function DisbursementDashboard() {
                         <div>
                           <p className="text-xs text-gray-500">หมายเหตุ</p>
                           <p className="text-[#374151]">{selected.order_note}</p>
+                        </div>
+                      )}
+                      {selected.order_channel_image && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">{selected.order_channel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'}</p>
+                          <img src={selected.order_channel_image} alt="รูปประกอบ" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
                         </div>
                       )}
                       {selected.payment_method === 'เบิก' && (
@@ -1119,6 +1141,42 @@ export default function DisbursementDashboard() {
                             {formErrors.advanceSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.advanceSlip}</p>}
                           </div>
                         )}
+                        <div>
+                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                            ช่องทางสั่งซื้อ <span className="text-[#DC2626]">*</span>
+                          </label>
+                          <div className="flex gap-2">
+                            {(['offline', 'online'] as const).map((ch) => (
+                              <button key={ch} type="button"
+                                onClick={() => { setOrderChannel(ch); setOrderChannelImageData(null); setOrderChannelImageName(''); setFormErrors((p) => ({ ...p, orderChannelImage: '' })) }}
+                                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${orderChannel === ch ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                                {ch === 'offline' ? '🏪 Offline' : '🌐 Online'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                            {orderChannel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'} <span className="text-[#DC2626]">*</span>
+                          </label>
+                          <input ref={orderChannelImageRef} type="file" accept="image/*" onChange={handleOrderChannelImageFile} className="hidden" />
+                          {orderChannelImageData ? (
+                            <div className="space-y-1">
+                              <img src={orderChannelImageData} alt="รูปประกอบ" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs text-gray-400 truncate">{orderChannelImageName}</p>
+                                <button type="button" onClick={() => { setOrderChannelImageData(null); setOrderChannelImageName(''); if (orderChannelImageRef.current) orderChannelImageRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button type="button" onClick={() => orderChannelImageRef.current?.click()}
+                              className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
+                              <span className="text-2xl">{orderChannel === 'offline' ? '📷' : '🖥️'}</span>
+                              <span className="text-xs text-gray-400">{orderChannel === 'offline' ? 'แนบรูปประกอบ' : 'แนบแคปหน้าจอ'}</span>
+                            </button>
+                          )}
+                          {formErrors.orderChannelImage && <p className="text-[#DC2626] text-xs mt-1">{formErrors.orderChannelImage}</p>}
+                        </div>
                       </>
                     )}
 
@@ -1205,6 +1263,7 @@ export default function DisbursementDashboard() {
                         <p className="text-gray-600">ยอดจริง: <span className="font-semibold text-blue-700">{Number(actualAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท</span></p>
                         {orderNote && <p className="text-gray-600">หมายเหตุ: {orderNote}</p>}
                         <p className="text-gray-600">วิธีจ่ายเงิน: <span className={`font-semibold ${paymentMethod === 'เบิก' ? 'text-green-700' : 'text-orange-600'}`}>{paymentMethod === 'เบิก' ? 'ขอเบิก' : 'สำรองจ่าย'}</span></p>
+                        <p className="text-gray-600">ช่องทางสั่งซื้อ: <span className="font-semibold">{orderChannel === 'offline' ? '🏪 Offline' : '🌐 Online'}</span></p>
                       </>
                     )}
                     {selected.status === 'ordered' && (
