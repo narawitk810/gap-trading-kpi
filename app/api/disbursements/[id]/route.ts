@@ -33,29 +33,60 @@ export async function PATCH(
       args: [body.approved_by.trim(), Number(body.transfer_amount), body.payment_slip, now, params.id],
     })
   } else if (action === 'order') {
+    const pm = body.payment_method as string
     if (
       !body.ordered_by?.trim() ||
       !body.actual_amount ||
       isNaN(Number(body.actual_amount)) ||
-      Number(body.actual_amount) <= 0
+      Number(body.actual_amount) <= 0 ||
+      (pm !== 'เบิก' && pm !== 'สำรองจ่าย')
     ) {
       return NextResponse.json({ error: 'กรุณากรอกข้อมูลการสั่งซื้อให้ครบถ้วน' }, { status: 400 })
     }
+    if (pm === 'เบิก' && (!body.order_disburse_slip || !body.order_pay_slip)) {
+      return NextResponse.json({ error: 'กรุณาแนบสลิปขอเบิกและสลิปชำระเงิน' }, { status: 400 })
+    }
+    if (pm === 'สำรองจ่าย' && !body.advance_slip) {
+      return NextResponse.json({ error: 'กรุณาแนบสลิปสำรองจ่าย' }, { status: 400 })
+    }
     await db.execute({
       sql: `UPDATE disbursements
-            SET status='ordered', ordered_by=?, actual_amount=?, order_note=?, ordered_at=?
+            SET status='ordered', ordered_by=?, actual_amount=?, order_note=?, ordered_at=?,
+                payment_method=?, order_disburse_slip=?, order_pay_slip=?, advance_slip=?
             WHERE id=? AND status='approved'`,
       args: [
         body.ordered_by.trim(),
         Number(body.actual_amount),
         body.order_note?.trim() || '',
         now,
+        pm,
+        pm === 'เบิก' ? body.order_disburse_slip : '',
+        pm === 'เบิก' ? body.order_pay_slip : '',
+        pm === 'สำรองจ่าย' ? body.advance_slip : '',
         params.id,
       ],
+    })
+  } else if (action === 'reimburse') {
+    if (!body.reimbursement_slip) {
+      return NextResponse.json({ error: 'กรุณาแนบสลิปการจ่ายคืน' }, { status: 400 })
+    }
+    await db.execute({
+      sql: `UPDATE disbursements
+            SET reimbursed_at=?, reimbursement_slip=?
+            WHERE id=? AND status='ordered' AND payment_method='สำรองจ่าย' AND reimbursed_at=''`,
+      args: [now, body.reimbursement_slip, params.id],
     })
   } else if (action === 'record_payment') {
     if (!body.payment_note?.trim()) {
       return NextResponse.json({ error: 'กรุณากรอกรายละเอียดการจ่าย' }, { status: 400 })
+    }
+    const rows = await db.execute({
+      sql: `SELECT payment_method, reimbursed_at FROM disbursements WHERE id=? AND status='ordered'`,
+      args: [params.id],
+    })
+    const row = rows.rows[0]
+    if (row && row.payment_method === 'สำรองจ่าย' && !row.reimbursed_at) {
+      return NextResponse.json({ error: 'กรุณารอการจ่ายคืนจากบริษัทก่อน' }, { status: 400 })
     }
     await db.execute({
       sql: `UPDATE disbursements
