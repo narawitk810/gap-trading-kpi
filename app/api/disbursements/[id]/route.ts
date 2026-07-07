@@ -104,6 +104,16 @@ export async function PATCH(
             WHERE id=? AND status='payment_recorded'`,
       args: [body.close_month.trim(), body.closed_by.trim(), now, params.id],
     })
+  } else if (action === 'rollback_to_approved') {
+    await db.execute({
+      sql: `UPDATE disbursements
+            SET status='approved',
+                ordered_by='', actual_amount=NULL, order_note='', ordered_at='',
+                payment_method='', order_disburse_slip='', order_pay_slip='',
+                advance_slip='', reimbursed_at='', reimbursement_slip=''
+            WHERE id=? AND status='ordered'`,
+      args: [params.id],
+    })
   } else if (action === 'skip_to_approved') {
     await db.execute({
       sql: `UPDATE disbursements SET status='approved' WHERE id=? AND status='pending_approval'`,
