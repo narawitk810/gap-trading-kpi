@@ -181,7 +181,7 @@ export default function DisbursementDashboard() {
   const [orderedBy, setOrderedBy] = useState('')
   const [actualAmount, setActualAmount] = useState('')
   const [orderNote, setOrderNote] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'สำรองจ่าย_บริษัท' | 'qr' | 'มีอยู่แล้ว'>('เบิก')
+  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'สำรองจ่าย_บริษัท' | 'qr'>('เบิก')
   const [orderDisburseSlipData, setOrderDisburseSlipData] = useState<string | null>(null)
   const [orderDisburseSlipName, setOrderDisburseSlipName] = useState('')
   const [orderPaySlipData, setOrderPaySlipData] = useState<string | null>(null)
@@ -1243,11 +1243,6 @@ export default function DisbursementDashboard() {
                               </button>
                             ))}
                           </div>
-                          <button type="button"
-                            onClick={() => { setPaymentMethod('มีอยู่แล้ว'); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
-                            className={`w-full mt-2 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === 'มีอยู่แล้ว' ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
-                            📦 มีอยู่แล้ว
-                          </button>
                         </div>
                         {paymentMethod === 'เบิก' ? (
                           <>
@@ -1355,12 +1350,7 @@ export default function DisbursementDashboard() {
                             )}
                             {formErrors.qrSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.qrSlip}</p>}
                           </div>
-                        ) : (
-                          <div className="bg-gray-50 rounded-xl px-3 py-3">
-                            <p className="text-sm font-semibold text-gray-600">📦 ไม่ต้องชำระเงิน</p>
-                            <p className="text-xs text-gray-400 mt-0.5">สินค้ามีอยู่ในบริษัทแล้ว ดำเนินการต่อได้เลย</p>
-                          </div>
-                        )}
+                        ) : null}
                         <div>
                           <label className="block text-sm font-semibold text-[#374151] mb-1.5">
                             ช่องทางสั่งซื้อ <span className="text-[#DC2626]">*</span>
@@ -1533,8 +1523,8 @@ export default function DisbursementDashboard() {
                         <p className="text-gray-600">ผู้ดำเนินการ: <span className="font-semibold">{orderedBy}</span></p>
                         <p className="text-gray-600">ยอดจริง: <span className="font-semibold text-blue-700">{Number(actualAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท</span></p>
                         {orderNote && <p className="text-gray-600">หมายเหตุ: {orderNote}</p>}
-                        <p className="text-gray-600">วิธีจ่ายเงิน: <span className={`font-semibold ${paymentMethod === 'เบิก' ? 'text-green-700' : paymentMethod === 'สำรองจ่าย' ? 'text-orange-600' : paymentMethod === 'qr' ? 'text-purple-700' : 'text-gray-600'}`}>
-                          {paymentMethod === 'เบิก' ? 'ขอเบิก' : paymentMethod === 'สำรองจ่าย' ? 'สำรองจ่าย' : paymentMethod === 'qr' ? 'ส่ง QR Code' : 'มีอยู่แล้ว'}
+                        <p className="text-gray-600">วิธีจ่ายเงิน: <span className={`font-semibold ${paymentMethod === 'เบิก' ? 'text-green-700' : paymentMethod === 'สำรองจ่าย' ? 'text-orange-600' : paymentMethod === 'สำรองจ่าย_บริษัท' ? 'text-blue-700' : 'text-purple-700'}`}>
+                          {paymentMethod === 'เบิก' ? 'ขอเบิก' : paymentMethod === 'สำรองจ่าย' ? 'สำรองจ่าย (บช พนักงาน)' : paymentMethod === 'สำรองจ่าย_บริษัท' ? 'สำรองจ่าย (บช บริษัท)' : 'ส่ง QR Code'}
                         </span></p>
                         <p className="text-gray-600">ช่องทางสั่งซื้อ: <span className="font-semibold">{orderChannel === 'offline' ? '🏪 Offline' : '🌐 Online'}</span></p>
                       </>
