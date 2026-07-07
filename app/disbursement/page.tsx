@@ -1103,7 +1103,7 @@ export default function DisbursementDashboard() {
                   {/* Action button */}
                   {selected.status === 'pending_approval' ? (
                     <button
-                      onClick={() => handleSkipApprove(selected.id)}
+                      onClick={() => setModalState('action_form')}
                       className={`w-full py-3 rounded-xl font-semibold text-sm ${STAGES.find((s) => s.status === selected.status)?.actionColor}`}
                     >
                       {STAGES.find((s) => s.status === selected.status)?.actionLabel} →
