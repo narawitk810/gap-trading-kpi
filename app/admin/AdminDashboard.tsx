@@ -409,7 +409,12 @@ export default function AdminDashboard() {
     if (expiry && Date.now() < Number(expiry)) {
       setAuthed(true)
     }
-    setKpiAnalysisDate(getTodayDate())
+    const todayDate = getTodayDate()
+    setKpiAnalysisDate(todayDate)
+    try {
+      const cached = localStorage.getItem(`kpiAnalysis_${todayDate}`)
+      if (cached) setKpiOverviewAnalysis(JSON.parse(cached))
+    } catch { /* ignore */ }
   }, [])
 
   function handleLogin() {
@@ -654,6 +659,14 @@ export default function AdminDashboard() {
     finally { setAnalyzingId(null) }
   }
 
+  function loadCachedAnalysis(date: string) {
+    try {
+      const cached = localStorage.getItem(`kpiAnalysis_${date}`)
+      if (cached) { setKpiOverviewAnalysis(JSON.parse(cached)); return true }
+    } catch { /* ignore */ }
+    return false
+  }
+
   async function handleAnalyzeKpiOverview() {
     const dateEntries = entries.filter((e) => e.date === kpiAnalysisDate)
     if (dateEntries.length === 0) { alert('ไม่มีข้อมูล KPI ในวันที่เลือก'); return }
@@ -674,8 +687,10 @@ export default function AdminDashboard() {
         }),
       })
       const data = await res.json()
-      if (res.ok) setKpiOverviewAnalysis(data)
-      else alert(data.error || 'วิเคราะห์ไม่สำเร็จ')
+      if (res.ok) {
+        setKpiOverviewAnalysis(data)
+        localStorage.setItem(`kpiAnalysis_${kpiAnalysisDate}`, JSON.stringify(data))
+      } else alert(data.error || 'วิเคราะห์ไม่สำเร็จ')
     } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
     finally { setAnalyzingKpiOverview(false) }
   }
@@ -1914,7 +1929,7 @@ export default function AdminDashboard() {
               <input
                 type="date"
                 value={kpiAnalysisDate}
-                onChange={(e) => { setKpiAnalysisDate(e.target.value); setKpiOverviewAnalysis(null) }}
+                onChange={(e) => { const d = e.target.value; setKpiAnalysisDate(d); setKpiOverviewAnalysis(null); loadCachedAnalysis(d) }}
                 className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-[#1E3A5F]"
               />
               <button
