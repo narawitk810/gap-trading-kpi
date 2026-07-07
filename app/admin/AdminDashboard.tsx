@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { DEPARTMENTS } from '@/types/kpi'
 import type { KPIEntry } from '@/types/kpi'
 import * as XLSX from 'xlsx'
@@ -396,12 +396,16 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   return null
 }
 
+interface PreorderProduct { id: string; name: string; description: string; price: number; close_date: string; max_qty: number; image_data: string; is_active: number }
+interface PreorderOrder { id: string; product_id: string; nickname: string; quantity: number; phone: string; note: string; status: string; created_at: string }
+interface PreorderFormData { id?: string; name: string; description: string; price: string; close_date: string; max_qty: string; image_data: string }
+
 export default function AdminDashboard() {
   const searchParams = useSearchParams()
   const key = searchParams.get('key')
   const isAuthorized = key === ADMIN_KEY
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -537,6 +541,29 @@ export default function AdminDashboard() {
   })
   const [rankCodeInput, setRankCodeInput] = useState('')
   const [rankCodeError, setRankCodeError] = useState('')
+
+  // Pre-order states
+  const [preorderProducts, setPreorderProducts] = useState<PreorderProduct[]>([])
+  const [preorderOrders, setPreorderOrders] = useState<PreorderOrder[]>([])
+  const [preorderSubTab, setPreorderSubTab] = useState<'products' | 'orders'>('products')
+  const [preorderForm, setPreorderForm] = useState<PreorderFormData | null>(null)
+  const [preorderFilterPid, setPreorderFilterPid] = useState('')
+  const [preorderSaving, setPreorderSaving] = useState(false)
+  const [preorderSaveError, setPreorderSaveError] = useState('')
+  const [preorderFormErrors, setPreorderFormErrors] = useState<Partial<PreorderFormData>>({})
+  const [loadingPreorder, setLoadingPreorder] = useState(false)
+  const preorderImageRef = useRef<HTMLInputElement>(null)
+
+  async function loadPreorderData() {
+    setLoadingPreorder(true)
+    const [prodRes, ordRes] = await Promise.all([
+      fetch(`/api/preorder-products?key=${ADMIN_KEY}`),
+      fetch(`/api/preorder-orders?key=${ADMIN_KEY}`),
+    ])
+    if (prodRes.ok) setPreorderProducts(await prodRes.json())
+    if (ordRes.ok) setPreorderOrders(await ordRes.json())
+    setLoadingPreorder(false)
+  }
 
   async function deleteStaff(s: LiveStaffMember, staffSetter: React.Dispatch<React.SetStateAction<LiveStaffMember[]>>) {
     if (!window.confirm(`ยืนยันลบ "${s.name}" ออกจากระบบ?\nการกระทำนี้ไม่สามารถย้อนกลับได้`)) return
@@ -1383,6 +1410,16 @@ export default function AdminDashboard() {
             }`}
           >
             ปรับตำแหน่ง
+          </button>
+          <button
+            onClick={() => { setActiveTab('preorder'); loadPreorderData() }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'preorder'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            Pre-Order
           </button>
         </div>
       </div>
@@ -4739,6 +4776,250 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Pre-Order Tab */}
+      {activeTab === 'preorder' && (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* Sub-tabs */}
+          <div className="flex gap-1 bg-[#F5F6F8] rounded-xl p-1 mb-4 w-fit">
+            {(['products', 'orders'] as const).map((t) => (
+              <button key={t} onClick={() => setPreorderSubTab(t)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${preorderSubTab === t ? 'bg-white text-[#1E3A5F] shadow-sm' : 'text-gray-500'}`}>
+                {t === 'products' ? `สินค้า (${preorderProducts.length})` : `ออเดอร์ (${preorderOrders.filter((o) => o.status !== 'cancelled').length})`}
+              </button>
+            ))}
+          </div>
+
+          {loadingPreorder ? (
+            <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : preorderSubTab === 'products' ? (
+            <div className="space-y-3">
+              <button onClick={() => { setPreorderForm({ name: '', description: '', price: '', close_date: '', max_qty: '0', image_data: '' }); setPreorderFormErrors({}); setPreorderSaveError('') }}
+                className="w-full bg-[#1E3A5F] text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+                + เพิ่มสินค้า Pre-Order
+              </button>
+
+              {preorderProducts.length === 0 && (
+                <div className="bg-white rounded-2xl py-12 text-center text-gray-400 shadow-sm">
+                  <p className="text-3xl mb-2">📦</p><p className="text-sm">ยังไม่มีสินค้า</p>
+                </div>
+              )}
+
+              {preorderProducts.map((p) => {
+                const orderedQty = preorderOrders.filter((o) => o.product_id === p.id && o.status !== 'cancelled').reduce((s, o) => s + o.quantity, 0)
+                return (
+                  <div key={p.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden ${!p.is_active ? 'opacity-60' : ''}`}>
+                    <div className="flex gap-3 p-4">
+                      {p.image_data && <img src={p.image_data} alt={p.name} className="w-16 h-16 object-cover rounded-xl shrink-0" />}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-bold text-[#1E3A5F] leading-tight">{p.name}</p>
+                          <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {p.is_active ? 'เปิด' : 'ปิด'}
+                          </span>
+                        </div>
+                        {p.description && <p className="text-sm text-gray-500 mt-0.5">{p.description}</p>}
+                        <p className="text-sm font-bold text-[#374151] mt-1">
+                          ฿{p.price.toLocaleString('th-TH')}
+                          {p.max_qty > 0 && <span className="font-normal text-xs text-gray-400 ml-1">· จำกัด {p.max_qty} ชิ้น</span>}
+                        </p>
+                        <p className="text-xs text-gray-400">ปิดรับ {new Date(p.close_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                        {orderedQty > 0 && <p className="text-xs text-amber-600 font-semibold mt-0.5">สั่งแล้ว {orderedQty} ชิ้น</p>}
+                      </div>
+                    </div>
+                    <div className="border-t border-[#E2E8F0] px-4 py-2 flex gap-2">
+                      <button onClick={() => { setPreorderForm({ id: p.id, name: p.name, description: p.description, price: String(p.price), close_date: p.close_date, max_qty: String(p.max_qty), image_data: p.image_data }); setPreorderFormErrors({}); setPreorderSaveError('') }}
+                        className="flex-1 text-xs font-semibold text-[#1E3A5F] py-1.5 rounded-lg hover:bg-[#1E3A5F]/5 transition-colors">แก้ไข</button>
+                      <button onClick={async () => {
+                        await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: p.is_active ? 0 : 1 }) })
+                        loadPreorderData()
+                      }} className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-colors ${p.is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-[#16A34A] hover:bg-green-50'}`}>
+                        {p.is_active ? 'ปิดรับ' : 'เปิดรับ'}
+                      </button>
+                      <button onClick={async () => {
+                        if (!window.confirm(`ลบ "${p.name}" และออเดอร์ทั้งหมด?`)) return
+                        await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'DELETE' })
+                        loadPreorderData()
+                      }} className="flex-1 text-xs font-semibold text-[#DC2626] py-1.5 rounded-lg hover:bg-[#DC2626]/5 transition-colors">ลบ</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* สรุปออเดอร์ */}
+              {preorderProducts.length > 0 && (
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                  <p className="text-xs font-bold text-[#374151] mb-2">สรุปออเดอร์รวม</p>
+                  <div className="space-y-1">
+                    {preorderProducts.map((p) => {
+                      const qty = preorderOrders.filter((o) => o.product_id === p.id && o.status !== 'cancelled').reduce((s, o) => s + o.quantity, 0)
+                      if (qty === 0) return null
+                      return (
+                        <div key={p.id} className="flex justify-between text-sm">
+                          <span className="text-gray-600">{p.name}</span>
+                          <span className="font-bold text-[#1E3A5F]">{qty} ชิ้น</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Filter */}
+              <select value={preorderFilterPid} onChange={(e) => setPreorderFilterPid(e.target.value)}
+                className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-[#1E3A5F]">
+                <option value="">ทุกสินค้า</option>
+                {preorderProducts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+
+              {preorderOrders.filter((o) => !preorderFilterPid || o.product_id === preorderFilterPid).length === 0 ? (
+                <div className="bg-white rounded-2xl py-12 text-center text-gray-400 shadow-sm">
+                  <p className="text-3xl mb-2">📋</p><p className="text-sm">ยังไม่มีออเดอร์</p>
+                </div>
+              ) : (
+                preorderOrders
+                  .filter((o) => !preorderFilterPid || o.product_id === preorderFilterPid)
+                  .map((o) => (
+                    <div key={o.id} className={`bg-white rounded-2xl p-4 shadow-sm ${o.status === 'cancelled' ? 'opacity-50' : ''}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-[#1E3A5F]">{o.nickname}</p>
+                          <p className="text-xs text-gray-400">{preorderProducts.find((p) => p.id === o.product_id)?.name || o.product_id}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-[#1E3A5F]">{o.quantity} ชิ้น</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${o.status === 'cancelled' ? 'bg-gray-100 text-gray-500' : o.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                            {o.status === 'cancelled' ? 'ยกเลิก' : o.status === 'confirmed' ? 'ยืนยัน' : 'รอดำเนินการ'}
+                          </span>
+                        </div>
+                      </div>
+                      {(o.phone || o.note) && (
+                        <div className="mt-2 pt-2 border-t border-[#E2E8F0] text-xs text-gray-500 space-y-0.5">
+                          {o.phone && <p>📞 {o.phone}</p>}
+                          {o.note && <p>📝 {o.note}</p>}
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(o.created_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  ))
+              )}
+            </div>
+          )}
+
+          {/* Modal เพิ่ม/แก้ไขสินค้า */}
+          {preorderForm !== null && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0">
+              <div className="bg-white rounded-2xl w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-4 border-b border-[#E2E8F0] sticky top-0 bg-white">
+                  <p className="font-bold text-[#1E3A5F]">{preorderForm.id ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}</p>
+                  <button onClick={() => setPreorderForm(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="p-4 space-y-4">
+                  {preorderSaveError && <div className="bg-[#DC2626]/10 text-[#DC2626] text-sm px-3 py-2 rounded-xl">{preorderSaveError}</div>}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">ชื่อสินค้า <span className="text-[#DC2626]">*</span></label>
+                    <input type="text" value={preorderForm.name}
+                      onChange={(e) => { setPreorderForm((p) => p && ({ ...p, name: e.target.value })); setPreorderFormErrors((p) => ({ ...p, name: '' })) }}
+                      className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${preorderFormErrors.name ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
+                      placeholder="ชื่อสินค้า" />
+                    {preorderFormErrors.name && <p className="text-xs text-[#DC2626] mt-1">{preorderFormErrors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">รายละเอียด</label>
+                    <textarea value={preorderForm.description} rows={2}
+                      onChange={(e) => setPreorderForm((p) => p && ({ ...p, description: e.target.value }))}
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] resize-none"
+                      placeholder="รายละเอียดเพิ่มเติม" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1.5">ราคา (บาท) <span className="text-[#DC2626]">*</span></label>
+                      <input type="number" min="0" value={preorderForm.price}
+                        onChange={(e) => { setPreorderForm((p) => p && ({ ...p, price: e.target.value })); setPreorderFormErrors((p) => ({ ...p, price: '' })) }}
+                        className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${preorderFormErrors.price ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
+                        placeholder="0" />
+                      {preorderFormErrors.price && <p className="text-xs text-[#DC2626] mt-1">{preorderFormErrors.price}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1.5">จำกัดจำนวน (0=ไม่จำกัด)</label>
+                      <input type="number" min="0" value={preorderForm.max_qty}
+                        onChange={(e) => setPreorderForm((p) => p && ({ ...p, max_qty: e.target.value }))}
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]"
+                        placeholder="0" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันปิดรับออเดอร์ <span className="text-[#DC2626]">*</span></label>
+                    <input type="date" value={preorderForm.close_date}
+                      onChange={(e) => { setPreorderForm((p) => p && ({ ...p, close_date: e.target.value })); setPreorderFormErrors((p) => ({ ...p, close_date: '' })) }}
+                      className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${preorderFormErrors.close_date ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} />
+                    {preorderFormErrors.close_date && <p className="text-xs text-[#DC2626] mt-1">{preorderFormErrors.close_date}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">รูปสินค้า</label>
+                    <input ref={preorderImageRef} type="file" accept="image/*" className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const reader = new FileReader()
+                        reader.onload = (ev) => setPreorderForm((p) => p && ({ ...p, image_data: ev.target?.result as string }))
+                        reader.readAsDataURL(file)
+                      }} />
+                    {preorderForm.image_data ? (
+                      <div className="relative">
+                        <img src={preorderForm.image_data} alt="preview" className="w-full h-40 object-cover rounded-xl" />
+                        <button onClick={() => { setPreorderForm((p) => p && ({ ...p, image_data: '' })); if (preorderImageRef.current) preorderImageRef.current.value = '' }}
+                          className="absolute top-2 right-2 bg-white/90 text-[#DC2626] text-xs font-bold px-2 py-1 rounded-lg shadow">ลบรูป</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => preorderImageRef.current?.click()}
+                        className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-8 text-center text-gray-400 text-sm hover:border-[#1E3A5F]/30 transition-colors">
+                        แตะเพื่อเลือกรูป
+                      </button>
+                    )}
+                  </div>
+
+                  <button disabled={preorderSaving} onClick={async () => {
+                    const e: Partial<PreorderFormData> = {}
+                    if (!preorderForm.name.trim()) e.name = 'กรุณากรอกชื่อสินค้า'
+                    if (!preorderForm.close_date.trim()) e.close_date = 'กรุณาระบุวันปิดรับ'
+                    if (!preorderForm.price.trim() || isNaN(Number(preorderForm.price))) e.price = 'กรุณากรอกราคา'
+                    setPreorderFormErrors(e)
+                    if (Object.keys(e).length > 0) return
+                    setPreorderSaving(true)
+                    setPreorderSaveError('')
+                    try {
+                      const body = { name: preorderForm.name.trim(), description: preorderForm.description.trim(), price: Number(preorderForm.price), close_date: preorderForm.close_date, max_qty: Number(preorderForm.max_qty) || 0, image_data: preorderForm.image_data }
+                      const url = preorderForm.id ? `/api/preorder-products/${preorderForm.id}?key=${ADMIN_KEY}` : `/api/preorder-products?key=${ADMIN_KEY}`
+                      const res = await fetch(url, { method: preorderForm.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+                      const data = await res.json()
+                      if (!res.ok) { setPreorderSaveError(data.error || 'เกิดข้อผิดพลาด'); return }
+                      setPreorderForm(null)
+                      loadPreorderData()
+                    } catch { setPreorderSaveError('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+                    finally { setPreorderSaving(false) }
+                  }} className="w-full bg-[#1E3A5F] text-white font-bold py-3 rounded-xl disabled:opacity-60 hover:opacity-90 transition-opacity">
+                    {preorderSaving ? 'กำลังบันทึก...' : preorderForm.id ? 'บันทึกการแก้ไข' : 'เพิ่มสินค้า'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
