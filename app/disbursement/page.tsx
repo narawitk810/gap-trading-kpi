@@ -170,6 +170,8 @@ export default function DisbursementDashboard() {
   const [eqModalState, setEqModalState] = useState<EqModalState>('detail')
   const [eqAmount, setEqAmount] = useState('')
   const [eqAmountError, setEqAmountError] = useState('')
+  const [eqApprovedBy, setEqApprovedBy] = useState('')
+  const [eqApprovedByError, setEqApprovedByError] = useState('')
 
   // Action form state
   const [approvedBy, setApprovedBy] = useState('')
@@ -255,6 +257,8 @@ export default function DisbursementDashboard() {
     setEqModalState('detail')
     setEqAmount('')
     setEqAmountError('')
+    setEqApprovedBy('')
+    setEqApprovedByError('')
   }
 
   async function handleEqApprove() {
@@ -272,6 +276,7 @@ export default function DisbursementDashboard() {
           request_date: today,
           request_doc: selectedEquipment.image_data || '',
           equipment_id: selectedEquipment.id,
+          approved_by: eqApprovedBy.trim(),
         }),
       })
       if (!disbRes.ok) throw new Error()
@@ -805,6 +810,23 @@ export default function DisbursementDashboard() {
                     <p className="text-gray-500 text-xs">{selectedEquipment.description}</p>
                   </div>
                   <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold text-[#374151]">
+                        ชื่อผู้อนุมัติ <span className="text-[#DC2626]">*</span>
+                      </label>
+                      <button type="button"
+                        onClick={() => { setEqApprovedBy('Boss'); setEqApprovedByError('') }}
+                        className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#1E3A5F] text-white">
+                        Boss
+                      </button>
+                    </div>
+                    <input type="text" value={eqApprovedBy}
+                      onChange={(e) => { setEqApprovedBy(e.target.value); setEqApprovedByError('') }}
+                      placeholder="ชื่อผู้มีอำนาจอนุมัติ"
+                      className={inputClass} />
+                    {eqApprovedByError && <p className="text-[#DC2626] text-xs mt-1">{eqApprovedByError}</p>}
+                  </div>
+                  <div>
                     <label className="block text-sm font-semibold text-[#374151] mb-1.5">
                       ยอดที่ขอเบิก <span className="text-[#DC2626]">*</span>
                     </label>
@@ -826,6 +848,7 @@ export default function DisbursementDashboard() {
                     </button>
                     <button
                       onClick={() => {
+                        if (!eqApprovedBy.trim()) { setEqApprovedByError('กรุณากรอกชื่อผู้อนุมัติ'); return }
                         if (!eqAmount || isNaN(Number(eqAmount)) || Number(eqAmount) <= 0) {
                           setEqAmountError('กรุณากรอกยอดที่ถูกต้อง')
                           return
@@ -847,6 +870,7 @@ export default function DisbursementDashboard() {
                     <p className="font-semibold text-[#374151]">ยืนยันการอนุมัติ</p>
                     <p className="text-gray-600">ผู้ขอ: <span className="font-semibold">{selectedEquipment.nickname}</span></p>
                     <p className="text-gray-600">รายการ: <span className="font-semibold">{selectedEquipment.description}</span></p>
+                    <p className="text-gray-600">ผู้อนุมัติ: <span className="font-semibold">{eqApprovedBy}</span></p>
                     <p className="text-gray-600">ยอด: <span className="font-semibold text-green-700">
                       {Number(eqAmount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
                     </span></p>
