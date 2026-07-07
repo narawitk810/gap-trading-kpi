@@ -565,10 +565,15 @@ export default function DisbursementDashboard() {
               <p className="text-xs opacity-60 mt-0.5">ติดตามสถานะการเบิกจ่ายทั้งหมด</p>
             </div>
           </div>
-          <Link href="/disbursement/new"
-            className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
-            + สร้างใหม่
-          </Link>
+          <div className="flex items-center gap-2">
+            <button onClick={() => load()} className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
+              ↻
+            </button>
+            <Link href="/disbursement/new"
+              className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
+              + สร้างใหม่
+            </Link>
+          </div>
         </div>
       </div>
 
