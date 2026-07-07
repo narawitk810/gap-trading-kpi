@@ -143,6 +143,15 @@ export async function PATCH(
             WHERE id=? AND status='ordered'`,
       args: [params.id],
     })
+  } else if (action === 'rollback_to_ordered') {
+    await db.execute({
+      sql: `UPDATE disbursements
+            SET status='ordered',
+                payment_note='', remaining_note='', payment_recorded_at='',
+                tax_invoice_status='', tax_invoice_image='', tax_invoice_no_reason=''
+            WHERE id=? AND status='payment_recorded'`,
+      args: [params.id],
+    })
   } else if (action === 'skip_to_approved') {
     await db.execute({
       sql: `UPDATE disbursements SET status='approved' WHERE id=? AND status='pending_approval'`,

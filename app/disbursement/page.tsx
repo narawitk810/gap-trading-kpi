@@ -138,6 +138,15 @@ const NEXT_STAGE: Partial<Record<DisbursementStatus, DisbursementStatus>> = {
   payment_recorded: 'monthly_closed',
 }
 
+function downloadImage(dataUrl: string, filename: string) {
+  const a = document.createElement('a')
+  a.href = dataUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
 function formatDate(dateStr: string) {
   if (!dateStr) return '-'
   const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00')
@@ -401,6 +410,27 @@ export default function DisbursementDashboard() {
       })
       if (res.ok) {
         setSelectedStage('approved')
+        closeModal()
+        await load()
+      } else {
+        alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      }
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาตรวจสอบการเชื่อมต่อ')
+    }
+  }
+
+  async function handleRollbackToOrdered() {
+    if (!selected) return
+    if (!confirm('ยืนยันย้อนกลับสู่ขั้นตอน 3? ข้อมูลการบันทึกจ่ายจะถูกล้างทั้งหมด')) return
+    try {
+      const res = await fetch(`/api/disbursements/${selected.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'rollback_to_ordered' }),
+      })
+      if (res.ok) {
+        setSelectedStage('ordered')
         closeModal()
         await load()
       } else {
@@ -828,7 +858,10 @@ export default function DisbursementDashboard() {
                       <p className="font-bold text-orange-700 text-base">{formatMoney(selected.requested_amount)}</p>
                     </div>
                     {selected.request_doc && (
-                      <img src={selected.request_doc} alt="เอกสาร" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                      <div>
+                        <img src={selected.request_doc} alt="เอกสาร" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                        <button onClick={() => downloadImage(selected.request_doc, 'request-doc.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
+                      </div>
                     )}
                   </div>
 
@@ -843,10 +876,10 @@ export default function DisbursementDashboard() {
                       {selected.payment_slip && (
                         <div className="space-y-2">
                           <img src={selected.payment_slip} alt="สลิป" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
-                          <button onClick={() => handleClearSlip(selected.id)}
-                            className="w-full border border-red-200 text-red-600 py-2 rounded-xl text-xs font-semibold">
-                            ลบสลิปการโอน
-                          </button>
+                          <div className="flex gap-2">
+                            <button onClick={() => downloadImage(selected.payment_slip, 'payment-slip.jpg')} className="flex-1 border border-[#E2E8F0] text-[#1E3A5F] py-2 rounded-xl text-xs font-semibold">⬇ บันทึกรูป</button>
+                            <button onClick={() => handleClearSlip(selected.id)} className="flex-1 border border-red-200 text-red-600 py-2 rounded-xl text-xs font-semibold">ลบสลิปการโอน</button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -895,6 +928,7 @@ export default function DisbursementDashboard() {
                         <div>
                           <p className="text-xs text-gray-500 mb-1">{selected.order_channel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'}</p>
                           <img src={selected.order_channel_image} alt="รูปประกอบ" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                          <button onClick={() => downloadImage(selected.order_channel_image, 'order-channel.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                         </div>
                       )}
                       {selected.payment_method === 'เบิก' && (
@@ -903,12 +937,14 @@ export default function DisbursementDashboard() {
                             <div>
                               <p className="text-xs text-gray-500 mb-1">สลิปที่ขอเบิก</p>
                               <img src={selected.order_disburse_slip} alt="สลิปขอเบิก" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                              <button onClick={() => downloadImage(selected.order_disburse_slip, 'disburse-slip.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                             </div>
                           )}
                           {selected.order_pay_slip && (
                             <div>
                               <p className="text-xs text-gray-500 mb-1">สลิปชำระเงิน</p>
                               <img src={selected.order_pay_slip} alt="สลิปชำระ" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                              <button onClick={() => downloadImage(selected.order_pay_slip, 'pay-slip.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                             </div>
                           )}
                         </div>
@@ -919,12 +955,14 @@ export default function DisbursementDashboard() {
                             <div>
                               <p className="text-xs text-gray-500 mb-1">สลิปสำรองจ่าย</p>
                               <img src={selected.advance_slip} alt="สลิปสำรองจ่าย" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                              <button onClick={() => downloadImage(selected.advance_slip, 'advance-slip.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                             </div>
                           )}
                           {selected.qr_slip && (
                             <div>
                               <p className="text-xs text-gray-500 mb-1">QR Code</p>
                               <img src={selected.qr_slip} alt="QR Code" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
+                              <button onClick={() => downloadImage(selected.qr_slip, 'qr-code.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                             </div>
                           )}
                           {selected.reimbursed_at ? (
@@ -933,7 +971,10 @@ export default function DisbursementDashboard() {
                                 ✅ {selected.payment_method === 'qr' ? 'บริษัทชำระแล้ว' : 'บริษัทจ่ายคืนแล้ว'}
                               </p>
                               {selected.reimbursement_slip && (
-                                <img src={selected.reimbursement_slip} alt="สลิปยืนยัน" className="w-full max-h-32 object-cover rounded-xl border border-green-200 mt-2" />
+                                <>
+                                  <img src={selected.reimbursement_slip} alt="สลิปยืนยัน" className="w-full max-h-32 object-cover rounded-xl border border-green-200 mt-2" />
+                                  <button onClick={() => downloadImage(selected.reimbursement_slip, 'reimbursement-slip.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
+                                </>
                               )}
                             </div>
                           ) : (
@@ -971,7 +1012,10 @@ export default function DisbursementDashboard() {
                             <p className="text-xs text-gray-500 mt-0.5">เหตุผล: {selected.tax_invoice_no_reason}</p>
                           )}
                           {selected.tax_invoice_image && (
-                            <img src={selected.tax_invoice_image} alt="ใบกำกับภาษี" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0] mt-2" />
+                            <>
+                              <img src={selected.tax_invoice_image} alt="ใบกำกับภาษี" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0] mt-2" />
+                              <button onClick={() => downloadImage(selected.tax_invoice_image, 'tax-invoice.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
+                            </>
                           )}
                         </div>
                       )}
@@ -1000,6 +1044,12 @@ export default function DisbursementDashboard() {
                     <button onClick={handleRollbackToApproved}
                       className="w-full py-2.5 rounded-xl font-semibold text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
                       ↩ ย้อนกลับสู่ขั้นตอนอนุมัติ
+                    </button>
+                  )}
+                  {selected.status === 'payment_recorded' && (
+                    <button onClick={handleRollbackToOrdered}
+                      className="w-full py-2.5 rounded-xl font-semibold text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                      ↩ ย้อนกลับสู่ขั้นตอนสั่งซื้อ
                     </button>
                   )}
 
