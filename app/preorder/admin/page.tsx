@@ -453,12 +453,6 @@ function AdminContent() {
                 {formErrors.name && <p className="text-xs text-[#DC2626] mt-1">{formErrors.name}</p>}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1.5">รายละเอียด</label>
-                <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                  rows={2} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] resize-none" placeholder="รายละเอียดเพิ่มเติม" />
-              </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#374151] mb-1.5">ราคา (บาท) <span className="text-[#DC2626]">*</span></label>
@@ -473,17 +467,24 @@ function AdminContent() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันปิดรับออเดอร์ <span className="text-[#DC2626]">*</span></label>
-                <input type="date" value={form.close_date} onChange={(e) => { setForm((p) => ({ ...p, close_date: e.target.value })); setFormErrors((p) => ({ ...p, close_date: '' })) }}
-                  className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.close_date ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} />
-                {formErrors.close_date && <p className="text-xs text-[#DC2626] mt-1">{formErrors.close_date}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันปิดรับออเดอร์ <span className="text-[#DC2626]">*</span></label>
+                  <input type="date" value={form.close_date} onChange={(e) => { setForm((p) => ({ ...p, close_date: e.target.value })); setFormErrors((p) => ({ ...p, close_date: '' })) }}
+                    className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.close_date ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} />
+                  {formErrors.close_date && <p className="text-xs text-[#DC2626] mt-1">{formErrors.close_date}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันวางจำหน่าย</label>
+                  <input type="date" value={form.release_date} onChange={(e) => setForm((p) => ({ ...p, release_date: e.target.value }))}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]" />
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันวางจำหน่าย</label>
-                <input type="date" value={form.release_date} onChange={(e) => setForm((p) => ({ ...p, release_date: e.target.value }))}
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]" />
+                <label className="block text-xs font-semibold text-[#374151] mb-1.5">รายละเอียด</label>
+                <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+                  rows={2} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] resize-none" placeholder="รายละเอียดเพิ่มเติม" />
               </div>
 
               <div>
