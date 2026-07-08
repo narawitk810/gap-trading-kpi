@@ -17,6 +17,7 @@ interface Product {
 export default function PreorderPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<Product | null>(null)
 
   useEffect(() => {
     fetch('/api/preorder-products?active=1')
@@ -55,6 +56,12 @@ export default function PreorderPage() {
     return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
+  function isUrgentDate(closeDate: string) {
+    return closeDate === new Date().toISOString().slice(0, 10)
+  }
+
+  const selectedImgs = selected ? parseImages(selected.image_data) : []
+
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
       {/* Header */}
@@ -66,92 +73,142 @@ export default function PreorderPage() {
           กลับหน้าหลัก
         </Link>
         <p className="text-xs opacity-60 mb-1">GAP TRADING</p>
-        <h1 className="text-2xl font-bold">Pre-Order (สำหรับดูเท่านั้น ตัดของใน Bigseller)</h1>
-        <p className="text-sm opacity-70 mt-1">สั่งจองสินค้าล่วงหน้า · ก่อนปิดรับออเดอร์</p>
+        <h1 className="text-2xl font-bold">Pre-Order</h1>
+        <p className="text-sm opacity-70 mt-1">แคตตาล็อกสินค้า · กดดูรายละเอียด</p>
       </div>
 
-      <div className="px-4 py-5 max-w-lg mx-auto space-y-4">
+      <div className="max-w-lg mx-auto">
         {loading ? (
           <div className="text-center py-16 text-gray-400">กำลังโหลด...</div>
         ) : products.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+          <div className="bg-white rounded-2xl mx-4 mt-5 p-8 text-center shadow-sm">
             <p className="text-4xl mb-3">📦</p>
             <p className="text-gray-500 font-semibold">ยังไม่มีสินค้า Pre-Order ขณะนี้</p>
             <p className="text-xs text-gray-400 mt-1">ติดตามได้ทาง LINE ของทีมไลฟ์สด</p>
           </div>
         ) : (
-          products.map((product) => {
-            const days = daysLeft(product.close_date)
-            const isUrgent = product.close_date === new Date().toISOString().slice(0, 10)
-            const imgs = parseImages(product.image_data)
-            return (
-              <div key={product.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                {imgs.length > 0 && (
-                  <div className="relative">
-                    <div className="flex overflow-x-auto snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
-                      {imgs.map((src, i) => (
-                        <img
-                          key={i}
-                          src={src}
-                          alt={`${product.name} ${i + 1}`}
-                          className="w-full h-56 object-cover shrink-0 snap-start"
-                        />
-                      ))}
+          <div className="grid grid-cols-2 gap-3 p-4">
+            {products.map((product) => {
+              const imgs = parseImages(product.image_data)
+              const firstImg = imgs[0]
+              const urgent = isUrgentDate(product.close_date)
+              return (
+                <button
+                  key={product.id}
+                  onClick={() => setSelected(product)}
+                  className="bg-white rounded-2xl shadow-sm overflow-hidden text-left active:scale-95 transition-transform"
+                >
+                  {firstImg ? (
+                    <img
+                      src={firstImg}
+                      alt={product.name}
+                      className="w-full aspect-square object-cover"
+                    />
+                  ) : (
+                    <div className="w-full aspect-square bg-[#F5F6F8] flex items-center justify-center text-4xl">
+                      🛍️
                     </div>
-                    {imgs.length > 1 && (
-                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-                        {imgs.length} รูป
-                      </div>
+                  )}
+                  <div className="p-2.5 space-y-1">
+                    <p className="text-xs font-bold text-[#1E3A5F] leading-tight line-clamp-2">{product.name}</p>
+                    <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${urgent ? 'bg-[#DC2626]/10 text-[#DC2626]' : 'bg-amber-50 text-amber-700'}`}>
+                      {daysLeft(product.close_date)}
+                    </span>
+                    {product.release_date && (
+                      <p className="text-[10px] text-[#1E3A5F]/60">วางจำหน่าย {formatDate(product.release_date)}</p>
                     )}
                   </div>
-                )}
-                <div className="p-4 space-y-3">
-                  {/* ชื่อสินค้า + badge */}
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-lg font-bold text-[#1E3A5F] leading-tight">{product.name}</h2>
-                    <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${isUrgent ? 'bg-[#DC2626]/10 text-[#DC2626]' : 'bg-amber-50 text-amber-700'}`}>
-                      {days}
-                    </span>
-                  </div>
-
-                  {/* รายละเอียด */}
-                  {product.description && (
-                    <div className="bg-[#F5F6F8] rounded-xl p-3">
-                      <p className="text-xs font-semibold text-gray-500 mb-1">รายละเอียด</p>
-                      <p className="text-sm text-[#374151] whitespace-pre-wrap">{product.description}</p>
-                    </div>
-                  )}
-
-                  {/* ราคา + วันปิดรับ */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-[#F5F6F8] rounded-xl p-3">
-                      <p className="text-xs text-gray-500 mb-0.5">ราคา</p>
-                      <p className="text-xl font-bold text-[#1E3A5F]">฿{formatPrice(product.price)}</p>
-                    </div>
-                    <div className="bg-[#F5F6F8] rounded-xl p-3">
-                      <p className="text-xs text-gray-500 mb-0.5">ปิดรับออเดอร์</p>
-                      <p className="text-sm font-semibold text-[#374151]">{formatDate(product.close_date)}</p>
-                    </div>
-                  </div>
-                  {product.release_date && (
-                    <div className="bg-[#1E3A5F]/5 rounded-xl p-3">
-                      <p className="text-xs text-gray-500 mb-0.5">วันวางจำหน่าย</p>
-                      <p className="text-sm font-semibold text-[#1E3A5F]">{formatDate(product.release_date)}</p>
-                    </div>
-                  )}
-
-                  {/* จำกัดจำนวน */}
-                  {product.max_qty > 0 && (
-                    <div className="bg-amber-50 rounded-xl px-3 py-2">
-                      <p className="text-xs font-semibold text-amber-700">จำกัด {product.max_qty} ชิ้น</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })
+                </button>
+              )
+            })}
+          </div>
         )}
       </div>
+
+      {/* Detail Modal (bottom sheet) */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelected(null)} />
+          <div className="relative bg-white rounded-t-3xl max-h-[88vh] overflow-y-auto">
+            {/* ปุ่มปิด */}
+            <button
+              onClick={() => setSelected(null)}
+              className="absolute top-3 right-3 z-10 w-8 h-8 bg-black/10 text-[#374151] text-sm font-bold rounded-full flex items-center justify-center"
+            >
+              ✕
+            </button>
+
+            {/* รูป carousel */}
+            {selectedImgs.length > 0 && (
+              <div className="relative">
+                <div
+                  className="flex overflow-x-auto snap-x snap-mandatory"
+                  style={{ scrollbarWidth: 'none' }}
+                >
+                  {selectedImgs.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`${selected.name} ${i + 1}`}
+                      className="w-full h-64 object-cover shrink-0 snap-start"
+                    />
+                  ))}
+                </div>
+                {selectedImgs.length > 1 && (
+                  <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                    {selectedImgs.length} รูป
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="p-4 space-y-3">
+              {/* ชื่อ + badge */}
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="text-lg font-bold text-[#1E3A5F] leading-tight">{selected.name}</h2>
+                <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${isUrgentDate(selected.close_date) ? 'bg-[#DC2626]/10 text-[#DC2626]' : 'bg-amber-50 text-amber-700'}`}>
+                  {daysLeft(selected.close_date)}
+                </span>
+              </div>
+
+              {/* ราคา + วันปิดรับ + วันวางจำหน่าย */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#F5F6F8] rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">ราคา</p>
+                  <p className="text-xl font-bold text-[#1E3A5F]">฿{formatPrice(selected.price)}</p>
+                </div>
+                <div className="bg-[#F5F6F8] rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">ปิดรับออเดอร์</p>
+                  <p className="text-sm font-semibold text-[#374151]">{formatDate(selected.close_date)}</p>
+                </div>
+              </div>
+              {selected.release_date && (
+                <div className="bg-[#1E3A5F]/5 rounded-xl p-3">
+                  <p className="text-xs text-gray-500 mb-0.5">วันวางจำหน่าย</p>
+                  <p className="text-sm font-semibold text-[#1E3A5F]">{formatDate(selected.release_date)}</p>
+                </div>
+              )}
+
+              {/* รายละเอียด */}
+              {selected.description && (
+                <div className="bg-[#F5F6F8] rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1">รายละเอียด</p>
+                  <p className="text-sm text-[#374151] whitespace-pre-wrap">{selected.description}</p>
+                </div>
+              )}
+
+              {/* จำนวนจำกัด */}
+              {selected.max_qty > 0 && (
+                <div className="bg-amber-50 rounded-xl px-3 py-2">
+                  <p className="text-xs font-semibold text-amber-700">จำกัด {selected.max_qty} ชิ้น</p>
+                </div>
+              )}
+
+              <div className="pb-2" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
