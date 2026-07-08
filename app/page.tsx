@@ -1723,10 +1723,7 @@ export default function Home() {
               🎂
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-[#534AB7]">VIP Birthday</p>
-                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">📈</span>
-              </div>
+              <p className="text-sm font-bold text-[#534AB7]">VIP Birthday 📈</p>
               <p className="text-xs text-gray-400 mt-0.5">จัดการข้อมูลวันเกิดลูกค้า VIP</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#534AB7] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1819,10 +1816,7 @@ export default function Home() {
               📋
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-[#16A34A]">รายการโปรซื้อครบ</p>
-                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">📈</span>
-              </div>
+              <p className="text-sm font-bold text-[#16A34A]">รายการโปรซื้อครบ 📈</p>
               <p className="text-xs text-gray-400 mt-0.5">ดูโปรที่ Admin อนุมัติแล้ว</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1879,10 +1873,7 @@ export default function Home() {
               📦
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-[#1E3A5F]">ขอสินค้าสำหรับไลฟ์</p>
-                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">📈</span>
-              </div>
+              <p className="text-sm font-bold text-[#1E3A5F]">ขอสินค้าสำหรับไลฟ์ 📈</p>
               <p className="text-xs text-gray-400 mt-0.5">แนบรูปสินค้าและรายละเอียด → Admin อนุมัติ</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1901,10 +1892,7 @@ export default function Home() {
               🛍️
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-[#1E3A5F]">Pre-Order 📈</p>
-                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">📈</span>
-              </div>
+              <p className="text-sm font-bold text-[#1E3A5F]">Pre-Order 📈</p>
               <p className="text-xs text-gray-400 mt-0.5">สั่งจองสินค้าล่วงหน้าก่อนปิดรับออเดอร์</p>
             </div>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
