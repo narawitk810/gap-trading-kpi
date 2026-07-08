@@ -432,18 +432,18 @@ function AdminContent() {
         )}
       </div>
 
-      {/* Product Form Modal */}
+      {/* Product Form — full screen */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-[#E2E8F0] sticky top-0 bg-white">
-              <p className="font-bold text-[#1E3A5F]">{editingId ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}</p>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 p-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 bg-[#F5F6F8] overflow-y-scroll" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-4 flex items-center justify-between">
+            <p className="font-bold text-lg">{editingId ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}</p>
+            <button onClick={() => setShowForm(false)} className="text-white/70 hover:text-white p-1">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="max-w-md mx-auto">
 
             <div className="p-4 space-y-3">
               {saveError && (
@@ -522,6 +522,7 @@ function AdminContent() {
                 className="w-full bg-[#1E3A5F] text-white font-bold py-3 rounded-xl disabled:opacity-60 active:opacity-80">
                 {saving ? 'กำลังบันทึก...' : editingId ? 'บันทึกการแก้ไข' : 'เพิ่มสินค้า'}
               </button>
+              <div className="pb-8" />
             </div>
           </div>
         </div>
