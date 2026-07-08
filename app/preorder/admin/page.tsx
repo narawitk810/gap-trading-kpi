@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
 const PAGE_PASSWORD = 'admin12345'
@@ -61,8 +61,6 @@ function AdminContent() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  const addImageRef = useRef<HTMLInputElement>(null)
-
   function handleLogin() {
     if (passwordInput === PAGE_PASSWORD) {
       setAuthed(true)
@@ -123,7 +121,6 @@ function AdminContent() {
     if (!file) return
     const src = await compressImage(file)
     setForm((p) => ({ ...p, images: [...p.images, src].slice(0, 10) }))
-    if (addImageRef.current) addImageRef.current.value = ''
   }
 
   function openAdd() {
@@ -473,12 +470,12 @@ function AdminContent() {
                   <label className="text-xs font-semibold text-[#374151]">รูปสินค้า</label>
                   <span className="text-[10px] text-gray-400">{form.images.length}/10 รูป</span>
                 </div>
-                <input ref={addImageRef} type="file" accept="image/*" onChange={handleAddImage} className="hidden" />
                 <div className="grid grid-cols-3 gap-2">
                   {form.images.map((src, i) => (
                     <div key={i} className="relative aspect-square">
                       <img src={src} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
                       <button
+                        type="button"
                         onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
                         className="absolute top-1 right-1 w-5 h-5 bg-white/90 text-[#DC2626] text-xs font-bold rounded-full shadow flex items-center justify-center"
                       >
@@ -487,13 +484,14 @@ function AdminContent() {
                     </div>
                   ))}
                   {form.images.length < 10 && (
-                    <button
-                      onClick={() => addImageRef.current?.click()}
-                      className="aspect-square border-2 border-dashed border-[#E2E8F0] rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#1E3A5F]/30 transition-colors"
+                    <label
+                      key={form.images.length}
+                      className="aspect-square border-2 border-dashed border-[#E2E8F0] rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#1E3A5F]/30 transition-colors cursor-pointer"
                     >
+                      <input type="file" accept="image/*" onChange={handleAddImage} className="hidden" />
                       <span className="text-xl leading-none">+</span>
                       <span className="text-[10px]">เพิ่มรูป</span>
-                    </button>
+                    </label>
                   )}
                 </div>
               </div>
