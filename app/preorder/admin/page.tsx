@@ -32,10 +32,16 @@ interface ProductForm {
   price: string
   close_date: string
   max_qty: string
-  image_data: string
+  images: string[]
 }
 
-const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', max_qty: '0', image_data: '' }
+const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', max_qty: '0', images: [] }
+
+function parseImages(raw: string): string[] {
+  if (!raw) return []
+  try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw] }
+  catch { return raw ? [raw] : [] }
+}
 
 function AdminContent() {
   const [authed, setAuthed] = useState(false)
@@ -55,7 +61,7 @@ function AdminContent() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  const imageRef = useRef<HTMLInputElement>(null)
+  const addImageRef = useRef<HTMLInputElement>(null)
 
   function handleLogin() {
     if (passwordInput === PAGE_PASSWORD) {
@@ -88,12 +94,16 @@ function AdminContent() {
     loadOrders()
   }, [filterProductId, authed, loadOrders])
 
-  function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleAddImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (ev) => setForm((p) => ({ ...p, image_data: ev.target?.result as string }))
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string
+      setForm((p) => ({ ...p, images: [...p.images, src].slice(0, 10) }))
+    }
     reader.readAsDataURL(file)
+    if (addImageRef.current) addImageRef.current.value = ''
   }
 
   function openAdd() {
@@ -111,7 +121,7 @@ function AdminContent() {
       price: String(p.price),
       close_date: p.close_date,
       max_qty: String(p.max_qty),
-      image_data: p.image_data,
+      images: parseImages(p.image_data),
     })
     setEditingId(p.id)
     setFormErrors({})
@@ -139,7 +149,7 @@ function AdminContent() {
         price: Number(form.price),
         close_date: form.close_date,
         max_qty: Number(form.max_qty) || 0,
-        image_data: form.image_data,
+        image_data: form.images.length > 0 ? JSON.stringify(form.images) : '',
       }
       const url = editingId
         ? `/api/preorder-products/${editingId}?key=${ADMIN_KEY}`
@@ -277,8 +287,15 @@ function AdminContent() {
             {products.map((p) => (
               <div key={p.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden ${!p.is_active ? 'opacity-60' : ''}`}>
                 <div className="flex gap-3 p-3">
-                  {p.image_data && (
-                    <img src={p.image_data} alt={p.name} className="w-16 h-16 object-cover rounded-xl shrink-0" />
+                  {parseImages(p.image_data)[0] && (
+                    <div className="relative shrink-0">
+                      <img src={parseImages(p.image_data)[0]} alt={p.name} className="w-16 h-16 object-cover rounded-xl" />
+                      {parseImages(p.image_data).length > 1 && (
+                        <span className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[9px] font-bold px-1 rounded">
+                          {parseImages(p.image_data).length}
+                        </span>
+                      )}
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-1">
@@ -432,22 +449,33 @@ function AdminContent() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1.5">รูปสินค้า</label>
-                <input ref={imageRef} type="file" accept="image/*" onChange={handleImageFile} className="hidden" />
-                {form.image_data ? (
-                  <div className="relative">
-                    <img src={form.image_data} alt="preview" className="w-full h-40 object-cover rounded-xl" />
-                    <button onClick={() => { setForm((p) => ({ ...p, image_data: '' })); if (imageRef.current) imageRef.current.value = '' }}
-                      className="absolute top-2 right-2 bg-white/90 text-[#DC2626] text-xs font-bold px-2 py-1 rounded-lg shadow">
-                      ลบรูป
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-[#374151]">รูปสินค้า</label>
+                  <span className="text-[10px] text-gray-400">{form.images.length}/10 รูป</span>
+                </div>
+                <input ref={addImageRef} type="file" accept="image/*" onChange={handleAddImage} className="hidden" />
+                <div className="grid grid-cols-3 gap-2">
+                  {form.images.map((src, i) => (
+                    <div key={i} className="relative aspect-square">
+                      <img src={src} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
+                      <button
+                        onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
+                        className="absolute top-1 right-1 w-5 h-5 bg-white/90 text-[#DC2626] text-xs font-bold rounded-full shadow flex items-center justify-center"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {form.images.length < 10 && (
+                    <button
+                      onClick={() => addImageRef.current?.click()}
+                      className="aspect-square border-2 border-dashed border-[#E2E8F0] rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#1E3A5F]/30 transition-colors"
+                    >
+                      <span className="text-xl leading-none">+</span>
+                      <span className="text-[10px]">เพิ่มรูป</span>
                     </button>
-                  </div>
-                ) : (
-                  <button onClick={() => imageRef.current?.click()}
-                    className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-8 text-center text-gray-400 text-sm hover:border-[#1E3A5F]/30 transition-colors">
-                    แตะเพื่อเลือกรูป
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
 
               <button onClick={handleSave} disabled={saving}

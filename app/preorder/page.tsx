@@ -28,6 +28,12 @@ export default function PreorderPage() {
       .catch(() => setLoading(false))
   }, [])
 
+  function parseImages(raw: string): string[] {
+    if (!raw) return []
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw] }
+    catch { return raw ? [raw] : [] }
+  }
+
   function formatPrice(price: number) {
     return price.toLocaleString('th-TH', { minimumFractionDigits: 0 })
   }
@@ -76,14 +82,27 @@ export default function PreorderPage() {
           products.map((product) => {
             const days = daysLeft(product.close_date)
             const isUrgent = product.close_date === new Date().toISOString().slice(0, 10)
+            const imgs = parseImages(product.image_data)
             return (
               <div key={product.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                {product.image_data && (
-                  <img
-                    src={product.image_data}
-                    alt={product.name}
-                    className="w-full h-56 object-cover"
-                  />
+                {imgs.length > 0 && (
+                  <div className="relative">
+                    <div className="flex overflow-x-auto snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
+                      {imgs.map((src, i) => (
+                        <img
+                          key={i}
+                          src={src}
+                          alt={`${product.name} ${i + 1}`}
+                          className="w-full h-56 object-cover shrink-0 snap-start"
+                        />
+                      ))}
+                    </div>
+                    {imgs.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                        {imgs.length} รูป
+                      </div>
+                    )}
+                  </div>
                 )}
                 <div className="p-4 space-y-3">
                   {/* ชื่อสินค้า + badge */}
