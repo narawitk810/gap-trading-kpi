@@ -139,7 +139,7 @@ export default function PreorderPage() {
           กลับหน้าหลัก
         </Link>
         <p className="text-xs opacity-60 mb-1">GAP TRADING</p>
-        <h1 className="text-2xl font-bold">Pre-Order ไลฟ์สด</h1>
+        <h1 className="text-2xl font-bold">Pre-Order (สำหรับดูเท่านั้น ตัดของใน Bigseller)</h1>
         <p className="text-sm opacity-70 mt-1">สั่งจองสินค้าล่วงหน้า · ก่อนปิดรับออเดอร์</p>
       </div>
 
