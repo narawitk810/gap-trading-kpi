@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { DEPARTMENTS } from '@/types/kpi'
 import type { KPIEntry } from '@/types/kpi'
 import * as XLSX from 'xlsx'
@@ -400,14 +401,20 @@ interface PreorderOrder { id: string; product_id: string; nickname: string; quan
 interface PreorderFormData { id?: string; name: string; description: string; price: string; close_date: string; max_qty: string; image_data: string }
 
 export default function AdminDashboard() {
+  const searchParams = useSearchParams()
   const [authed, setAuthed] = useState(false)
   const [passwordInput, setPasswordInput] = useState('')
   const [passwordError, setPasswordError] = useState('')
 
   useEffect(() => {
-    const expiry = localStorage.getItem('adminAuthedExpiry')
-    if (expiry && Date.now() < Number(expiry)) {
+    if (searchParams.get('key') === ADMIN_KEY) {
+      localStorage.setItem('adminAuthedExpiry', String(Date.now() + 10 * 24 * 60 * 60 * 1000))
       setAuthed(true)
+    } else {
+      const expiry = localStorage.getItem('adminAuthedExpiry')
+      if (expiry && Date.now() < Number(expiry)) {
+        setAuthed(true)
+      }
     }
     const todayDate = getTodayDate()
     setKpiAnalysisDate(todayDate)
@@ -415,7 +422,7 @@ export default function AdminDashboard() {
       const cached = localStorage.getItem(`kpiAnalysis_${todayDate}`)
       if (cached) setKpiOverviewAnalysis(JSON.parse(cached))
     } catch { /* ignore */ }
-  }, [])
+  }, [searchParams])
 
   function handleLogin() {
     if (passwordInput === 'admin12345') {
