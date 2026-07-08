@@ -94,15 +94,35 @@ function AdminContent() {
     loadOrders()
   }, [filterProductId, authed, loadOrders])
 
-  function handleAddImage(e: React.ChangeEvent<HTMLInputElement>) {
+  function compressImage(file: File): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const img = new Image()
+        img.onload = () => {
+          const MAX = 1200
+          let { width, height } = img
+          if (width > MAX || height > MAX) {
+            if (width > height) { height = Math.round((height * MAX) / width); width = MAX }
+            else { width = Math.round((width * MAX) / height); height = MAX }
+          }
+          const canvas = document.createElement('canvas')
+          canvas.width = width
+          canvas.height = height
+          canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+          resolve(canvas.toDataURL('image/jpeg', 0.78))
+        }
+        img.src = ev.target?.result as string
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+  async function handleAddImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const src = ev.target?.result as string
-      setForm((p) => ({ ...p, images: [...p.images, src].slice(0, 10) }))
-    }
-    reader.readAsDataURL(file)
+    const src = await compressImage(file)
+    setForm((p) => ({ ...p, images: [...p.images, src].slice(0, 10) }))
     if (addImageRef.current) addImageRef.current.value = ''
   }
 
