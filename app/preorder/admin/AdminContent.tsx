@@ -458,30 +458,29 @@ function AdminContent() {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">ราคา (บาท) <span className="text-[#DC2626]">*</span></label>
+                <input type="number" min="0" value={form.price} onChange={(e) => { setForm((p) => ({ ...p, price: e.target.value })); setFormErrors((p) => ({ ...p, price: '' })) }}
+                  className={`w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.price ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} placeholder="0" />
+                {formErrors.price && <p className="text-xs text-[#DC2626] mt-1">{formErrors.price}</p>}
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-1">วันปิดรับออเดอร์ <span className="text-[#DC2626]">*</span></label>
                 <input type="date" value={form.close_date} onChange={(e) => { setForm((p) => ({ ...p, close_date: e.target.value })); setFormErrors((p) => ({ ...p, close_date: '' })) }}
                   className={`w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.close_date ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} />
                 {formErrors.close_date && <p className="text-xs text-[#DC2626] mt-1">{formErrors.close_date}</p>}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1">วันวางจำหน่าย</label>
+              <div className="bg-[#1E3A5F]/8 border border-[#1E3A5F]/20 rounded-2xl p-3">
+                <label className="block text-sm font-bold text-[#1E3A5F] mb-2">📅 วันวางจำหน่าย</label>
                 <input type="date" value={form.release_date} onChange={(e) => setForm((p) => ({ ...p, release_date: e.target.value }))}
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F]" />
+                  className="w-full border border-[#1E3A5F]/30 bg-white rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#374151] mb-1">ราคา (บาท) <span className="text-[#DC2626]">*</span></label>
-                  <input type="number" min="0" value={form.price} onChange={(e) => { setForm((p) => ({ ...p, price: e.target.value })); setFormErrors((p) => ({ ...p, price: '' })) }}
-                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.price ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} placeholder="0" />
-                  {formErrors.price && <p className="text-xs text-[#DC2626] mt-1">{formErrors.price}</p>}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#374151] mb-1">จำกัดจำนวน (0=ไม่จำกัด)</label>
-                  <input type="number" min="0" value={form.max_qty} onChange={(e) => setForm((p) => ({ ...p, max_qty: e.target.value }))}
-                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F]" placeholder="0" />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">จำกัดจำนวน (0=ไม่จำกัด)</label>
+                <input type="number" min="0" value={form.max_qty} onChange={(e) => setForm((p) => ({ ...p, max_qty: e.target.value }))}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F]" placeholder="0" />
               </div>
 
               <div>
