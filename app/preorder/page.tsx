@@ -18,6 +18,16 @@ export default function PreorderPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Product | null>(null)
+  const [selectedFull, setSelectedFull] = useState<Product | null>(null)
+
+  function openDetail(product: Product) {
+    setSelected(product)
+    setSelectedFull(null)
+    fetch(`/api/preorder-products/${product.id}`)
+      .then((r) => r.json())
+      .then((full: Product) => setSelectedFull(full))
+      .catch(() => setSelectedFull(product))
+  }
 
   useEffect(() => {
     fetch('/api/preorder-products?active=1')
@@ -60,7 +70,7 @@ export default function PreorderPage() {
     return closeDate === new Date().toISOString().slice(0, 10)
   }
 
-  const selectedImgs = selected ? parseImages(selected.image_data) : []
+  const selectedImgs = selectedFull ? parseImages(selectedFull.image_data) : (selected ? parseImages(selected.image_data) : [])
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
@@ -95,7 +105,7 @@ export default function PreorderPage() {
               return (
                 <button
                   key={product.id}
-                  onClick={() => setSelected(product)}
+                  onClick={() => openDetail(product)}
                   className="bg-white rounded-2xl shadow-sm overflow-hidden text-left active:scale-95 transition-transform"
                 >
                   {firstImg ? (

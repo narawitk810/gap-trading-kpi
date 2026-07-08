@@ -14,7 +14,16 @@ export async function GET(request: NextRequest) {
     : 'SELECT * FROM preorder_products ORDER BY created_at DESC'
 
   const result = await db.execute(sql)
-  return NextResponse.json(result.rows)
+  const rows = result.rows.map((row: Record<string, unknown>) => {
+    const raw = row.image_data as string
+    if (!raw) return row
+    try {
+      const imgs = JSON.parse(raw)
+      const first = Array.isArray(imgs) ? imgs[0] ?? '' : raw
+      return { ...row, image_data: first ? JSON.stringify([first]) : '' }
+    } catch { return row }
+  })
+  return NextResponse.json(rows)
 }
 
 export async function POST(request: NextRequest) {

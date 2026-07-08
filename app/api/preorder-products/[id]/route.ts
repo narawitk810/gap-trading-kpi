@@ -3,6 +3,14 @@ import { getDb, ensureSchema } from '@/lib/db'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
+export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  await ensureSchema()
+  const db = getDb()
+  const result = await db.execute({ sql: 'SELECT * FROM preorder_products WHERE id=?', args: [params.id] })
+  if (result.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(result.rows[0])
+}
+
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const { searchParams } = new URL(request.url)
   if (searchParams.get('key') !== ADMIN_KEY) {

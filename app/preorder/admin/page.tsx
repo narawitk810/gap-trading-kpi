@@ -158,6 +158,10 @@ function AdminContent() {
     setFormErrors({})
     setSaveError('')
     setShowForm(true)
+    fetch(`/api/preorder-products/${p.id}`)
+      .then((r) => r.json())
+      .then((full: Product) => setImages(parseImages(full.image_data)))
+      .catch(() => {})
   }
 
   function validateForm(): boolean {
