@@ -32,10 +32,9 @@ interface ProductForm {
   price: string
   close_date: string
   max_qty: string
-  images: string[]
 }
 
-const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', max_qty: '0', images: [] }
+const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', max_qty: '0' }
 
 function parseImages(raw: string): string[] {
   if (!raw) return []
@@ -60,6 +59,9 @@ function AdminContent() {
   const [formErrors, setFormErrors] = useState<Partial<ProductForm>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [images, setImages] = useState<string[]>([])
+  const [fileKey, setFileKey] = useState(0)
+  const [compressing, setCompressing] = useState(false)
 
   function handleLogin() {
     if (passwordInput === PAGE_PASSWORD) {
@@ -119,12 +121,20 @@ function AdminContent() {
   async function handleAddImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const src = await compressImage(file)
-    setForm((p) => ({ ...p, images: [...p.images, src].slice(0, 10) }))
+    setCompressing(true)
+    try {
+      const src = await compressImage(file)
+      setImages((prev) => [...prev, src].slice(0, 10))
+    } finally {
+      setCompressing(false)
+      setFileKey((k) => k + 1)
+    }
   }
 
   function openAdd() {
     setForm(emptyForm)
+    setImages([])
+    setFileKey(0)
     setEditingId(null)
     setFormErrors({})
     setSaveError('')
@@ -138,8 +148,9 @@ function AdminContent() {
       price: String(p.price),
       close_date: p.close_date,
       max_qty: String(p.max_qty),
-      images: parseImages(p.image_data),
     })
+    setImages(parseImages(p.image_data))
+    setFileKey(0)
     setEditingId(p.id)
     setFormErrors({})
     setSaveError('')
@@ -166,7 +177,7 @@ function AdminContent() {
         price: Number(form.price),
         close_date: form.close_date,
         max_qty: Number(form.max_qty) || 0,
-        image_data: form.images.length > 0 ? JSON.stringify(form.images) : '',
+        image_data: images.length > 0 ? JSON.stringify(images) : '',
       }
       const url = editingId
         ? `/api/preorder-products/${editingId}?key=${ADMIN_KEY}`
@@ -468,29 +479,26 @@ function AdminContent() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-semibold text-[#374151]">รูปสินค้า</label>
-                  <span className="text-[10px] text-gray-400">{form.images.length}/10 รูป</span>
+                  <span className="text-[10px] text-gray-400">{images.length}/10 รูป</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  {form.images.map((src, i) => (
+                  {images.map((src, i) => (
                     <div key={i} className="relative aspect-square">
                       <img src={src} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
                       <button
                         type="button"
-                        onClick={() => setForm((p) => ({ ...p, images: p.images.filter((_, idx) => idx !== i) }))}
+                        onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
                         className="absolute top-1 right-1 w-5 h-5 bg-white/90 text-[#DC2626] text-xs font-bold rounded-full shadow flex items-center justify-center"
                       >
                         ✕
                       </button>
                     </div>
                   ))}
-                  {form.images.length < 10 && (
-                    <label
-                      key={form.images.length}
-                      className="aspect-square border-2 border-dashed border-[#E2E8F0] rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#1E3A5F]/30 transition-colors cursor-pointer"
-                    >
-                      <input type="file" accept="image/*" onChange={handleAddImage} className="hidden" />
-                      <span className="text-xl leading-none">+</span>
-                      <span className="text-[10px]">เพิ่มรูป</span>
+                  {images.length < 10 && (
+                    <label className={`aspect-square border-2 border-dashed border-[#E2E8F0] rounded-xl flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${compressing ? 'opacity-50' : 'text-gray-400 hover:border-[#1E3A5F]/30'}`}>
+                      <input key={fileKey} type="file" accept="image/*" onChange={handleAddImage} className="hidden" disabled={compressing} />
+                      <span className="text-xl leading-none">{compressing ? '⏳' : '+'}</span>
+                      <span className="text-[10px]">{compressing ? 'กำลังบีบ...' : 'เพิ่มรูป'}</span>
                     </label>
                   )}
                 </div>
