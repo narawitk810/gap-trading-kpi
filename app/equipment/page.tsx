@@ -45,6 +45,7 @@ export default function EquipmentPage() {
   const [department, setDepartment] = useState('')
   const [action, setAction] = useState<'ซ่อม' | 'เบิกใหม่' | ''>('')
   const [description, setDescription] = useState('')
+  const [amount, setAmount] = useState('')
   const [imageData, setImageData] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submittedId, setSubmittedId] = useState('')
@@ -72,6 +73,10 @@ export default function EquipmentPage() {
     if (!nickname.trim()) e.nickname = 'กรุณากรอกชื่อเล่น'
     if (!department) e.department = 'กรุณาเลือกแผนก'
     if (requestType === 'damaged' && !action) e.action = 'กรุณาเลือกประเภทการดำเนินการ'
+    if (requestType === 'ads') {
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
+        e.amount = 'กรุณากรอกจำนวนเงินที่ถูกต้อง'
+    }
     if (!imageData) e.image = 'กรุณาแนบรูปภาพ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -93,6 +98,7 @@ export default function EquipmentPage() {
           action: action,
           description: description.trim(),
           image_data: imageData,
+          amount: requestType === 'ads' ? Number(amount) : 0,
         }),
       })
       const data = await res.json()
@@ -116,6 +122,7 @@ export default function EquipmentPage() {
     setDepartment('')
     setAction('')
     setDescription('')
+    setAmount('')
     setImageData(null)
     setErrors({})
     setSubmittedId('')
@@ -181,6 +188,14 @@ export default function EquipmentPage() {
               <p className="text-xs text-gray-500 mb-0.5">คำอธิบาย</p>
               <p className="text-sm text-[#374151]">{description}</p>
             </div>
+            {requestType === 'ads' && (
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">จำนวนเงินที่ขอเบิก</p>
+                <p className="font-semibold text-orange-700">
+                  {Number(amount).toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
+                </p>
+              </div>
+            )}
             {imageData && (
               <div>
                 <p className="text-xs text-gray-500 mb-2">รูปภาพ</p>
@@ -396,6 +411,24 @@ export default function EquipmentPage() {
             />
             {errors.description && <p className="text-[#DC2626] text-xs mt-1">{errors.description}</p>}
           </div>
+
+          {requestType === 'ads' && (
+            <div>
+              <label className="block text-sm font-semibold text-[#374151] mb-2">
+                จำนวนเงินที่ขอเบิก <span className="text-[#DC2626]">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number" min="0" step="0.01" value={amount}
+                  onChange={(e) => { setAmount(e.target.value); setErrors((p) => ({ ...p, amount: '' })) }}
+                  placeholder="0.00"
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] pr-10"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
+              </div>
+              {errors.amount && <p className="text-[#DC2626] text-xs mt-1">{errors.amount}</p>}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2">

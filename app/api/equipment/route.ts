@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
   await db.execute({
     sql: `INSERT INTO disbursements
           (id, requester, item_list, requested_amount, request_doc, request_date, status, equipment_id, created_at)
-          VALUES (?, ?, ?, 0, ?, ?, 'pending_approval', ?, ?)`,
-    args: [disbId, body.nickname.trim(), itemLabel, body.image_data, today, id, now],
+          VALUES (?, ?, ?, ?, ?, ?, 'pending_approval', ?, ?)`,
+    args: [disbId, body.nickname.trim(), itemLabel, Number(body.amount) || 0, body.image_data, today, id, now],
   })
 
   return NextResponse.json({ id }, { status: 201 })
