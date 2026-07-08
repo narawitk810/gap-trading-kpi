@@ -8,6 +8,7 @@ interface Product {
   description: string
   price: number
   close_date: string
+  release_date: string
   max_qty: number
   image_data: string
   is_active: number
@@ -132,6 +133,12 @@ export default function PreorderPage() {
                       <p className="text-sm font-semibold text-[#374151]">{formatDate(product.close_date)}</p>
                     </div>
                   </div>
+                  {product.release_date && (
+                    <div className="bg-[#1E3A5F]/5 rounded-xl p-3">
+                      <p className="text-xs text-gray-500 mb-0.5">วันวางจำหน่าย</p>
+                      <p className="text-sm font-semibold text-[#1E3A5F]">{formatDate(product.release_date)}</p>
+                    </div>
+                  )}
 
                   {/* จำกัดจำนวน */}
                   {product.max_qty > 0 && (

@@ -10,6 +10,7 @@ interface Product {
   description: string
   price: number
   close_date: string
+  release_date: string
   max_qty: number
   image_data: string
   is_active: number
@@ -31,10 +32,11 @@ interface ProductForm {
   description: string
   price: string
   close_date: string
+  release_date: string
   max_qty: string
 }
 
-const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', max_qty: '0' }
+const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', release_date: '', max_qty: '0' }
 
 function parseImages(raw: string): string[] {
   if (!raw) return []
@@ -147,6 +149,7 @@ function AdminContent() {
       description: p.description,
       price: String(p.price),
       close_date: p.close_date,
+      release_date: p.release_date || '',
       max_qty: String(p.max_qty),
     })
     setImages(parseImages(p.image_data))
@@ -176,6 +179,7 @@ function AdminContent() {
         description: form.description.trim(),
         price: Number(form.price),
         close_date: form.close_date,
+        release_date: form.release_date.trim(),
         max_qty: Number(form.max_qty) || 0,
         image_data: images.length > 0 ? JSON.stringify(images) : '',
       }
@@ -469,11 +473,18 @@ function AdminContent() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันปิดรับออเดอร์ <span className="text-[#DC2626]">*</span></label>
-                <input type="date" value={form.close_date} onChange={(e) => { setForm((p) => ({ ...p, close_date: e.target.value })); setFormErrors((p) => ({ ...p, close_date: '' })) }}
-                  className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.close_date ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} />
-                {formErrors.close_date && <p className="text-xs text-[#DC2626] mt-1">{formErrors.close_date}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันปิดรับออเดอร์ <span className="text-[#DC2626]">*</span></label>
+                  <input type="date" value={form.close_date} onChange={(e) => { setForm((p) => ({ ...p, close_date: e.target.value })); setFormErrors((p) => ({ ...p, close_date: '' })) }}
+                    className={`w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.close_date ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} />
+                  {formErrors.close_date && <p className="text-xs text-[#DC2626] mt-1">{formErrors.close_date}</p>}
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันวางจำหน่าย</label>
+                  <input type="date" value={form.release_date} onChange={(e) => setForm((p) => ({ ...p, release_date: e.target.value }))}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]" />
+                </div>
               </div>
 
               <div>

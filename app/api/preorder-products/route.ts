@@ -34,14 +34,15 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString()
 
   await db.execute({
-    sql: `INSERT INTO preorder_products (id, name, description, price, close_date, max_qty, image_data, is_active, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+    sql: `INSERT INTO preorder_products (id, name, description, price, close_date, release_date, max_qty, image_data, is_active, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
     args: [
       id,
       body.name.trim(),
       body.description?.trim() || '',
       Number(body.price) || 0,
       body.close_date.trim(),
+      body.release_date?.trim() || '',
       Number(body.max_qty) || 0,
       body.image_data || '',
       now,
