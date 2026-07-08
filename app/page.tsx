@@ -1902,7 +1902,7 @@ export default function Home() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-[#1E3A5F]">Pre-Order ไลฟ์สด</p>
+                <p className="text-sm font-bold text-[#1E3A5F]">Pre-Order 📈</p>
                 <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">📈</span>
               </div>
               <p className="text-xs text-gray-400 mt-0.5">สั่งจองสินค้าล่วงหน้าก่อนปิดรับออเดอร์</p>
