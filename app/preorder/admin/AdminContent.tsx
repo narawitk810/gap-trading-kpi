@@ -40,10 +40,15 @@ interface ProductForm {
 
 const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', release_date: '', sku: '', max_qty: '0' }
 
-function parseImages(raw: string): string[] {
+type ImgPair = { t: string; f: string }
+
+function parseImages(raw: string): ImgPair[] {
   if (!raw) return []
-  try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw] }
-  catch { return raw ? [raw] : [] }
+  try {
+    const p = JSON.parse(raw)
+    if (!Array.isArray(p)) return [{ t: raw, f: raw }]
+    return p.map((item) => (typeof item === 'string' ? { t: item, f: item } : (item as ImgPair)))
+  } catch { return raw ? [{ t: raw, f: raw }] : [] }
 }
 
 function AdminContent() {
@@ -63,7 +68,7 @@ function AdminContent() {
   const [formErrors, setFormErrors] = useState<Partial<ProductForm>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<ImgPair[]>([])
   const [fileKey, setFileKey] = useState(0)
   const [compressing, setCompressing] = useState(false)
 
@@ -98,23 +103,28 @@ function AdminContent() {
     loadOrders()
   }, [filterProductId, authed, loadOrders])
 
-  function compressImage(file: File): Promise<string> {
+  function compressToDataURL(img: HTMLImageElement, maxPx: number, quality: number): string {
+    let { width, height } = img
+    if (width > maxPx || height > maxPx) {
+      if (width > height) { height = Math.round((height * maxPx) / width); width = maxPx }
+      else { width = Math.round((width * maxPx) / height); height = maxPx }
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = width; canvas.height = height
+    canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+    return canvas.toDataURL('image/jpeg', quality)
+  }
+
+  function compressImage(file: File): Promise<ImgPair> {
     return new Promise((resolve) => {
       const reader = new FileReader()
       reader.onload = (ev) => {
         const img = new Image()
         img.onload = () => {
-          const MAX = 1200
-          let { width, height } = img
-          if (width > MAX || height > MAX) {
-            if (width > height) { height = Math.round((height * MAX) / width); width = MAX }
-            else { width = Math.round((width * MAX) / height); height = MAX }
-          }
-          const canvas = document.createElement('canvas')
-          canvas.width = width
-          canvas.height = height
-          canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
-          resolve(canvas.toDataURL('image/jpeg', 0.78))
+          resolve({
+            f: compressToDataURL(img, 1200, 0.78),
+            t: compressToDataURL(img, 40, 0.5),
+          })
         }
         img.src = ev.target?.result as string
       }
@@ -127,8 +137,8 @@ function AdminContent() {
     if (!file) return
     setCompressing(true)
     try {
-      const src = await compressImage(file)
-      setImages((prev) => [...prev, src].slice(0, 10))
+      const pair = await compressImage(file)
+      setImages((prev) => [...prev, pair].slice(0, 10))
     } finally {
       setCompressing(false)
       setFileKey((k) => k + 1)
@@ -345,7 +355,7 @@ function AdminContent() {
                         <tr key={p.id} className={`border-t border-[#E2E8F0] ${!p.is_active ? 'opacity-50' : ''} ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
                           <td className="px-3 py-2.5 w-14">
                             {parseImages(p.image_data)[0]
-                              ? <img src={parseImages(p.image_data)[0]} alt={p.name} className="w-11 h-11 object-cover rounded-xl" />
+                              ? <img src={parseImages(p.image_data)[0].f} alt={p.name} className="w-11 h-11 object-cover rounded-xl" />
                               : <div className="w-11 h-11 bg-[#F5F6F8] rounded-xl flex items-center justify-center text-lg">🛍️</div>
                             }
                           </td>
@@ -530,9 +540,9 @@ function AdminContent() {
                   <span className="text-[10px] text-gray-400">{images.length}/10 รูป</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  {images.map((src, i) => (
+                  {images.map((pair, i) => (
                     <div key={i} className="relative aspect-square">
-                      <img src={src} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
+                      <img src={pair.f} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
                       <button
                         type="button"
                         onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}

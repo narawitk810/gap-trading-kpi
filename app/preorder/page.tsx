@@ -74,10 +74,15 @@ export default function PreorderPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  function parseImages(raw: string): string[] {
+  type ImgPair = { t: string; f: string }
+
+  function parseImages(raw: string): ImgPair[] {
     if (!raw) return []
-    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw] }
-    catch { return raw ? [raw] : [] }
+    try {
+      const p = JSON.parse(raw)
+      if (!Array.isArray(p)) return [{ t: raw, f: raw }]
+      return p.map((item) => (typeof item === 'string' ? { t: item, f: item } : (item as ImgPair)))
+    } catch { return raw ? [{ t: raw, f: raw }] : [] }
   }
 
   function formatPrice(price: number) {
@@ -134,7 +139,7 @@ export default function PreorderPage() {
           <div className="grid grid-cols-2 gap-3 p-4">
             {products.map((product) => {
               const imgs = parseImages(product.image_data)
-              const firstImg = imgs[0]
+              const firstImg = imgs[0]?.t
               const urgent = isUrgentDate(product.close_date)
               return (
                 <button
@@ -189,15 +194,16 @@ export default function PreorderPage() {
                   className="flex overflow-x-auto snap-x snap-mandatory"
                   style={{ scrollbarWidth: 'none' }}
                 >
-                  {selectedImgs.map((src, i) => (
-                    <div key={i} className="relative w-full shrink-0 snap-start">
+                  {selectedImgs.map((pair, i) => (
+                    <div key={i} className="relative w-full shrink-0 snap-start overflow-hidden">
                       <img
-                        src={src}
+                        src={pair.t}
                         alt={`${selected.name} ${i + 1}`}
                         className="w-full h-64 object-cover"
+                        style={{ filter: 'blur(5px) brightness(0.92)', transform: 'scale(1.08)' }}
                       />
                       <button
-                        onClick={() => downloadImage(src, selected.name, i)}
+                        onClick={() => downloadImage(pair.f, selected.name, i)}
                         className="absolute bottom-2 left-2 bg-black/50 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg backdrop-blur-sm flex items-center gap-1.5"
                       >
                         ⬇ บันทึกรูป

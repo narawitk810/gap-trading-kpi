@@ -584,32 +584,42 @@ export default function AdminDashboard() {
   const [preorderFormErrors, setPreorderFormErrors] = useState<Partial<PreorderFormData>>({})
   const [loadingPreorder, setLoadingPreorder] = useState(false)
   const preorderImageRef = useRef<HTMLInputElement>(null)
-  const [preorderImages, setPreorderImages] = useState<string[]>([])
+  type PreorderImgPair = { t: string; f: string }
+  const [preorderImages, setPreorderImages] = useState<PreorderImgPair[]>([])
   const [preorderFileKey, setPreorderFileKey] = useState(0)
   const [preorderCompressing, setPreorderCompressing] = useState(false)
 
-  function parsePreorderImages(raw: string): string[] {
+  function parsePreorderImages(raw: string): PreorderImgPair[] {
     if (!raw) return []
-    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw] }
-    catch { return raw ? [raw] : [] }
+    try {
+      const p = JSON.parse(raw)
+      if (!Array.isArray(p)) return [{ t: raw, f: raw }]
+      return p.map((item) => (typeof item === 'string' ? { t: item, f: item } : (item as PreorderImgPair)))
+    } catch { return raw ? [{ t: raw, f: raw }] : [] }
   }
 
-  function compressPreorderImage(file: File): Promise<string> {
+  function compressPreorderToDataURL(img: HTMLImageElement, maxPx: number, quality: number): string {
+    let { width, height } = img
+    if (width > maxPx || height > maxPx) {
+      if (width > height) { height = Math.round((height * maxPx) / width); width = maxPx }
+      else { width = Math.round((width * maxPx) / height); height = maxPx }
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = width; canvas.height = height
+    canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+    return canvas.toDataURL('image/jpeg', quality)
+  }
+
+  function compressPreorderImage(file: File): Promise<PreorderImgPair> {
     return new Promise((resolve) => {
       const reader = new FileReader()
       reader.onload = (ev) => {
         const img = new Image()
         img.onload = () => {
-          const MAX = 1200
-          let { width, height } = img
-          if (width > MAX || height > MAX) {
-            if (width > height) { height = Math.round((height * MAX) / width); width = MAX }
-            else { width = Math.round((width * MAX) / height); height = MAX }
-          }
-          const canvas = document.createElement('canvas')
-          canvas.width = width; canvas.height = height
-          canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
-          resolve(canvas.toDataURL('image/jpeg', 0.78))
+          resolve({
+            f: compressPreorderToDataURL(img, 1200, 0.78),
+            t: compressPreorderToDataURL(img, 40, 0.5),
+          })
         }
         img.src = ev.target?.result as string
       }
@@ -622,8 +632,8 @@ export default function AdminDashboard() {
     if (!file) return
     setPreorderCompressing(true)
     try {
-      const src = await compressPreorderImage(file)
-      setPreorderImages((prev) => [...prev, src].slice(0, 10))
+      const pair = await compressPreorderImage(file)
+      setPreorderImages((prev) => [...prev, pair].slice(0, 10))
     } finally {
       setPreorderCompressing(false)
       setPreorderFileKey((k) => k + 1)
@@ -5002,7 +5012,7 @@ export default function AdminDashboard() {
                             <tr key={p.id} className={`border-t border-[#E2E8F0] ${!p.is_active ? 'opacity-50' : ''} ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
                               <td className="px-3 py-2.5 w-14">
                                 {parsePreorderImages(p.image_data)[0]
-                                  ? <img src={parsePreorderImages(p.image_data)[0]} alt={p.name} className="w-11 h-11 object-cover rounded-xl" />
+                                  ? <img src={parsePreorderImages(p.image_data)[0].f} alt={p.name} className="w-11 h-11 object-cover rounded-xl" />
                                   : <div className="w-11 h-11 bg-[#F5F6F8] rounded-xl flex items-center justify-center text-lg">🛍️</div>
                                 }
                               </td>
@@ -5197,9 +5207,9 @@ export default function AdminDashboard() {
                       <span className="text-[10px] text-gray-400">{preorderImages.length}/10 รูป</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                      {preorderImages.map((src, i) => (
+                      {preorderImages.map((pair, i) => (
                         <div key={i} className="relative aspect-square">
-                          <img src={src} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
+                          <img src={pair.f} alt={`รูป ${i + 1}`} className="w-full h-full object-cover rounded-xl" />
                           <button type="button"
                             onClick={() => setPreorderImages((prev) => prev.filter((_, idx) => idx !== i))}
                             className="absolute top-1 right-1 w-5 h-5 bg-white/90 text-[#DC2626] text-xs font-bold rounded-full shadow flex items-center justify-center">✕</button>
