@@ -57,8 +57,6 @@ interface ExtraData {
   adsFacebook: string
   // แพค
   packCount: string
-  // สต๊อค&จัดซื้อ
-  skuList: string[]
 }
 
 const defaultExtraData: ExtraData = {
@@ -70,7 +68,6 @@ const defaultExtraData: ExtraData = {
   adsTiktok: '',
   adsFacebook: '',
   packCount: '',
-  skuList: [''],
 }
 
 interface FormData {
@@ -300,10 +297,6 @@ function buildExtraDataPayload(dept: string, extra: ExtraData, channelEntries: R
   if (dept === 'Creative') {
     const validLinks = extra.clipLinks.filter((l) => l.trim())
     return validLinks.length > 0 ? { clip_links: validLinks } : undefined
-  }
-  if (dept === 'สต๊อค&จัดซื้อ') {
-    const validSkus = extra.skuList.filter((s) => s.trim())
-    return validSkus.length > 0 ? { sku_list: validSkus } : undefined
   }
   if (dept === 'การตลาด') {
     const channels = Object.entries(channelEntries).map(([ch, e]) => ({
@@ -656,21 +649,6 @@ export default function Home() {
     setExtra({ clipLinks: links })
   }
 
-  function handleAddSkuEntry() {
-    if (formData.extraData.skuList.length < 10) {
-      setExtra({ skuList: [...formData.extraData.skuList, ''] })
-    }
-  }
-
-  function handleRemoveSkuEntry(index: number) {
-    setExtra({ skuList: formData.extraData.skuList.filter((_, i) => i !== index) })
-  }
-
-  function handleSkuChange(index: number, value: string) {
-    const list = [...formData.extraData.skuList]
-    list[index] = value
-    setExtra({ skuList: list })
-  }
 
   function resetForm() {
     setFormData({
@@ -2157,39 +2135,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* สต๊อค&จัดซื้อ — SKU ตัด stock */}
-        {formData.department === 'สต๊อค&จัดซื้อ' && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-sm font-bold text-[#1E3A5F] mb-3">รหัส SKU ที่ตัด stock วันนี้</p>
-            <div className="space-y-2">
-              {extra.skuList.map((sku, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={sku}
-                    onChange={(e) => handleSkuChange(i, e.target.value)}
-                    placeholder="เช่น SKU-001, BK-XL-RED"
-                    className={inputClass + ' flex-1'}
-                  />
-                  {i > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSkuEntry(i)}
-                      className="w-9 h-10 flex items-center justify-center text-[#DC2626] text-sm font-bold rounded-xl border border-[#E2E8F0] shrink-0"
-                    >✕</button>
-                  )}
-                </div>
-              ))}
-              {extra.skuList.length < 10 && (
-                <button
-                  type="button"
-                  onClick={handleAddSkuEntry}
-                  className="text-xs text-[#1E3A5F] font-semibold py-1.5 px-3 rounded-xl border border-[#1E3A5F]/20 bg-[#1E3A5F]/5 hover:bg-[#1E3A5F]/10 transition-colors"
-                >+ เพิ่ม SKU</button>
-              )}
-            </div>
-          </div>
-        )}
 
         <Link
           href="/meeting-report"
@@ -2414,17 +2359,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Extra fields in confirm — สต๊อค&จัดซื้อ SKU */}
-              {formData.department === 'สต๊อค&จัดซื้อ' && extra.skuList.some((s) => s.trim()) && (
-                <div className="pt-1 border-t border-[#E2E8F0]">
-                  <p className="text-xs text-gray-500 mb-1.5">รหัส SKU ที่ตัด stock</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {extra.skuList.filter((s) => s.trim()).map((sku, i) => (
-                      <span key={i} className="text-xs font-mono bg-[#1E3A5F]/8 text-[#1E3A5F] px-2 py-0.5 rounded-lg">{sku}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Extra fields in confirm — Creative */}
               {formData.department === 'Creative' &&
