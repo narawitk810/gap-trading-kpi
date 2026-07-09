@@ -277,7 +277,7 @@ export default function PreorderPage() {
               {/* จำนวนจำกัด */}
               {selected.max_qty > 0 && (
                 <div className="bg-amber-50 rounded-xl px-3 py-2">
-                  <p className="text-xs font-semibold text-amber-700">จำกัด {selected.max_qty} ชิ้น (ต่อพนักงาน 1 ท่าน)</p>
+                  <p className="text-xs font-semibold text-amber-700">จำกัด {selected.max_qty} กล่อง (ต่อพนักงาน 1 ท่าน)</p>
                 </div>
               )}
 
