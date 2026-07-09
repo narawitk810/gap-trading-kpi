@@ -306,7 +306,7 @@ function AdminContent() {
         </div>
       </div>
 
-      <div className="px-4 py-4 max-w-lg mx-auto">
+      <div className="px-4 py-4 max-w-4xl mx-auto">
         {/* Products Tab */}
         {tab === 'products' && (
           <div className="space-y-3">
@@ -324,50 +324,73 @@ function AdminContent() {
               </div>
             )}
 
-            {products.map((p) => (
-              <div key={p.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden ${!p.is_active ? 'opacity-60' : ''}`}>
-                <div className="flex gap-3 p-3">
-                  {parseImages(p.image_data)[0] && (
-                    <div className="relative shrink-0">
-                      <img src={parseImages(p.image_data)[0]} alt={p.name} className="w-16 h-16 object-cover rounded-xl" />
-                      {parseImages(p.image_data).length > 1 && (
-                        <span className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[9px] font-bold px-1 rounded">
-                          {parseImages(p.image_data).length}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1">
-                      <p className="font-bold text-[#1E3A5F] text-sm leading-tight">{p.name}</p>
-                      <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {p.is_active ? 'เปิด' : 'ปิด'}
-                      </span>
-                    </div>
-                    <p className="text-sm font-bold text-[#374151] mt-0.5">
-                      ฿{p.price.toLocaleString('th-TH')}
-                      {p.max_qty > 0 && <span className="font-normal text-xs text-gray-400 ml-1">· จำกัด {p.max_qty} ชิ้น</span>}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">ปิดรับ {formatDate(p.close_date)}</p>
-                    {p.sku && <p className="text-xs text-[#1E3A5F]/60 mt-0.5 font-mono">SKU: {p.sku}</p>}
-                    {summary[p.id] && (
-                      <p className="text-xs text-amber-600 font-semibold mt-0.5">สั่งแล้ว {summary[p.id]} ชิ้น</p>
-                    )}
-                  </div>
-                </div>
-                <div className="border-t border-[#E2E8F0] px-3 py-2 flex gap-2">
-                  <button onClick={() => openEdit(p)} className="flex-1 text-xs font-semibold text-[#1E3A5F] py-1.5 rounded-lg hover:bg-[#1E3A5F]/5 transition-colors">
-                    แก้ไข
-                  </button>
-                  <button onClick={() => toggleActive(p)} className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-colors ${p.is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-[#16A34A] hover:bg-green-50'}`}>
-                    {p.is_active ? 'ปิดรับ' : 'เปิดรับ'}
-                  </button>
-                  <button onClick={() => deleteProduct(p)} className="flex-1 text-xs font-semibold text-[#DC2626] py-1.5 rounded-lg hover:bg-[#DC2626]/5 transition-colors">
-                    ลบ
-                  </button>
+            {products.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[680px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold">
+                        <th className="text-left px-3 py-3 w-14">ภาพ</th>
+                        <th className="text-left px-3 py-3">ชื่อสินค้า / SKU</th>
+                        <th className="text-right px-3 py-3">ราคา</th>
+                        <th className="text-center px-3 py-3">ปิดรับ</th>
+                        <th className="text-center px-3 py-3">วางจำหน่าย</th>
+                        <th className="text-center px-3 py-3">สั่งแล้ว</th>
+                        <th className="text-center px-3 py-3">สถานะ</th>
+                        <th className="text-center px-3 py-3">จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((p, idx) => (
+                        <tr key={p.id} className={`border-t border-[#E2E8F0] ${!p.is_active ? 'opacity-50' : ''} ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                          <td className="px-3 py-2.5 w-14">
+                            {parseImages(p.image_data)[0]
+                              ? <img src={parseImages(p.image_data)[0]} alt={p.name} className="w-11 h-11 object-cover rounded-xl" />
+                              : <div className="w-11 h-11 bg-[#F5F6F8] rounded-xl flex items-center justify-center text-lg">🛍️</div>
+                            }
+                          </td>
+                          <td className="px-3 py-2.5 max-w-[200px]">
+                            <p className="font-bold text-[#1E3A5F] text-sm leading-tight truncate">{p.name}</p>
+                            {p.sku && <p className="text-xs font-mono text-[#1E3A5F]/50 mt-0.5 truncate">SKU: {p.sku}</p>}
+                            {p.max_qty > 0 && <p className="text-xs text-gray-400 mt-0.5">จำกัด {p.max_qty} ชิ้น</p>}
+                          </td>
+                          <td className="px-3 py-2.5 text-right font-bold text-[#374151] whitespace-nowrap">
+                            ฿{p.price.toLocaleString('th-TH')}
+                          </td>
+                          <td className="px-3 py-2.5 text-center text-xs text-gray-500 whitespace-nowrap">
+                            {formatDate(p.close_date)}
+                          </td>
+                          <td className="px-3 py-2.5 text-center text-xs text-gray-500 whitespace-nowrap">
+                            {p.release_date ? formatDate(p.release_date) : <span className="text-gray-300">-</span>}
+                          </td>
+                          <td className="px-3 py-2.5 text-center text-xs font-semibold text-amber-600">
+                            {summary[p.id] ? `${summary[p.id]} ชิ้น` : <span className="text-gray-300">-</span>}
+                          </td>
+                          <td className="px-3 py-2.5 text-center">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {p.is_active ? 'เปิด' : 'ปิด'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={() => openEdit(p)} className="text-xs font-semibold text-[#1E3A5F] px-2.5 py-1 rounded-lg hover:bg-[#1E3A5F]/5 transition-colors">
+                                แก้ไข
+                              </button>
+                              <button onClick={() => toggleActive(p)} className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${p.is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-[#16A34A] hover:bg-green-50'}`}>
+                                {p.is_active ? 'ปิดรับ' : 'เปิดรับ'}
+                              </button>
+                              <button onClick={() => deleteProduct(p)} className="text-xs font-semibold text-[#DC2626] px-2.5 py-1 rounded-lg hover:bg-[#DC2626]/5 transition-colors">
+                                ลบ
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
 
