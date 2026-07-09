@@ -9,6 +9,7 @@ interface Product {
   price: number
   close_date: string
   release_date: string
+  sku: string
   max_qty: number
   image_data: string
   is_active: number
@@ -196,6 +197,12 @@ export default function PreorderPage() {
                 <div className="bg-[#1E3A5F]/5 rounded-xl p-3">
                   <p className="text-xs text-gray-500 mb-0.5">วันวางจำหน่าย</p>
                   <p className="text-sm font-semibold text-[#1E3A5F]">{formatDate(selected.release_date)}</p>
+                </div>
+              )}
+              {selected.sku && (
+                <div className="bg-[#F5F6F8] rounded-xl px-3 py-2">
+                  <p className="text-xs text-gray-500 mb-0.5">รหัส SKU (ตัด stock)</p>
+                  <p className="text-sm font-mono font-semibold text-[#374151]">{selected.sku}</p>
                 </div>
               )}
 

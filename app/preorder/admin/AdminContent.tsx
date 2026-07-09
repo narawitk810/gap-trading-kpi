@@ -11,6 +11,7 @@ interface Product {
   price: number
   close_date: string
   release_date: string
+  sku: string
   max_qty: number
   image_data: string
   is_active: number
@@ -33,10 +34,11 @@ interface ProductForm {
   price: string
   close_date: string
   release_date: string
+  sku: string
   max_qty: string
 }
 
-const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', release_date: '', max_qty: '0' }
+const emptyForm: ProductForm = { name: '', description: '', price: '', close_date: '', release_date: '', sku: '', max_qty: '0' }
 
 function parseImages(raw: string): string[] {
   if (!raw) return []
@@ -150,6 +152,7 @@ function AdminContent() {
       price: String(p.price),
       close_date: p.close_date,
       release_date: p.release_date || '',
+      sku: p.sku || '',
       max_qty: String(p.max_qty),
     })
     setImages(parseImages(p.image_data))
@@ -184,6 +187,7 @@ function AdminContent() {
         price: Number(form.price),
         close_date: form.close_date,
         release_date: form.release_date.trim(),
+        sku: form.sku.trim(),
         max_qty: Number(form.max_qty) || 0,
         image_data: images.length > 0 ? JSON.stringify(images) : '',
       }
@@ -345,6 +349,7 @@ function AdminContent() {
                       {p.max_qty > 0 && <span className="font-normal text-xs text-gray-400 ml-1">· จำกัด {p.max_qty} ชิ้น</span>}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">ปิดรับ {formatDate(p.close_date)}</p>
+                    {p.sku && <p className="text-xs text-[#1E3A5F]/60 mt-0.5 font-mono">SKU: {p.sku}</p>}
                     {summary[p.id] && (
                       <p className="text-xs text-amber-600 font-semibold mt-0.5">สั่งแล้ว {summary[p.id]} ชิ้น</p>
                     )}
@@ -455,6 +460,12 @@ function AdminContent() {
                 <input type="text" value={form.name} onChange={(e) => { setForm((p) => ({ ...p, name: e.target.value })); setFormErrors((p) => ({ ...p, name: '' })) }}
                   className={`w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F] ${formErrors.name ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`} placeholder="ชื่อสินค้า" />
                 {formErrors.name && <p className="text-xs text-[#DC2626] mt-1">{formErrors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">รหัส SKU <span className="text-gray-400 font-normal">(สำหรับตัด stock)</span></label>
+                <input type="text" value={form.sku} onChange={(e) => setForm((p) => ({ ...p, sku: e.target.value }))}
+                  className="w-full border border-[#E2E8F0] bg-white rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1E3A5F]" placeholder="เช่น SKU-001, BK-XL-RED" />
               </div>
 
               <div>

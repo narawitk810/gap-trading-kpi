@@ -31,13 +31,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       return NextResponse.json({ error: 'กรุณากรอกชื่อสินค้าและวันปิดรับออเดอร์' }, { status: 400 })
     }
     await db.execute({
-      sql: `UPDATE preorder_products SET name=?, description=?, price=?, close_date=?, release_date=?, max_qty=?, image_data=? WHERE id=?`,
+      sql: `UPDATE preorder_products SET name=?, description=?, price=?, close_date=?, release_date=?, sku=?, max_qty=?, image_data=? WHERE id=?`,
       args: [
         body.name.trim(),
         body.description?.trim() || '',
         Number(body.price) || 0,
         body.close_date.trim(),
         body.release_date?.trim() || '',
+        body.sku?.trim() || '',
         Number(body.max_qty) || 0,
         body.image_data || '',
         params.id,

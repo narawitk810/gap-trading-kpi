@@ -430,6 +430,7 @@ export async function ensureSchema(): Promise<void> {
       price        REAL NOT NULL DEFAULT 0,
       close_date   TEXT NOT NULL,
       release_date TEXT NOT NULL DEFAULT '',
+      sku          TEXT NOT NULL DEFAULT '',
       max_qty      INTEGER NOT NULL DEFAULT 0,
       image_data   TEXT NOT NULL DEFAULT '',
       is_active    INTEGER NOT NULL DEFAULT 1,
@@ -437,6 +438,7 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
   try { await db.execute(`ALTER TABLE preorder_products ADD COLUMN release_date TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE preorder_products ADD COLUMN sku TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS preorder_orders (
