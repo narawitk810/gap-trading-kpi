@@ -21,6 +21,7 @@ export default function PreorderPage() {
   const [selected, setSelected] = useState<Product | null>(null)
   const [selectedFull, setSelectedFull] = useState<Product | null>(null)
   const [copiedSku, setCopiedSku] = useState(false)
+  const [skuInput, setSkuInput] = useState('')
 
   function copySku(sku: string) {
     navigator.clipboard.writeText(sku).catch(() => {})
@@ -32,6 +33,7 @@ export default function PreorderPage() {
     setSelected(product)
     setSelectedFull(null)
     setCopiedSku(false)
+    setSkuInput(product.sku || '')
     fetch(`/api/preorder-products/${product.id}`)
       .then((r) => r.json())
       .then((full: Product) => setSelectedFull(full))
@@ -207,25 +209,26 @@ export default function PreorderPage() {
                   <p className="text-sm font-semibold text-[#1E3A5F]">{formatDate(selected.release_date)}</p>
                 </div>
               )}
-              {selected.sku && (
-                <div className="bg-[#F5F6F8] rounded-xl px-3 py-2">
-                  <p className="text-xs text-gray-500 mb-1">รหัส SKU (ตัด stock)</p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={selected.sku}
-                      className="flex-1 text-sm font-mono font-semibold text-[#374151] bg-transparent outline-none"
-                    />
+              <div className="bg-[#F5F6F8] rounded-xl px-3 py-2">
+                <p className="text-xs text-gray-500 mb-1">รหัส SKU (ตัด stock)</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={skuInput}
+                    onChange={(e) => setSkuInput(e.target.value)}
+                    placeholder="กรอกรหัส SKU"
+                    className="flex-1 text-sm font-mono font-semibold text-[#374151] bg-transparent outline-none"
+                  />
+                  {skuInput && (
                     <button
-                      onClick={() => copySku(selected.sku)}
+                      onClick={() => copySku(skuInput)}
                       className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${copiedSku ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-[#1E3A5F]/10 text-[#1E3A5F]'}`}
                     >
                       {copiedSku ? '✓ คัดลอก' : 'คัดลอก'}
                     </button>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* รายละเอียด */}
               {selected.description && (
