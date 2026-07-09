@@ -20,10 +20,18 @@ export default function PreorderPage() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Product | null>(null)
   const [selectedFull, setSelectedFull] = useState<Product | null>(null)
+  const [copiedSku, setCopiedSku] = useState(false)
+
+  function copySku(sku: string) {
+    navigator.clipboard.writeText(sku).catch(() => {})
+    setCopiedSku(true)
+    setTimeout(() => setCopiedSku(false), 2000)
+  }
 
   function openDetail(product: Product) {
     setSelected(product)
     setSelectedFull(null)
+    setCopiedSku(false)
     fetch(`/api/preorder-products/${product.id}`)
       .then((r) => r.json())
       .then((full: Product) => setSelectedFull(full))
@@ -201,8 +209,21 @@ export default function PreorderPage() {
               )}
               {selected.sku && (
                 <div className="bg-[#F5F6F8] rounded-xl px-3 py-2">
-                  <p className="text-xs text-gray-500 mb-0.5">รหัส SKU (ตัด stock)</p>
-                  <p className="text-sm font-mono font-semibold text-[#374151]">{selected.sku}</p>
+                  <p className="text-xs text-gray-500 mb-1">รหัส SKU (ตัด stock)</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={selected.sku}
+                      className="flex-1 text-sm font-mono font-semibold text-[#374151] bg-transparent outline-none"
+                    />
+                    <button
+                      onClick={() => copySku(selected.sku)}
+                      className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${copiedSku ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-[#1E3A5F]/10 text-[#1E3A5F]'}`}
+                    >
+                      {copiedSku ? '✓ คัดลอก' : 'คัดลอก'}
+                    </button>
+                  </div>
                 </div>
               )}
 
