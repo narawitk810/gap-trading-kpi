@@ -439,7 +439,8 @@ function AdminContent() {
 
       {/* Product Form — full screen */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-[#F5F6F8] overflow-y-scroll" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="min-h-full bg-[#F5F6F8]">
           <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-4 flex items-center justify-between">
             <p className="font-bold text-lg">{editingId ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่'}</p>
             <button onClick={() => setShowForm(false)} className="text-white/70 hover:text-white p-1">
@@ -534,6 +535,7 @@ function AdminContent() {
               </button>
               <div className="pb-8" />
             </div>
+          </div>
           </div>
         </div>
       )}
