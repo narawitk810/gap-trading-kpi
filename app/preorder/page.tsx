@@ -30,15 +30,26 @@ export default function PreorderPage() {
   }
 
   function downloadImage(src: string, name: string, index: number) {
+    const [header, data] = src.split(',')
+    const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg'
+    const bytes = atob(data)
+    const ab = new ArrayBuffer(bytes.length)
+    const ia = new Uint8Array(ab)
+    for (let i = 0; i < bytes.length; i++) ia[i] = bytes.charCodeAt(i)
+    const blob = new Blob([ab], { type: mime })
+    const url = URL.createObjectURL(blob)
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
     if (isIOS) {
-      window.open(src, '_blank')
+      window.open(url, '_blank')
     } else {
       const a = document.createElement('a')
-      a.href = src
+      a.href = url
       a.download = `${name}-${index + 1}.jpg`
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
     }
+    setTimeout(() => URL.revokeObjectURL(url), 30000)
   }
 
   function openDetail(product: Product) {
