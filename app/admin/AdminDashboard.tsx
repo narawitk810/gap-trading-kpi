@@ -396,9 +396,9 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
   return null
 }
 
-interface PreorderProduct { id: string; name: string; description: string; price: number; close_date: string; max_qty: number; image_data: string; is_active: number }
+interface PreorderProduct { id: string; name: string; description: string; price: number; close_date: string; release_date: string; sku: string; max_qty: number; image_data: string; is_active: number }
 interface PreorderOrder { id: string; product_id: string; nickname: string; quantity: number; phone: string; note: string; status: string; created_at: string }
-interface PreorderFormData { id?: string; name: string; description: string; price: string; close_date: string; max_qty: string; image_data: string }
+interface PreorderFormData { id?: string; name: string; description: string; price: string; close_date: string; release_date: string; sku: string; max_qty: string; image_data: string }
 
 export default function AdminDashboard() {
   const searchParams = useSearchParams()
@@ -4923,7 +4923,7 @@ export default function AdminDashboard() {
             <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
           ) : preorderSubTab === 'products' ? (
             <div className="space-y-3">
-              <button onClick={() => { setPreorderForm({ name: '', description: '', price: '', close_date: '', max_qty: '0', image_data: '' }); setPreorderFormErrors({}); setPreorderSaveError('') }}
+              <button onClick={() => { setPreorderForm({ name: '', description: '', price: '', close_date: '', release_date: '', sku: '', max_qty: '0', image_data: '' }); setPreorderFormErrors({}); setPreorderSaveError('') }}
                 className="w-full bg-[#1E3A5F] text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
                 + เพิ่มสินค้า Pre-Order
               </button>
@@ -4934,46 +4934,80 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              {preorderProducts.map((p) => {
-                const orderedQty = preorderOrders.filter((o) => o.product_id === p.id && o.status !== 'cancelled').reduce((s, o) => s + o.quantity, 0)
-                return (
-                  <div key={p.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden ${!p.is_active ? 'opacity-60' : ''}`}>
-                    <div className="flex gap-3 p-4">
-                      {p.image_data && <img src={p.image_data} alt={p.name} className="w-16 h-16 object-cover rounded-xl shrink-0" />}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="font-bold text-[#1E3A5F] leading-tight">{p.name}</p>
-                          <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-semibold ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {p.is_active ? 'เปิด' : 'ปิด'}
-                          </span>
-                        </div>
-                        {p.description && <p className="text-sm text-gray-500 mt-0.5">{p.description}</p>}
-                        <p className="text-sm font-bold text-[#374151] mt-1">
-                          ฿{p.price.toLocaleString('th-TH')}
-                          {p.max_qty > 0 && <span className="font-normal text-xs text-gray-400 ml-1">· จำกัด {p.max_qty} ชิ้น</span>}
-                        </p>
-                        <p className="text-xs text-gray-400">ปิดรับ {new Date(p.close_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                        {orderedQty > 0 && <p className="text-xs text-amber-600 font-semibold mt-0.5">สั่งแล้ว {orderedQty} ชิ้น</p>}
-                      </div>
-                    </div>
-                    <div className="border-t border-[#E2E8F0] px-4 py-2 flex gap-2">
-                      <button onClick={() => { setPreorderForm({ id: p.id, name: p.name, description: p.description, price: String(p.price), close_date: p.close_date, max_qty: String(p.max_qty), image_data: p.image_data }); setPreorderFormErrors({}); setPreorderSaveError('') }}
-                        className="flex-1 text-xs font-semibold text-[#1E3A5F] py-1.5 rounded-lg hover:bg-[#1E3A5F]/5 transition-colors">แก้ไข</button>
-                      <button onClick={async () => {
-                        await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: p.is_active ? 0 : 1 }) })
-                        loadPreorderData()
-                      }} className={`flex-1 text-xs font-semibold py-1.5 rounded-lg transition-colors ${p.is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-[#16A34A] hover:bg-green-50'}`}>
-                        {p.is_active ? 'ปิดรับ' : 'เปิดรับ'}
-                      </button>
-                      <button onClick={async () => {
-                        if (!window.confirm(`ลบ "${p.name}" และออเดอร์ทั้งหมด?`)) return
-                        await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'DELETE' })
-                        loadPreorderData()
-                      }} className="flex-1 text-xs font-semibold text-[#DC2626] py-1.5 rounded-lg hover:bg-[#DC2626]/5 transition-colors">ลบ</button>
-                    </div>
+              {preorderProducts.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm min-w-[680px]">
+                      <thead>
+                        <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold">
+                          <th className="text-left px-3 py-3 w-14">ภาพ</th>
+                          <th className="text-left px-3 py-3">ชื่อสินค้า / SKU</th>
+                          <th className="text-right px-3 py-3">ราคา</th>
+                          <th className="text-center px-3 py-3">ปิดรับ</th>
+                          <th className="text-center px-3 py-3">วางจำหน่าย</th>
+                          <th className="text-center px-3 py-3">สั่งแล้ว</th>
+                          <th className="text-center px-3 py-3">สถานะ</th>
+                          <th className="text-center px-3 py-3">จัดการ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {preorderProducts.map((p, idx) => {
+                          const orderedQty = preorderOrders.filter((o) => o.product_id === p.id && o.status !== 'cancelled').reduce((s, o) => s + o.quantity, 0)
+                          return (
+                            <tr key={p.id} className={`border-t border-[#E2E8F0] ${!p.is_active ? 'opacity-50' : ''} ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                              <td className="px-3 py-2.5 w-14">
+                                {p.image_data
+                                  ? <img src={p.image_data} alt={p.name} className="w-11 h-11 object-cover rounded-xl" />
+                                  : <div className="w-11 h-11 bg-[#F5F6F8] rounded-xl flex items-center justify-center text-lg">🛍️</div>
+                                }
+                              </td>
+                              <td className="px-3 py-2.5 max-w-[200px]">
+                                <p className="font-bold text-[#1E3A5F] text-sm leading-tight truncate">{p.name}</p>
+                                {p.sku && <p className="text-xs font-mono text-[#1E3A5F]/50 mt-0.5 truncate">SKU: {p.sku}</p>}
+                                {p.max_qty > 0 && <p className="text-xs text-gray-400 mt-0.5">จำกัด {p.max_qty} ชิ้น</p>}
+                              </td>
+                              <td className="px-3 py-2.5 text-right font-bold text-[#374151] whitespace-nowrap">
+                                ฿{p.price.toLocaleString('th-TH')}
+                              </td>
+                              <td className="px-3 py-2.5 text-center text-xs text-gray-500 whitespace-nowrap">
+                                {new Date(p.close_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </td>
+                              <td className="px-3 py-2.5 text-center text-xs text-gray-500 whitespace-nowrap">
+                                {p.release_date ? new Date(p.release_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : <span className="text-gray-300">-</span>}
+                              </td>
+                              <td className="px-3 py-2.5 text-center text-xs font-semibold text-amber-600">
+                                {orderedQty > 0 ? `${orderedQty} ชิ้น` : <span className="text-gray-300">-</span>}
+                              </td>
+                              <td className="px-3 py-2.5 text-center">
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                  {p.is_active ? 'เปิด' : 'ปิด'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                                <div className="flex items-center justify-center gap-1">
+                                  <button onClick={() => { setPreorderForm({ id: p.id, name: p.name, description: p.description, price: String(p.price), close_date: p.close_date, release_date: p.release_date || '', sku: p.sku || '', max_qty: String(p.max_qty), image_data: p.image_data }); setPreorderFormErrors({}); setPreorderSaveError('') }}
+                                    className="text-xs font-semibold text-[#1E3A5F] px-2.5 py-1 rounded-lg hover:bg-[#1E3A5F]/5 transition-colors">แก้ไข</button>
+                                  <button onClick={async () => {
+                                    await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: p.is_active ? 0 : 1 }) })
+                                    loadPreorderData()
+                                  }} className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${p.is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-[#16A34A] hover:bg-green-50'}`}>
+                                    {p.is_active ? 'ปิดรับ' : 'เปิดรับ'}
+                                  </button>
+                                  <button onClick={async () => {
+                                    if (!window.confirm(`ลบ "${p.name}" และออเดอร์ทั้งหมด?`)) return
+                                    await fetch(`/api/preorder-products/${p.id}?key=${ADMIN_KEY}`, { method: 'DELETE' })
+                                    loadPreorderData()
+                                  }} className="text-xs font-semibold text-[#DC2626] px-2.5 py-1 rounded-lg hover:bg-[#DC2626]/5 transition-colors">ลบ</button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                )
-              })}
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -5098,6 +5132,21 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">วันวางจำหน่าย</label>
+                    <input type="date" value={preorderForm.release_date}
+                      onChange={(e) => setPreorderForm((p) => p && ({ ...p, release_date: e.target.value }))}
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">รหัส SKU <span className="text-gray-400 font-normal">(สำหรับตัด stock)</span></label>
+                    <input type="text" value={preorderForm.sku}
+                      onChange={(e) => setPreorderForm((p) => p && ({ ...p, sku: e.target.value }))}
+                      className="w-full border border-[#E2E8F0] bg-white rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1E3A5F]"
+                      placeholder="เช่น SKU-001, BK-XL-RED" />
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-semibold text-[#374151] mb-1.5">รูปสินค้า</label>
                     <input ref={preorderImageRef} type="file" accept="image/*" className="hidden"
                       onChange={(e) => {
@@ -5131,7 +5180,7 @@ export default function AdminDashboard() {
                     setPreorderSaving(true)
                     setPreorderSaveError('')
                     try {
-                      const body = { name: preorderForm.name.trim(), description: preorderForm.description.trim(), price: Number(preorderForm.price), close_date: preorderForm.close_date, max_qty: Number(preorderForm.max_qty) || 0, image_data: preorderForm.image_data }
+                      const body = { name: preorderForm.name.trim(), description: preorderForm.description.trim(), price: Number(preorderForm.price), close_date: preorderForm.close_date, release_date: preorderForm.release_date.trim(), sku: preorderForm.sku.trim(), max_qty: Number(preorderForm.max_qty) || 0, image_data: preorderForm.image_data }
                       const url = preorderForm.id ? `/api/preorder-products/${preorderForm.id}?key=${ADMIN_KEY}` : `/api/preorder-products?key=${ADMIN_KEY}`
                       const res = await fetch(url, { method: preorderForm.id ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
                       const data = await res.json()
