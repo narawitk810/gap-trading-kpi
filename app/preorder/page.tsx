@@ -29,6 +29,18 @@ export default function PreorderPage() {
     setTimeout(() => setCopiedSku(false), 2000)
   }
 
+  function downloadImage(src: string, name: string, index: number) {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    if (isIOS) {
+      window.open(src, '_blank')
+    } else {
+      const a = document.createElement('a')
+      a.href = src
+      a.download = `${name}-${index + 1}.jpg`
+      a.click()
+    }
+  }
+
   function openDetail(product: Product) {
     setSelected(product)
     setSelectedFull(null)
@@ -167,12 +179,19 @@ export default function PreorderPage() {
                   style={{ scrollbarWidth: 'none' }}
                 >
                   {selectedImgs.map((src, i) => (
-                    <img
-                      key={i}
-                      src={src}
-                      alt={`${selected.name} ${i + 1}`}
-                      className="w-full h-64 object-cover shrink-0 snap-start"
-                    />
+                    <div key={i} className="relative w-full shrink-0 snap-start">
+                      <img
+                        src={src}
+                        alt={`${selected.name} ${i + 1}`}
+                        className="w-full h-64 object-cover"
+                      />
+                      <button
+                        onClick={() => downloadImage(src, selected.name, i)}
+                        className="absolute bottom-2 left-2 bg-black/50 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg backdrop-blur-sm flex items-center gap-1.5"
+                      >
+                        ⬇ บันทึกรูป
+                      </button>
+                    </div>
                   ))}
                 </div>
                 {selectedImgs.length > 1 && (
