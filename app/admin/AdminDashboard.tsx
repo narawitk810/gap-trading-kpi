@@ -182,6 +182,9 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> | 
     const links = (ex.clip_links as string[] | undefined) || []
     return { 'ลิ้งคลิป': links.join('\n') }
   }
+  if (entry.department === 'สต๊อค&จัดซื้อ' && Array.isArray(ex.sku_list)) {
+    return { 'SKU ตัด stock': (ex.sku_list as string[]).join(', ') }
+  }
   if (entry.department === 'การตลาด') {
     if (Array.isArray(ex.channels)) {
       return (ex.channels as Record<string, unknown>[]).map((c) => ({
@@ -389,6 +392,19 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
       <div className="bg-blue-50 rounded-xl p-3">
         <p className="text-xs font-bold text-[#1E3A5F] mb-2">ยอดการแพควันนี้</p>
         <DetailRow label="จำนวนชิ้นที่แพคได้" value={`${Number(ex.pack_count).toLocaleString()} ชิ้น`} />
+      </div>
+    )
+  }
+
+  if (dept === 'สต๊อค&จัดซื้อ' && Array.isArray(ex.sku_list) && (ex.sku_list as string[]).length > 0) {
+    return (
+      <div className="bg-blue-50 rounded-xl p-3">
+        <p className="text-xs font-bold text-[#1E3A5F] mb-2">SKU ที่ตัด stock</p>
+        <div className="flex flex-wrap gap-1.5">
+          {(ex.sku_list as string[]).map((sku, i) => (
+            <span key={i} className="text-xs font-mono bg-white border border-[#1E3A5F]/20 text-[#374151] px-2 py-0.5 rounded-lg">{sku}</span>
+          ))}
+        </div>
       </div>
     )
   }
