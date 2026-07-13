@@ -36,7 +36,7 @@ export async function PATCH(
       body.actual_amount === '' ||
       isNaN(Number(body.actual_amount)) ||
       Number(body.actual_amount) < 0 ||
-      !['เบิก', 'สำรองจ่าย', 'qr', 'มีอยู่แล้ว'].includes(pm) ||
+      !['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr', 'มีอยู่แล้ว'].includes(pm) ||
       (ch !== 'offline' && ch !== 'online') ||
       !body.order_channel_image
     ) {
@@ -45,17 +45,23 @@ export async function PATCH(
     if (pm === 'เบิก' && (!body.order_disburse_slip || !body.order_pay_slip)) {
       return NextResponse.json({ error: 'กรุณาแนบสลิปขอเบิกและสลิปชำระเงิน' }, { status: 400 })
     }
-    if (pm === 'สำรองจ่าย' && !body.advance_slip) {
+    if ((pm === 'สำรองจ่าย' || pm === 'สำรองจ่าย_บริษัท') && !body.advance_slip) {
       return NextResponse.json({ error: 'กรุณาแนบสลิปสำรองจ่าย' }, { status: 400 })
     }
     if (pm === 'qr' && !body.qr_slip) {
       return NextResponse.json({ error: 'กรุณาแนบ QR Code' }, { status: 400 })
     }
+    if (['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(pm)) {
+      if (!body.bank_account?.trim() || !body.bank_name?.trim()) {
+        return NextResponse.json({ error: 'กรุณากรอกเลขบัญชี/พร้อมเพย์ และชื่อธนาคาร' }, { status: 400 })
+      }
+    }
     await db.execute({
       sql: `UPDATE disbursements
             SET status='ordered', ordered_by=?, actual_amount=?, order_note=?, ordered_at=?,
                 payment_method=?, order_disburse_slip=?, order_pay_slip=?, advance_slip=?,
-                order_channel=?, order_channel_image=?, qr_slip=?
+                order_channel=?, order_channel_image=?, qr_slip=?,
+                bank_account=?, bank_name=?
             WHERE id=? AND status='approved'`,
       args: [
         body.ordered_by.trim(),
@@ -65,10 +71,12 @@ export async function PATCH(
         pm,
         pm === 'เบิก' ? body.order_disburse_slip : '',
         pm === 'เบิก' ? body.order_pay_slip : '',
-        pm === 'สำรองจ่าย' ? body.advance_slip : '',
+        (pm === 'สำรองจ่าย' || pm === 'สำรองจ่าย_บริษัท') ? body.advance_slip : '',
         ch,
         body.order_channel_image,
         pm === 'qr' ? body.qr_slip : '',
+        body.bank_account?.trim() || '',
+        body.bank_name?.trim() || '',
         params.id,
       ],
     })

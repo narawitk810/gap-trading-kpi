@@ -80,6 +80,8 @@ type Disbursement = {
   closed_at: string
   status: DisbursementStatus
   equipment_id: string
+  bank_account: string
+  bank_name: string
   created_at: string
 }
 
@@ -203,6 +205,8 @@ export default function DisbursementDashboard() {
   const [remainingNote, setRemainingNote] = useState('')
   const [closeMonth, setCloseMonth] = useState('')
   const [closedBy, setClosedBy] = useState('')
+  const [bankAccount, setBankAccount] = useState('')
+  const [bankName, setBankName] = useState('')
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [deleteTarget, setDeleteTarget] = useState<Disbursement | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -287,6 +291,7 @@ export default function DisbursementDashboard() {
     setTaxInvoiceStatus(''); setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); setTaxInvoiceNoReason('')
     setPaymentNote(''); setRemainingNote('')
     setCloseMonth(''); setClosedBy('')
+    setBankAccount(''); setBankName('')
     setFormErrors({})
   }
 
@@ -398,6 +403,10 @@ export default function DisbursementDashboard() {
         if (!qrSlipData) e.qrSlip = 'กรุณาแนบ QR Code'
       }
       if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
+      if (['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod)) {
+        if (!bankAccount.trim()) e.bankAccount = 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์'
+        if (!bankName.trim()) e.bankName = 'กรุณาระบุชื่อธนาคาร'
+      }
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
       if (['yes', 'receipt'].includes(taxInvoiceStatus) && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปเอกสาร'
@@ -526,6 +535,8 @@ export default function DisbursementDashboard() {
         order_channel: orderChannel,
         order_channel_image: orderChannelImageData,
         qr_slip: paymentMethod === 'qr' ? qrSlipData : '',
+        bank_account: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankAccount.trim() : '',
+        bank_name: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankName.trim() : '',
       }
     } else if (selected.status === 'ordered') {
       body = {
@@ -1308,6 +1319,37 @@ export default function DisbursementDashboard() {
                             ))}
                           </div>
                         </div>
+                        {['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) && (
+                          <div className="space-y-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                            <p className="text-xs font-bold text-blue-700">🏦 ข้อมูลบัญชีรับโอน</p>
+                            <div>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                                เลขพร้อมเพย์ / เลขบัญชีธนาคาร <span className="text-[#DC2626]">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={bankAccount}
+                                onChange={(e) => setBankAccount(e.target.value)}
+                                placeholder="เช่น 0812345678 หรือ 123-4-56789-0"
+                                className={inputClass}
+                              />
+                              {formErrors.bankAccount && <p className="text-[#DC2626] text-xs mt-1">{formErrors.bankAccount}</p>}
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                                ชื่อธนาคาร <span className="text-[#DC2626]">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={bankName}
+                                onChange={(e) => setBankName(e.target.value)}
+                                placeholder="เช่น กสิกรไทย, SCB, ทหารไทยธนชาต"
+                                className={inputClass}
+                              />
+                              {formErrors.bankName && <p className="text-[#DC2626] text-xs mt-1">{formErrors.bankName}</p>}
+                            </div>
+                          </div>
+                        )}
                         {paymentMethod === 'เบิก' ? (
                           <>
                             <div>
