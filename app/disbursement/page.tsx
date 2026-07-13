@@ -683,10 +683,10 @@ export default function DisbursementDashboard() {
                 ) : (
                   <>
                     {(grouped['pending_approval'] || []).map((item) => (
-                      <div key={item.id} className="relative">
+                      <div key={item.id} className="flex bg-white rounded-xl shadow-sm border border-[#E2E8F0]">
                         <button
                           onClick={() => openItem(item)}
-                          className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50 pr-10"
+                          className="flex-1 p-3 text-left active:bg-gray-50 min-w-0 rounded-l-xl"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
@@ -702,8 +702,8 @@ export default function DisbursementDashboard() {
                           </div>
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
-                          className="absolute top-2 right-2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={() => setDeleteTarget(item)}
+                          className="px-3 border-l border-[#E2E8F0] text-red-400 hover:text-red-600 hover:bg-red-50 rounded-r-xl transition-colors shrink-0"
                           title="ลบรายการ"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -713,10 +713,10 @@ export default function DisbursementDashboard() {
                       </div>
                     ))}
                     {pendingEquipment.map((eq) => (
-                      <div key={eq.id} className="relative">
+                      <div key={eq.id} className="flex bg-white rounded-xl shadow-sm border border-[#E2E8F0]">
                         <button
                           onClick={() => openEquipment(eq)}
-                          className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50 pr-10"
+                          className="flex-1 p-3 text-left active:bg-gray-50 min-w-0 rounded-l-xl"
                         >
                           <div className="flex items-start gap-3">
                             {eq.image_data && (
@@ -751,8 +751,8 @@ export default function DisbursementDashboard() {
                           </div>
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteEqTarget(eq) }}
-                          className="absolute top-2 right-2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={() => setDeleteEqTarget(eq)}
+                          className="px-3 border-l border-[#E2E8F0] text-red-400 hover:text-red-600 hover:bg-red-50 rounded-r-xl transition-colors shrink-0"
                           title="ลบรายการ"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
