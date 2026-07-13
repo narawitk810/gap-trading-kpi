@@ -39,10 +39,18 @@ function StatusContent() {
   const [items, setItems] = useState<Disbursement[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(!!initialNickname)
+  const [publicItems, setPublicItems] = useState<Disbursement[]>([])
 
   useEffect(() => {
     if (initialNickname) fetchItems(initialNickname)
   }, [initialNickname])
+
+  useEffect(() => {
+    fetch('/api/disbursements?public=true')
+      .then(r => r.json())
+      .then(d => setPublicItems(Array.isArray(d) ? d : []))
+      .catch(() => {})
+  }, [])
 
   async function fetchItems(name: string) {
     if (!name.trim()) return
@@ -108,7 +116,7 @@ function StatusContent() {
           </div>
         </div>
 
-        {/* Results */}
+        {/* Search Results */}
         {searched && !loading && (
           <div>
             {items.length === 0 ? (
@@ -146,6 +154,41 @@ function StatusContent() {
             )}
           </div>
         )}
+
+        {/* Public History */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-[#E2E8F0] flex items-center justify-between">
+            <div>
+              <p className="font-bold text-[#374151]">ประวัติคำขอแจ้งเบิก</p>
+              <p className="text-xs text-gray-400 mt-0.5">ทุกคนมองเห็น</p>
+            </div>
+            <span className="text-xs bg-[#F5F6F8] text-gray-500 px-2 py-1 rounded-full font-semibold">
+              {publicItems.length} รายการ
+            </span>
+          </div>
+          <div className="divide-y divide-[#E2E8F0]">
+            {publicItems.length === 0 ? (
+              <p className="text-center text-gray-400 text-sm py-8">ยังไม่มีรายการ</p>
+            ) : (
+              publicItems.map((item) => {
+                const cfg = STATUS_CONFIG[item.status] ?? { icon: '❓', label: item.status, badgeClass: 'bg-gray-100 text-gray-600' }
+                return (
+                  <div key={item.id} className="grid grid-cols-[1fr_auto] gap-3 px-4 py-3 items-center">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#374151] truncate">{item.item_list}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {item.requester} · {formatDate(item.request_date)}
+                      </p>
+                    </div>
+                    <span className={`shrink-0 inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${cfg.badgeClass}`}>
+                      {cfg.icon} {cfg.label}
+                    </span>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

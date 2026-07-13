@@ -6,6 +6,15 @@ export async function GET(request: NextRequest) {
   const db = getDb()
 
   const { searchParams } = new URL(request.url)
+  const isPublic = searchParams.get('public') === 'true'
+
+  if (isPublic) {
+    const result = await db.execute(
+      'SELECT * FROM disbursements ORDER BY created_at DESC LIMIT 200'
+    )
+    return NextResponse.json(result.rows)
+  }
+
   const status = searchParams.get('status')
   const requester = searchParams.get('requester')
 
