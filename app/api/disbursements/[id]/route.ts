@@ -51,11 +51,6 @@ export async function PATCH(
     if (pm === 'qr' && !body.qr_slip) {
       return NextResponse.json({ error: 'กรุณาแนบ QR Code' }, { status: 400 })
     }
-    if (['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(pm)) {
-      if (!body.bank_account?.trim()) {
-        return NextResponse.json({ error: 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์' }, { status: 400 })
-      }
-    }
     await db.execute({
       sql: `UPDATE disbursements
             SET status='ordered', ordered_by=?, actual_amount=?, order_note=?, ordered_at=?,
@@ -170,12 +165,9 @@ export async function PATCH(
       args: [params.id],
     })
   } else if (action === 'save_bank_info') {
-    if (!body.bank_account?.trim()) {
-      return NextResponse.json({ error: 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์' }, { status: 400 })
-    }
     await db.execute({
       sql: `UPDATE disbursements SET bank_account=?, bank_name=? WHERE id=? AND status='approved'`,
-      args: [body.bank_account.trim(), body.bank_name?.trim() || '', params.id],
+      args: [body.bank_account?.trim() || '', body.bank_name?.trim() || '', params.id],
     })
   } else {
     return NextResponse.json({ error: 'action ไม่ถูกต้อง' }, { status: 400 })

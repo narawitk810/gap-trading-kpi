@@ -404,9 +404,6 @@ export default function DisbursementDashboard() {
         if (!qrSlipData) e.qrSlip = 'กรุณาแนบ QR Code'
       }
       if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
-      if (['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod)) {
-        if (!bankAccount.trim()) e.bankAccount = 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์'
-      }
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
       if (['yes', 'receipt'].includes(taxInvoiceStatus) && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปเอกสาร'
@@ -574,7 +571,7 @@ export default function DisbursementDashboard() {
   }
 
   async function handleSaveBankInfo() {
-    if (!selected || !bankAccount.trim()) return
+    if (!selected) return
     setSavingBank(true)
     try {
       const res = await fetch(`/api/disbursements/${selected.id}`, {
@@ -1348,7 +1345,7 @@ export default function DisbursementDashboard() {
                             <p className="text-xs font-bold text-blue-700">🏦 ข้อมูลบัญชีรับโอน</p>
                             <div>
                               <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                                เลขพร้อมเพย์ / เลขบัญชีธนาคาร <span className="text-[#DC2626]">*</span>
+                                เลขพร้อมเพย์ / เลขบัญชีธนาคาร
                               </label>
                               <input
                                 type="text"
@@ -1375,7 +1372,7 @@ export default function DisbursementDashboard() {
                             <button
                               type="button"
                               onClick={handleSaveBankInfo}
-                              disabled={!bankAccount.trim() || savingBank}
+                              disabled={savingBank}
                               className="w-full py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white disabled:opacity-40 active:bg-blue-700 transition-colors"
                             >
                               {savingBank ? 'กำลังบันทึก...' : 'บันทึกชั่วคราว'}
