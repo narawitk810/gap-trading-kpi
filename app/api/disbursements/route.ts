@@ -7,13 +7,19 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
+  const requester = searchParams.get('requester')
 
   let query = 'SELECT * FROM disbursements WHERE 1=1'
-  const args: string[] = []
+  const args: (string | number)[] = []
 
   if (status) {
     query += ' AND status = ?'
     args.push(status)
+  }
+
+  if (requester) {
+    query += ' AND requester LIKE ?'
+    args.push(requester + '%')
   }
 
   query += ' ORDER BY created_at DESC'

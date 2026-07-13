@@ -2193,6 +2193,14 @@ export default function Home() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>
+        <Link
+          href={formData.nickname
+            ? `/disbursement/status?nickname=${encodeURIComponent(formData.nickname)}`
+            : '/disbursement/status'}
+          className="block text-center text-sm text-[#1E3A5F] font-semibold hover:underline py-1"
+        >
+          เช็คสถานะคำขอของฉัน →
+        </Link>
 
         {/* Submit */}
         <button
