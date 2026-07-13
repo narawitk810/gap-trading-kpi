@@ -207,6 +207,7 @@ export default function DisbursementDashboard() {
   const [closedBy, setClosedBy] = useState('')
   const [bankAccount, setBankAccount] = useState('')
   const [bankName, setBankName] = useState('')
+  const [savingBank, setSavingBank] = useState(false)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [deleteTarget, setDeleteTarget] = useState<Disbursement | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -291,7 +292,7 @@ export default function DisbursementDashboard() {
     setTaxInvoiceStatus(''); setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); setTaxInvoiceNoReason('')
     setPaymentNote(''); setRemainingNote('')
     setCloseMonth(''); setClosedBy('')
-    setBankAccount(''); setBankName('')
+    setBankAccount(item.bank_account || ''); setBankName(item.bank_name || '')
     setFormErrors({})
   }
 
@@ -570,6 +571,23 @@ export default function DisbursementDashboard() {
       alert('เกิดข้อผิดพลาด กรุณาตรวจสอบการเชื่อมต่อ')
       setModalState('action_form')
     }
+  }
+
+  async function handleSaveBankInfo() {
+    if (!selected || !bankAccount.trim()) return
+    setSavingBank(true)
+    try {
+      const res = await fetch(`/api/disbursements/${selected.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_bank_info', bank_account: bankAccount, bank_name: bankName }),
+      })
+      if (!res.ok) { const d = await res.json(); alert(d.error || 'เกิดข้อผิดพลาด'); return }
+      setItems(prev => prev.map(i => i.id === selected.id ? { ...i, bank_account: bankAccount.trim(), bank_name: bankName.trim() } : i))
+      setSelected(prev => prev ? { ...prev, bank_account: bankAccount.trim(), bank_name: bankName.trim() } : prev)
+      alert('บันทึกข้อมูลบัญชีแล้ว')
+    } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setSavingBank(false) }
   }
 
   async function handleReimburseSubmit() {
@@ -1023,6 +1041,13 @@ export default function DisbursementDashboard() {
                         <p className="text-xs text-gray-500">ผู้อนุมัติ</p>
                         <p className="font-semibold text-[#374151]">{selected.approved_by}</p>
                       </div>
+                      {selected.status === 'approved' && selected.bank_account && (
+                        <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+                          <p className="text-xs font-bold text-blue-700 mb-1">🏦 ข้อมูลบัญชีรับโอน (บันทึกชั่วคราว)</p>
+                          <p className="text-[#374151]">เลขบัญชี: <span className="font-semibold">{selected.bank_account}</span></p>
+                          {selected.bank_name && <p className="text-[#374151]">ธนาคาร: <span className="font-semibold">{selected.bank_name}</span></p>}
+                        </div>
+                      )}
                       {selected.payment_slip && (
                         <div className="space-y-2">
                           <img src={selected.payment_slip} alt="สลิป" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
@@ -1347,6 +1372,14 @@ export default function DisbursementDashboard() {
                               />
                               {formErrors.bankName && <p className="text-[#DC2626] text-xs mt-1">{formErrors.bankName}</p>}
                             </div>
+                            <button
+                              type="button"
+                              onClick={handleSaveBankInfo}
+                              disabled={!bankAccount.trim() || savingBank}
+                              className="w-full py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white disabled:opacity-40 active:bg-blue-700 transition-colors"
+                            >
+                              {savingBank ? 'กำลังบันทึก...' : 'บันทึกชั่วคราว'}
+                            </button>
                           </div>
                         )}
                         {paymentMethod === 'เบิก' ? (

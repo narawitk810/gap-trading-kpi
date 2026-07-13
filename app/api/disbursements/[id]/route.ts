@@ -169,6 +169,14 @@ export async function PATCH(
       sql: `UPDATE disbursements SET payment_slip='' WHERE id=?`,
       args: [params.id],
     })
+  } else if (action === 'save_bank_info') {
+    if (!body.bank_account?.trim()) {
+      return NextResponse.json({ error: 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์' }, { status: 400 })
+    }
+    await db.execute({
+      sql: `UPDATE disbursements SET bank_account=?, bank_name=? WHERE id=? AND status='approved'`,
+      args: [body.bank_account.trim(), body.bank_name?.trim() || '', params.id],
+    })
   } else {
     return NextResponse.json({ error: 'action ไม่ถูกต้อง' }, { status: 400 })
   }
