@@ -246,7 +246,6 @@ export default function DisbursementDashboard() {
       if (!res.ok) { const d = await res.json(); alert(d.error || 'เกิดข้อผิดพลาด'); return }
       setDeleteEqTarget(null)
       setEquipmentItems(prev => prev.filter(e => e.id !== targetId))
-      await load()
     } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
     finally { setDeletingEq(false) }
   }
@@ -264,7 +263,6 @@ export default function DisbursementDashboard() {
       }
       setDeleteTarget(null)
       setItems(prev => prev.filter(i => i.id !== targetId))
-      await load()
     } catch {
       alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
