@@ -204,6 +204,8 @@ export default function DisbursementDashboard() {
   const [closeMonth, setCloseMonth] = useState('')
   const [closedBy, setClosedBy] = useState('')
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [deleteTarget, setDeleteTarget] = useState<Disbursement | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const slipRef = useRef<HTMLInputElement>(null)
   const orderDisburseSlipRef = useRef<HTMLInputElement>(null)
@@ -225,6 +227,25 @@ export default function DisbursementDashboard() {
       if (eqRes.ok) setEquipmentItems(await eqRes.json())
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/disbursements/${deleteTarget.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error || 'เกิดข้อผิดพลาด')
+        return
+      }
+      setDeleteTarget(null)
+      await load()
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -639,24 +660,34 @@ export default function DisbursementDashboard() {
                 ) : (
                   <>
                     {(grouped['pending_approval'] || []).map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => openItem(item)}
-                        className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                      <div key={item.id} className="relative">
+                        <button
+                          onClick={() => openItem(item)}
+                          className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50 pr-10"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
+                              <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-sm font-bold text-orange-700">
+                                {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
+                              </p>
+                              <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
+                            </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-orange-700">
-                              {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
-                            </p>
-                            <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
-                          </div>
-                        </div>
-                      </button>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
+                          className="absolute top-2 right-2 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="ลบรายการ"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     ))}
                     {pendingEquipment.map((eq) => (
                       <button
@@ -1602,6 +1633,40 @@ export default function DisbursementDashboard() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <div className="text-center mb-5">
+              <div className="text-4xl mb-3">🗑️</div>
+              <h3 className="text-base font-bold text-[#374151]">ยืนยันการลบรายการ</h3>
+              <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                คุณต้องการลบ<br />
+                <span className="font-semibold text-[#374151]">&ldquo;{deleteTarget.item_list}&rdquo;</span><br />
+                ของ {deleteTarget.requester} ใช่หรือไม่?
+              </p>
+              <p className="text-xs text-[#DC2626] mt-2">⚠️ ไม่สามารถกู้คืนได้</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-gray-600"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-[#DC2626] text-white text-sm font-semibold disabled:opacity-50"
+              >
+                {deleting ? 'กำลังลบ...' : 'ยืนยันลบ'}
+              </button>
             </div>
           </div>
         </div>

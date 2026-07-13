@@ -167,3 +167,28 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  await ensureSchema()
+  const db = getDb()
+
+  const existing = await db.execute({
+    sql: 'SELECT status FROM disbursements WHERE id = ?',
+    args: [params.id],
+  })
+  if (existing.rows.length === 0) {
+    return NextResponse.json({ error: 'ไม่พบรายการ' }, { status: 404 })
+  }
+  if (existing.rows[0].status !== 'pending_approval') {
+    return NextResponse.json(
+      { error: 'ลบได้เฉพาะรายการที่รอดำเนินการเท่านั้น' },
+      { status: 400 }
+    )
+  }
+
+  await db.execute({ sql: 'DELETE FROM disbursements WHERE id = ?', args: [params.id] })
+  return NextResponse.json({ ok: true })
+}
