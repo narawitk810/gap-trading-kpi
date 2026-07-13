@@ -206,6 +206,8 @@ export default function DisbursementDashboard() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [deleteTarget, setDeleteTarget] = useState<Disbursement | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteEqTarget, setDeleteEqTarget] = useState<EquipmentRequest | null>(null)
+  const [deletingEq, setDeletingEq] = useState(false)
 
   const slipRef = useRef<HTMLInputElement>(null)
   const orderDisburseSlipRef = useRef<HTMLInputElement>(null)
@@ -228,6 +230,22 @@ export default function DisbursementDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleDeleteEq() {
+    if (!deleteEqTarget) return
+    setDeletingEq(true)
+    try {
+      const res = await fetch('/api/equipment', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deleteEqTarget.id }),
+      })
+      if (!res.ok) { const d = await res.json(); alert(d.error || 'เกิดข้อผิดพลาด'); return }
+      setDeleteEqTarget(null)
+      await load()
+    } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setDeletingEq(false) }
   }
 
   async function handleDelete() {
@@ -680,7 +698,7 @@ export default function DisbursementDashboard() {
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(item) }}
-                          className="absolute top-2 right-2 p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="absolute top-2 right-2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="ลบรายการ"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -690,43 +708,53 @@ export default function DisbursementDashboard() {
                       </div>
                     ))}
                     {pendingEquipment.map((eq) => (
-                      <button
-                        key={eq.id}
-                        onClick={() => openEquipment(eq)}
-                        className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50"
-                      >
-                        <div className="flex items-start gap-3">
-                          {eq.image_data && (
-                            <img
-                              src={eq.image_data}
-                              alt="รูปอุปกรณ์"
-                              className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
-                              {eq.request_type && eq.request_type !== 'damaged' && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                                  {{ new: 'เบิกใหม่', pack: 'เบิกของแพค', ads: 'เบิกค่า Ads', other: 'เบิกอื่นๆ' }[eq.request_type] || eq.request_type}
+                      <div key={eq.id} className="relative">
+                        <button
+                          onClick={() => openEquipment(eq)}
+                          className="w-full bg-white rounded-xl p-3 text-left shadow-sm border border-[#E2E8F0] active:bg-gray-50 pr-10"
+                        >
+                          <div className="flex items-start gap-3">
+                            {eq.image_data && (
+                              <img
+                                src={eq.image_data}
+                                alt="รูปอุปกรณ์"
+                                className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
+                                {eq.request_type && eq.request_type !== 'damaged' && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                    {{ new: 'เบิกใหม่', pack: 'เบิกของแพค', ads: 'เบิกค่า Ads', other: 'เบิกอื่นๆ' }[eq.request_type] || eq.request_type}
+                                  </span>
+                                )}
+                                {eq.request_type === 'damaged' && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">อุปกรณ์เสีย</span>
+                                )}
+                                {eq.action ? (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                    {eq.action}
+                                  </span>
+                                ) : null}
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-red-100 text-red-600">
+                                  รอดำเนินการ
                                 </span>
-                              )}
-                              {eq.request_type === 'damaged' && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">อุปกรณ์เสีย</span>
-                              )}
-                              {eq.action ? (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                  {eq.action}
-                                </span>
-                              ) : null}
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto shrink-0 bg-red-100 text-red-600">
-                                รอดำเนินการ
-                              </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
                             </div>
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{eq.description}</p>
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteEqTarget(eq) }}
+                          className="absolute top-2 right-2 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="ลบรายการ"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     ))}
                   </>
                 )
@@ -1633,6 +1661,40 @@ export default function DisbursementDashboard() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Equipment delete confirmation modal */}
+      {deleteEqTarget && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
+            <div className="text-center mb-5">
+              <div className="text-4xl mb-3">🗑️</div>
+              <h3 className="text-base font-bold text-[#374151]">ยืนยันการลบคำขอ</h3>
+              <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                คุณต้องการลบคำขอของ<br />
+                <span className="font-semibold text-[#374151]">{deleteEqTarget.nickname}</span><br />
+                ({deleteEqTarget.description || deleteEqTarget.request_type}) ใช่หรือไม่?
+              </p>
+              <p className="text-xs text-[#DC2626] mt-2">⚠️ ไม่สามารถกู้คืนได้</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteEqTarget(null)}
+                disabled={deletingEq}
+                className="flex-1 py-2.5 rounded-xl border border-[#E2E8F0] text-sm font-semibold text-gray-600"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleDeleteEq}
+                disabled={deletingEq}
+                className="flex-1 py-2.5 rounded-xl bg-[#DC2626] text-white text-sm font-semibold disabled:opacity-50"
+              >
+                {deletingEq ? 'กำลังลบ...' : 'ยืนยันลบ'}
+              </button>
             </div>
           </div>
         </div>

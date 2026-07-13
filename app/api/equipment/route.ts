@@ -50,6 +50,16 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ id }, { status: 201 })
 }
 
+export async function DELETE(request: NextRequest) {
+  const body = await request.json()
+  if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  await ensureSchema()
+  const db = getDb()
+  await db.execute({ sql: 'DELETE FROM disbursements WHERE equipment_id = ?', args: [body.id] })
+  await db.execute({ sql: 'DELETE FROM equipment_requests WHERE id = ?', args: [body.id] })
+  return NextResponse.json({ ok: true })
+}
+
 export async function PATCH(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   if (searchParams.get('key') !== ADMIN_KEY) {
