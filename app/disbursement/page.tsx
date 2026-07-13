@@ -405,7 +405,6 @@ export default function DisbursementDashboard() {
       if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
       if (['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod)) {
         if (!bankAccount.trim()) e.bankAccount = 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์'
-        if (!bankName.trim()) e.bankName = 'กรุณาระบุชื่อธนาคาร'
       }
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
@@ -1337,7 +1336,7 @@ export default function DisbursementDashboard() {
                             </div>
                             <div>
                               <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                                ชื่อธนาคาร <span className="text-[#DC2626]">*</span>
+                                ชื่อธนาคาร
                               </label>
                               <input
                                 type="text"

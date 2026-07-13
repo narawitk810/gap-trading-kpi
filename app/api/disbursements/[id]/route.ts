@@ -52,8 +52,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'กรุณาแนบ QR Code' }, { status: 400 })
     }
     if (['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(pm)) {
-      if (!body.bank_account?.trim() || !body.bank_name?.trim()) {
-        return NextResponse.json({ error: 'กรุณากรอกเลขบัญชี/พร้อมเพย์ และชื่อธนาคาร' }, { status: 400 })
+      if (!body.bank_account?.trim()) {
+        return NextResponse.json({ error: 'กรุณากรอกเลขบัญชี หรือพร้อมเพย์' }, { status: 400 })
       }
     }
     await db.execute({
