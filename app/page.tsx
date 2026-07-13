@@ -2182,25 +2182,28 @@ export default function Home() {
           </Link>
         )}
 
-        <Link
-          href="/equipment"
-          target="_blank"
-          className="flex items-center gap-2 border border-[#E2E8F0] rounded-xl px-3 py-2 text-xs text-gray-500 hover:border-[#1E3A5F] hover:text-[#1E3A5F] transition-colors"
-        >
-          <span>🔧</span>
-          <span>แจ้งเบิกทุกอย่าง (ลัง/สินค้า/ค่าads/เสีย/เบิก/ซ่อม และอื่นๆ)</span>
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-        <Link
-          href={formData.nickname
-            ? `/disbursement/status?nickname=${encodeURIComponent(formData.nickname)}`
-            : '/disbursement/status'}
-          className="block text-center text-sm text-[#1E3A5F] font-semibold hover:underline py-1"
-        >
-          เช็คสถานะคำขอของฉัน →
-        </Link>
+        <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+          <Link
+            href="/equipment"
+            target="_blank"
+            className="flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            <span>🔧</span>
+            <span>แจ้งเบิกทุกอย่าง (ลัง/สินค้า/ค่าads/เสีย/เบิก/ซ่อม และอื่นๆ)</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+          <div className="border-t border-[#E2E8F0]" />
+          <Link
+            href={formData.nickname
+              ? `/disbursement/status?nickname=${encodeURIComponent(formData.nickname)}`
+              : '/disbursement/status'}
+            className="flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold text-[#1E3A5F] hover:bg-[#1E3A5F]/5 transition-colors"
+          >
+            เช็คสถานะคำขอของฉัน →
+          </Link>
+        </div>
 
         {/* Submit */}
         <button
