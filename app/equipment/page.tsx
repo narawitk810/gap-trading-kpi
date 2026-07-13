@@ -312,6 +312,13 @@ export default function EquipmentPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+
+          <Link
+            href="/disbursement/status"
+            className="block text-center text-sm text-[#1E3A5F] font-semibold hover:underline py-2"
+          >
+            เช็คสถานะคำขอของฉัน →
+          </Link>
         </div>
       </div>
     )
