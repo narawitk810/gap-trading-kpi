@@ -220,10 +220,11 @@ export default function DisbursementDashboard() {
 
   async function load() {
     setLoading(true)
+    const t = Date.now()
     try {
       const [disbRes, eqRes] = await Promise.all([
-        fetch('/api/disbursements'),
-        fetch('/api/equipment/all'),
+        fetch(`/api/disbursements?_t=${t}`),
+        fetch(`/api/equipment/all?_t=${t}`),
       ])
       if (disbRes.ok) setItems(await disbRes.json())
       if (eqRes.ok) setEquipmentItems(await eqRes.json())
@@ -235,14 +236,16 @@ export default function DisbursementDashboard() {
   async function handleDeleteEq() {
     if (!deleteEqTarget) return
     setDeletingEq(true)
+    const targetId = deleteEqTarget.id
     try {
       const res = await fetch('/api/equipment', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: deleteEqTarget.id }),
+        body: JSON.stringify({ id: targetId }),
       })
       if (!res.ok) { const d = await res.json(); alert(d.error || 'เกิดข้อผิดพลาด'); return }
       setDeleteEqTarget(null)
+      setEquipmentItems(prev => prev.filter(e => e.id !== targetId))
       await load()
     } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
     finally { setDeletingEq(false) }
@@ -251,14 +254,16 @@ export default function DisbursementDashboard() {
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
+    const targetId = deleteTarget.id
     try {
-      const res = await fetch(`/api/disbursements/${deleteTarget.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/disbursements/${targetId}`, { method: 'DELETE' })
       if (!res.ok) {
         const data = await res.json()
         alert(data.error || 'เกิดข้อผิดพลาด')
         return
       }
       setDeleteTarget(null)
+      setItems(prev => prev.filter(i => i.id !== targetId))
       await load()
     } catch {
       alert('เกิดข้อผิดพลาด กรุณาลองใหม่')

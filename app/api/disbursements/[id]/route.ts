@@ -176,7 +176,7 @@ export async function DELETE(
   const db = getDb()
 
   const existing = await db.execute({
-    sql: 'SELECT status FROM disbursements WHERE id = ?',
+    sql: 'SELECT status, equipment_id FROM disbursements WHERE id = ?',
     args: [params.id],
   })
   if (existing.rows.length === 0) {
@@ -189,6 +189,10 @@ export async function DELETE(
     )
   }
 
+  const eqId = existing.rows[0].equipment_id
+  if (eqId) {
+    await db.execute({ sql: 'DELETE FROM equipment_requests WHERE id = ?', args: [eqId] })
+  }
   await db.execute({ sql: 'DELETE FROM disbursements WHERE id = ?', args: [params.id] })
   return NextResponse.json({ ok: true })
 }
