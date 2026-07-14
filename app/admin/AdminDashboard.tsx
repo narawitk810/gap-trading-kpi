@@ -3041,8 +3041,10 @@ export default function AdminDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key, [field]: value }),
               })
-                .then((r) => r.json())
-                .then((d) => { if (d.ok) { alert('บันทึกแล้ว') } else { alert(d.error || 'เกิดข้อผิดพลาด') } })
+                .then(async (r) => {
+                  const d = await r.json().catch(() => ({}))
+                  if ((d as { ok?: boolean }).ok) { alert('บันทึกแล้ว') } else { alert((d as { error?: string }).error || 'เกิดข้อผิดพลาด') }
+                })
                 .catch(() => alert('เกิดข้อผิดพลาด'))
             return (
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden mt-4">

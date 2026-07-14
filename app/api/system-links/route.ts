@@ -10,10 +10,15 @@ const VALID_KEYS = [
 ]
 
 export async function GET() {
-  await ensureSchema()
-  const db = getDb()
-  const rows = await db.execute('SELECT key, url, label, system_id, system_password FROM system_links ORDER BY key')
-  return NextResponse.json({ links: rows.rows })
+  try {
+    await ensureSchema()
+    const db = getDb()
+    const rows = await db.execute('SELECT key, url, label, system_id, system_password FROM system_links ORDER BY key')
+    return NextResponse.json({ links: rows.rows })
+  } catch (e) {
+    console.error('[system-links GET]', e)
+    return NextResponse.json({ links: [] })
+  }
 }
 
 export async function PUT(request: NextRequest) {
@@ -42,8 +47,13 @@ export async function PUT(request: NextRequest) {
   sets.push('updated_at=?')
   args.push(new Date().toISOString())
   args.push(key)
-  await ensureSchema()
-  const db = getDb()
-  await db.execute({ sql: `UPDATE system_links SET ${sets.join(', ')} WHERE key=?`, args })
-  return NextResponse.json({ ok: true })
+  try {
+    await ensureSchema()
+    const db = getDb()
+    await db.execute({ sql: `UPDATE system_links SET ${sets.join(', ')} WHERE key=?`, args })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    console.error('[system-links PUT]', e)
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
 }
