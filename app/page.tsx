@@ -734,6 +734,9 @@ export default function Home() {
         <p className="text-sm mt-1" style={{ opacity: 0.75 }}>
           Every Pack Every Box Every Smile
         </p>
+        <p className="text-xs mt-0.5" style={{ opacity: 0.55 }}>
+          ทุกซอง ทุกกล่อง ทุกความสุข
+        </p>
         <button
           onClick={() => window.location.reload()}
           className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors opacity-70"
