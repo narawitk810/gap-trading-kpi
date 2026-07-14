@@ -105,7 +105,6 @@ export default function StoreManagementPage() {
             <div className="flex flex-col gap-3">
               {SYSTEMS.map((sys) => {
                 const info = links[sys.key]
-                const hasCredentials = !!(info.system_id || info.system_password)
                 return (
                   <div key={sys.key}>
                     <a
@@ -120,11 +119,11 @@ export default function StoreManagementPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
                     </a>
-                    {hasCredentials && (
-                      <div className="mt-1 bg-[#1E3A5F]/5 rounded-xl px-3 py-2 flex flex-col gap-1.5">
-                        {info.system_id && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-gray-400 w-10 shrink-0">ID</span>
+                    <div className="mt-1 bg-[#1E3A5F]/5 rounded-xl px-3 py-2 flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-400 w-10 shrink-0">ID</span>
+                        {info.system_id ? (
+                          <>
                             <span className="text-xs font-mono text-[#374151] flex-1 break-all">{info.system_id}</span>
                             <button
                               type="button"
@@ -133,11 +132,15 @@ export default function StoreManagementPage() {
                             >
                               คัดลอก
                             </button>
-                          </div>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-300 flex-1">-</span>
                         )}
-                        {info.system_password && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-gray-400 w-10 shrink-0">รหัส</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-400 w-10 shrink-0">รหัส</span>
+                        {info.system_password ? (
+                          <>
                             <span className="text-xs font-mono text-[#374151] flex-1 break-all">
                               {showPassword[sys.key] ? info.system_password : '••••••••'}
                             </span>
@@ -155,10 +158,12 @@ export default function StoreManagementPage() {
                             >
                               คัดลอก
                             </button>
-                          </div>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-300 flex-1">-</span>
                         )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 )
               })}
