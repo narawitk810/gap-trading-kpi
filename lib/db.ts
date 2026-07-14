@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 26
+const SCHEMA_VERSION = 27
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -511,6 +511,16 @@ export async function ensureSchema(): Promise<void> {
       event_date   TEXT NOT NULL,
       start_time   TEXT NOT NULL DEFAULT '',
       created_at   TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tournament_games (
+      id         TEXT PRIMARY KEY,
+      store_id   TEXT NOT NULL,
+      game_name  TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      UNIQUE(store_id, game_name)
     )
   `)
 

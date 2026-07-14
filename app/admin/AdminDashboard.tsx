@@ -439,6 +439,10 @@ export default function AdminDashboard() {
   const [regenerating, setRegenerating] = useState(false)
   const [sysLinks, setSysLinks] = useState<{ key: string; url: string; label: string; system_id: string; system_password: string }[]>([])
   const [sysLinksEdit, setSysLinksEdit] = useState<Record<string, string>>({})
+  const [tournamentGames, setTournamentGames] = useState<{ id: string; store_id: string; game_name: string }[]>([])
+  const [newGameName, setNewGameName] = useState<Record<string, string>>({})
+  const [addingGame, setAddingGame] = useState<Record<string, boolean>>({})
+  const [deletingGameId, setDeletingGameId] = useState<string | null>(null)
   const [tournamentCreds, setTournamentCreds] = useState<Record<string, { system_id: string; system_password: string }>>({})
   const [tournamentCredsEdit, setTournamentCredsEdit] = useState<Record<string, string>>({})
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
@@ -959,6 +963,13 @@ export default function AdminDashboard() {
       })
       setTournamentCreds(map)
       setTournamentCredsEdit(edit)
+    } catch { /* silent */ }
+  }, [])
+
+  const fetchTournamentGames = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tournament-games')
+      if (res.ok) { const data = await res.json(); setTournamentGames(data.games || []) }
     } catch { /* silent */ }
   }, [])
 
@@ -1624,7 +1635,7 @@ export default function AdminDashboard() {
             Pre-Order
           </button>
           <button
-            onClick={() => { setActiveTab('tournament-creds'); fetchTournamentCreds() }}
+            onClick={() => { setActiveTab('tournament-creds'); fetchTournamentCreds(); fetchTournamentGames() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'tournament-creds'
                 ? 'bg-white text-[#1E3A5F]'
@@ -5512,6 +5523,37 @@ export default function AdminDashboard() {
           { id: 'catramen', label: 'catramen card&boardgame cafe' },
           { id: 'ninjabear', label: 'ninjabear card shop' },
         ]
+
+        const addGame = async (storeId: string) => {
+          const name = (newGameName[storeId] || '').trim()
+          if (!name) return
+          setAddingGame((p) => ({ ...p, [storeId]: true }))
+          try {
+            const res = await fetch(`/api/tournament-games?key=${ADMIN_KEY}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ store_id: storeId, game_name: name }),
+            })
+            const data = await res.json()
+            if (res.ok) {
+              setTournamentGames((prev) => [...prev, data.game])
+              setNewGameName((p) => ({ ...p, [storeId]: '' }))
+            } else {
+              alert(data.error || 'เพิ่มไม่สำเร็จ')
+            }
+          } catch { alert('เกิดข้อผิดพลาด') }
+          finally { setAddingGame((p) => ({ ...p, [storeId]: false })) }
+        }
+
+        const removeGame = async (id: string) => {
+          setDeletingGameId(id)
+          try {
+            await fetch(`/api/tournament-games?key=${ADMIN_KEY}&id=${id}`, { method: 'DELETE' })
+            setTournamentGames((prev) => prev.filter((g) => g.id !== id))
+          } catch { alert('เกิดข้อผิดพลาด') }
+          finally { setDeletingGameId(null) }
+        }
+
         const SYSTEMS = [
           { id: 'bandai', label: 'Bandai TCG+' },
           { id: 'pokemon', label: 'Pokemon' },
@@ -5542,7 +5584,58 @@ export default function AdminDashboard() {
             })
             .catch((e: unknown) => alert(`เกิดข้อผิดพลาด: ${e}`))
         return (
-          <div className="max-w-2xl mx-auto px-4 pb-10">
+          <div className="max-w-2xl mx-auto px-4 pb-10 flex flex-col gap-6">
+            {/* การ์ดเกมที่ต้องจัดแข่ง */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">🃏 การ์ดเกมที่ต้องจัดแข่ง</h2>
+                <p className="text-xs text-gray-400 mt-0.5">กำหนดรายชื่อเกมที่แต่ละร้านต้องจัดในสัปดาห์นี้ — แสดงในหน้าระบบจัดการหน้าร้าน</p>
+              </div>
+              <div className="divide-y divide-[#E2E8F0]">
+                {STORES.map((store) => {
+                  const storeGames = tournamentGames.filter((g) => g.store_id === store.id)
+                  return (
+                    <div key={store.id} className="px-5 py-4">
+                      <p className="text-sm font-semibold text-[#374151] mb-2">🏪 {store.label}</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {storeGames.length === 0 && (
+                          <span className="text-xs text-gray-300">ยังไม่มีเกม</span>
+                        )}
+                        {storeGames.map((g) => (
+                          <span key={g.id} className="flex items-center gap-1 text-xs font-semibold bg-[#1E3A5F]/10 text-[#1E3A5F] px-2.5 py-1 rounded-full">
+                            🃏 {g.game_name}
+                            <button
+                              disabled={deletingGameId === g.id}
+                              onClick={() => removeGame(g.id)}
+                              className="ml-1 text-[#DC2626] opacity-60 hover:opacity-100 disabled:opacity-20 text-xs leading-none"
+                            >✕</button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="ชื่อเกม เช่น Pokemon"
+                          value={newGameName[store.id] || ''}
+                          onChange={(e) => setNewGameName((p) => ({ ...p, [store.id]: e.target.value }))}
+                          onKeyDown={(e) => e.key === 'Enter' && addGame(store.id)}
+                          className="flex-1 border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[#1E3A5F]"
+                        />
+                        <button
+                          disabled={addingGame[store.id] || !newGameName[store.id]?.trim()}
+                          onClick={() => addGame(store.id)}
+                          className="px-3 py-1.5 bg-[#1E3A5F] text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                        >
+                          {addingGame[store.id] ? '...' : '+ เพิ่ม'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* รหัสระบบ */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-[#E2E8F0]">
                 <h2 className="font-bold text-[#1E3A5F] text-base">รหัสจัดงานแข่ง</h2>
