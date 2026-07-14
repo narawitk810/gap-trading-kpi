@@ -437,7 +437,7 @@ export default function AdminDashboard() {
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
-  const [sysLinks, setSysLinks] = useState<{ key: string; url: string; label: string }[]>([])
+  const [sysLinks, setSysLinks] = useState<{ key: string; url: string; label: string; system_id: string; system_password: string }[]>([])
   const [sysLinksEdit, setSysLinksEdit] = useState<Record<string, string>>({})
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
   const [loadingRestock, setLoadingRestock] = useState(false)
@@ -907,10 +907,14 @@ export default function AdminDashboard() {
       const res2 = await fetch(`/api/system-links?key=${ADMIN_KEY}`)
       if (res2.ok) {
         const data = await res2.json()
-        const links: { key: string; url: string; label: string }[] = data.links || []
+        const links: { key: string; url: string; label: string; system_id: string; system_password: string }[] = data.links || []
         setSysLinks(links)
         const init: Record<string, string> = {}
-        links.forEach((l) => { init[l.key] = l.url })
+        links.forEach((l) => {
+          init[`${l.key}_url`] = l.url
+          init[`${l.key}_system_id`] = l.system_id || ''
+          init[`${l.key}_system_password`] = l.system_password || ''
+        })
         setSysLinksEdit(init)
       }
     } catch { /* silent */ }
@@ -3022,34 +3026,45 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden mt-4">
               <div className="px-5 py-4 border-b border-[#E2E8F0]">
                 <h2 className="font-bold text-[#1E3A5F] text-base">ลิ้งระบบหน้าร้าน</h2>
-                <p className="text-xs text-gray-400 mt-0.5">แก้ไข URL ของระบบภายนอกที่ใช้ในแผนก ผู้จัดการหน้าร้าน</p>
+                <p className="text-xs text-gray-400 mt-0.5">แก้ไข URL / ID / Password ของแต่ละระบบ</p>
               </div>
-              <div className="px-5 py-4 flex flex-col gap-3">
+              <div className="px-5 py-4 flex flex-col gap-4">
                 {sysLinks.map((link) => (
-                  <div key={link.key} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 w-32 shrink-0 font-medium">{link.label}</span>
-                    <input
-                      type="text"
-                      value={sysLinksEdit[link.key] ?? link.url}
-                      onChange={(e) => setSysLinksEdit((prev) => ({ ...prev, [link.key]: e.target.value }))}
-                      className="flex-1 text-xs border border-[#E2E8F0] rounded-lg px-3 py-2 focus:border-[#1E3A5F] outline-none min-w-0"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        fetch(`/api/system-links?key=${ADMIN_KEY}`, {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ key: link.key, url: sysLinksEdit[link.key] }),
-                        })
-                          .then((r) => r.json())
-                          .then((d) => { if (d.ok) { alert('บันทึกแล้ว') } else { alert(d.error || 'เกิดข้อผิดพลาด') } })
-                          .catch(() => alert('เกิดข้อผิดพลาด'))
-                      }
-                      className="px-3 py-2 bg-[#1E3A5F] text-white text-xs rounded-lg shrink-0 font-semibold"
-                    >
-                      บันทึก
-                    </button>
+                  <div key={link.key} className="border border-[#E2E8F0] rounded-xl p-3">
+                    <p className="text-xs font-bold text-[#374151] mb-2">{link.label}</p>
+                    {(
+                      [
+                        { field: 'url', label: 'URL' },
+                        { field: 'system_id', label: 'ID' },
+                        { field: 'system_password', label: 'Password' },
+                      ] as const
+                    ).map((f) => (
+                      <div key={f.field} className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[11px] text-gray-400 w-16 shrink-0">{f.label}</span>
+                        <input
+                          type="text"
+                          value={sysLinksEdit[`${link.key}_${f.field}`] ?? ''}
+                          onChange={(e) => setSysLinksEdit((prev) => ({ ...prev, [`${link.key}_${f.field}`]: e.target.value }))}
+                          className="flex-1 text-xs border border-[#E2E8F0] rounded-lg px-2 py-1.5 focus:border-[#1E3A5F] outline-none min-w-0"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            fetch(`/api/system-links?key=${ADMIN_KEY}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ key: link.key, [f.field]: sysLinksEdit[`${link.key}_${f.field}`] ?? '' }),
+                            })
+                              .then((r) => r.json())
+                              .then((d) => { if (d.ok) { alert('บันทึกแล้ว') } else { alert(d.error || 'เกิดข้อผิดพลาด') } })
+                              .catch(() => alert('เกิดข้อผิดพลาด'))
+                          }
+                          className="px-2 py-1.5 bg-[#1E3A5F] text-white text-[11px] rounded-lg shrink-0 font-semibold"
+                        >
+                          บันทึก
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>

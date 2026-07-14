@@ -466,6 +466,8 @@ export async function ensureSchema(): Promise<void> {
   await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_bandai', 'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', 'Bandai TCG+', '')`)
   await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_pokemon', 'https://event.asia.pokemon-card.com/login/th', 'Pokemon', '')`)
   await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_liftbound', 'https://www.carde.io/', 'Liftbound & Lorcana', '')`)
+  try { await db.execute(`ALTER TABLE system_links ADD COLUMN system_id TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE system_links ADD COLUMN system_password TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   g.dbVersion = SCHEMA_VERSION
 }
