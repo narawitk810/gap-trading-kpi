@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 22
+const SCHEMA_VERSION = 23
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -454,6 +454,18 @@ export async function ensureSchema(): Promise<void> {
       created_at TEXT NOT NULL
     )
   `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS system_links (
+      key        TEXT PRIMARY KEY,
+      url        TEXT NOT NULL,
+      label      TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `)
+  await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_bandai', 'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', 'Bandai TCG+', '')`)
+  await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_pokemon', 'https://event.asia.pokemon-card.com/login/th', 'Pokemon', '')`)
+  await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_liftbound', 'https://www.carde.io/', 'Liftbound & Lorcana', '')`)
 
   g.dbVersion = SCHEMA_VERSION
 }
