@@ -730,9 +730,9 @@ export default function Home() {
     <div className="min-h-screen bg-[#F5F6F8]">
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 py-5 text-center shadow-md relative">
-        <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
+        <h1 className="text-xl font-bold tracking-wide">GAP TRADING & NAKAMA</h1>
         <p className="text-sm mt-1" style={{ opacity: 0.75 }}>
-          บันทึก KPI รายวัน
+          Every Pack Every Box Every Smile
         </p>
         <button
           onClick={() => window.location.reload()}
