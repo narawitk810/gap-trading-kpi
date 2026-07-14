@@ -481,7 +481,7 @@ export async function ensureSchema(): Promise<void> {
     ['ninjabear_liftbound', 'https://www.carde.io/',                                              'ninjabear – Liftbound & Lorcana'],
   ]
   for (const [key, url, label] of STORE_CRED_ROWS) {
-    await db.execute({ sql: `INSERT OR IGNORE INTO system_links (key, url, label, system_id, system_password, updated_at) VALUES (?, ?, ?, '', '', '')`, args: [key, url, label] })
+    await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('${key}', '${url}', '${label}', '')`)
   }
 
   g.dbVersion = SCHEMA_VERSION
