@@ -486,7 +486,7 @@ export default function AdminDashboard() {
   const [newStaffRank, setNewStaffRank] = useState('1|Junior Live Sales|🥉')
   const [addingStaff, setAddingStaff] = useState(false)
   const [addStaffError, setAddStaffError] = useState('')
-  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative' | 'การตลาด' | 'Sales Admin' | 'Store Retail' | 'สต๊อค&จัดซื้อ' | 'แพค' | 'บัญชี&การเงิน' | 'ธุรการ' | 'บุคคล' | 'ผู้จัดการไลฟ์สด'>('ไลฟ์สด')
+  const [adjustRankDept, setAdjustRankDept] = useState<'ไลฟ์สด' | 'Creative' | 'การตลาด' | 'Sales Admin' | 'Store Retail' | 'สต๊อค&จัดซื้อ' | 'แพค' | 'บัญชี&การเงิน' | 'ธุรการ' | 'บุคคล' | 'ผู้จัดการไลฟ์สด' | 'ผู้จัดการหน้าร้าน'>('ไลฟ์สด')
   const [creativeStaff, setCreativeStaff] = useState<LiveStaffMember[]>([])
   const [loadingCreativeStaff, setLoadingCreativeStaff] = useState(false)
   const [savingCreativeRankId, setSavingCreativeRankId] = useState<string | null>(null)
@@ -567,6 +567,14 @@ export default function AdminDashboard() {
   const [newLiveManagerStaffRank, setNewLiveManagerStaffRank] = useState('1|Live Team Leader|👥')
   const [addingLiveManagerStaff, setAddingLiveManagerStaff] = useState(false)
   const [addLiveManagerStaffError, setAddLiveManagerStaffError] = useState('')
+  const [storeManagerStaff, setStoreManagerStaff] = useState<LiveStaffMember[]>([])
+  const [loadingStoreManagerStaff, setLoadingStoreManagerStaff] = useState(false)
+  const [savingStoreManagerRankId, setSavingStoreManagerRankId] = useState<string | null>(null)
+  const [storeManagerRankSavedId, setStoreManagerRankSavedId] = useState<string | null>(null)
+  const [newStoreManagerStaffName, setNewStoreManagerStaffName] = useState('')
+  const [newStoreManagerStaffRank, setNewStoreManagerStaffRank] = useState('1|Junior Store Manager|🥉')
+  const [addingStoreManagerStaff, setAddingStoreManagerStaff] = useState(false)
+  const [addStoreManagerStaffError, setAddStoreManagerStaffError] = useState('')
   const [savingHeadId, setSavingHeadId] = useState<string | null>(null)
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null)
   const [rankUnlocked, setRankUnlocked] = useState(() => {
@@ -1278,6 +1286,15 @@ export default function AdminDashboard() {
     finally { setLoadingLiveManagerStaff(false) }
   }, [])
 
+  const fetchStoreManagerStaff = useCallback(async () => {
+    setLoadingStoreManagerStaff(true)
+    try {
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}&department=` + encodeURIComponent('ผู้จัดการหน้าร้าน'))
+      if (res.ok) { const data = await res.json(); setStoreManagerStaff(data.staff || []) }
+    } catch { /* silent */ }
+    finally { setLoadingStoreManagerStaff(false) }
+  }, [])
+
   const fetchEquipment = useCallback(async () => {
     setLoadingEquipment(true)
     try {
@@ -1587,7 +1604,7 @@ export default function AdminDashboard() {
             รหัสแผนก
           </button>
           <button
-            onClick={() => { setActiveTab('adjust-rank'); fetchLiveStaff(); fetchCreativeStaff(); fetchMarketingStaff(); fetchSaleAdminStaff(); fetchStoreRetailStaff(); fetchStockPurchasingStaff(); fetchPackStaff(); fetchAccountingStaff(); fetchAdministrationStaff(); fetchHrStaff(); fetchLiveManagerStaff() }}
+            onClick={() => { setActiveTab('adjust-rank'); fetchLiveStaff(); fetchCreativeStaff(); fetchMarketingStaff(); fetchSaleAdminStaff(); fetchStoreRetailStaff(); fetchStockPurchasingStaff(); fetchPackStaff(); fetchAccountingStaff(); fetchAdministrationStaff(); fetchHrStaff(); fetchLiveManagerStaff(); fetchStoreManagerStaff() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'adjust-rank'
                 ? 'bg-white text-[#1E3A5F]'
@@ -3112,7 +3129,7 @@ export default function AdminDashboard() {
           {/* Department toggle */}
           <div className="overflow-x-auto pb-1">
             <div className="flex gap-2">
-              {(['ไลฟ์สด', 'Creative', 'การตลาด', 'Sales Admin', 'Store Retail', 'สต๊อค&จัดซื้อ', 'แพค', 'บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'ผู้จัดการไลฟ์สด'] as const).map((dept) => (
+              {(['ไลฟ์สด', 'Creative', 'การตลาด', 'Sales Admin', 'Store Retail', 'สต๊อค&จัดซื้อ', 'แพค', 'บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน'] as const).map((dept) => (
                 <button
                   key={dept}
                   onClick={() => setAdjustRankDept(dept)}
@@ -4232,6 +4249,167 @@ export default function AdminDashboard() {
                           <button
                             disabled={deletingStaffId === s.id}
                             onClick={() => deleteStaff(s, setLiveManagerStaff)}
+                            title="ลบพนักงานนี้"
+                            className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
+                          >🗑️</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table></div>
+              )}
+            </div>
+          )}
+
+          {adjustRankDept === 'ผู้จัดการหน้าร้าน' && (
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">จัดการยศ ผู้จัดการหน้าร้าน</h2>
+                <p className="text-xs text-gray-400 mt-0.5">เปลี่ยนยศผู้จัดการหน้าร้านแต่ละคน — มีผลกับหน้ากรอก KPI ทันที</p>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/30">
+                <p className="text-xs font-semibold text-[#374151] mb-2">⚜️ Head ของแผนก</p>
+                <div className="flex flex-wrap gap-2">
+                  {storeManagerStaff.map((s) => (
+                    <button
+                      key={s.id}
+                      disabled={savingHeadId === s.id}
+                      onClick={() => toggleHead(s, setStoreManagerStaff)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                        s.is_head
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {s.is_head ? `⚜️ ${s.name}` : s.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="px-5 py-4 border-b border-[#E2E8F0] bg-[#F5F6F8]/50">
+                <p className="text-xs font-semibold text-[#374151] mb-2">เพิ่มพนักงานใหม่</p>
+                <div className="flex gap-2 flex-wrap items-start">
+                  <input
+                    type="text"
+                    placeholder="ชื่อเล่น"
+                    value={newStoreManagerStaffName}
+                    onChange={(e) => { setNewStoreManagerStaffName(e.target.value); setAddStoreManagerStaffError('') }}
+                    className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm bg-white w-32 focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                  <select
+                    value={newStoreManagerStaffRank}
+                    onChange={(e) => setNewStoreManagerStaffRank(e.target.value)}
+                    className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white"
+                  >
+                    <option value="1|Junior Store Manager|🥉">🥉 Junior Store Manager</option>
+                    <option value="2|Store Manager|🥈">🥈 Store Manager</option>
+                    <option value="3|Senior Store Manager|🥇">🥇 Senior Store Manager</option>
+                    <option value="4|Expert Store Manager|🏅">🏅 Expert Store Manager</option>
+                    <option value="5|Master Store Manager|🏆">🏆 Master Store Manager</option>
+                    <option value="6|Elite Store Manager|💠">💠 Elite Store Manager</option>
+                    <option value="7|Legend Store Manager|💎">💎 Legend Store Manager</option>
+                    <option value="8|Grandmaster Store Manager|👑">👑 Grandmaster Store Manager</option>
+                  </select>
+                  <button
+                    disabled={addingStoreManagerStaff || !newStoreManagerStaffName.trim()}
+                    onClick={async () => {
+                      const parts = newStoreManagerStaffRank.split('|')
+                      setAddingStoreManagerStaff(true)
+                      setAddStoreManagerStaffError('')
+                      try {
+                        const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ name: newStoreManagerStaffName.trim(), rank_order: Number(parts[0]), rank_name: parts[1], rank_emoji: parts[2], department: 'ผู้จัดการหน้าร้าน' }),
+                        })
+                        const data = await res.json()
+                        if (res.ok) {
+                          setStoreManagerStaff((prev) => [...prev, data.staff].sort((a, b) => a.rank_order - b.rank_order || a.name.localeCompare(b.name, 'th')))
+                          setNewStoreManagerStaffName('')
+                        } else {
+                          setAddStoreManagerStaffError(data.error || 'เพิ่มไม่สำเร็จ')
+                        }
+                      } catch { setAddStoreManagerStaffError('เกิดข้อผิดพลาด') }
+                      finally { setAddingStoreManagerStaff(false) }
+                    }}
+                    className="px-4 py-1.5 rounded-lg bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    {addingStoreManagerStaff ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
+                  </button>
+                </div>
+                {addStoreManagerStaffError && <p className="text-[#DC2626] text-xs mt-1.5">{addStoreManagerStaffError}</p>}
+              </div>
+              {loadingStoreManagerStaff ? (
+                <div className="py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+              ) : storeManagerStaff.length === 0 ? (
+                <div className="py-16 text-center text-gray-400 text-sm">ไม่มีข้อมูล</div>
+              ) : (
+                <div className="overflow-x-auto"><table className="min-w-[500px] text-sm">
+                  <thead>
+                    <tr className="bg-[#F5F6F8] text-xs text-[#374151]">
+                      <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
+                      <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
+                      <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="px-5 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {storeManagerStaff.map((s, i) => (
+                      <tr key={s.id} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/50'}>
+                        <td className="px-5 py-3 font-semibold text-[#1E3A5F]">{s.is_head ? '⚜️ ' : ''}{s.name}</td>
+                        <td className="px-5 py-3 text-sm text-[#374151]">{s.rank_emoji} {s.rank_name}</td>
+                        <td className="px-5 py-3">
+                          <select
+                            value={`${s.rank_order}|${s.rank_name}|${s.rank_emoji}`}
+                            disabled={savingStoreManagerRankId === s.id}
+                            onChange={async (e) => {
+                              const parts = e.target.value.split('|')
+                              const newOrder = Number(parts[0])
+                              const newName = parts[1]
+                              const newEmoji = parts[2]
+                              setSavingStoreManagerRankId(s.id)
+                              try {
+                                const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: s.id, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder }),
+                                })
+                                if (res.ok) {
+                                  setStoreManagerStaff((prev) =>
+                                    prev.map((x) => x.id === s.id ? { ...x, rank_name: newName, rank_emoji: newEmoji, rank_order: newOrder } : x)
+                                  )
+                                  setStoreManagerRankSavedId(s.id)
+                                  setTimeout(() => setStoreManagerRankSavedId((prev) => prev === s.id ? null : prev), 2000)
+                                } else {
+                                  alert('บันทึกไม่สำเร็จ')
+                                }
+                              } catch { alert('เกิดข้อผิดพลาด') }
+                              finally { setSavingStoreManagerRankId(null) }
+                            }}
+                            className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm bg-white disabled:opacity-60"
+                          >
+                            <option value="1|Junior Store Manager|🥉">🥉 Junior Store Manager</option>
+                            <option value="2|Store Manager|🥈">🥈 Store Manager</option>
+                            <option value="3|Senior Store Manager|🥇">🥇 Senior Store Manager</option>
+                            <option value="4|Expert Store Manager|🏅">🏅 Expert Store Manager</option>
+                            <option value="5|Master Store Manager|🏆">🏆 Master Store Manager</option>
+                            <option value="6|Elite Store Manager|💠">💠 Elite Store Manager</option>
+                            <option value="7|Legend Store Manager|💎">💎 Legend Store Manager</option>
+                            <option value="8|Grandmaster Store Manager|👑">👑 Grandmaster Store Manager</option>
+                          </select>
+                        </td>
+                        <td className="px-5 py-3 text-right w-32">
+                          <button
+                            disabled={savingHeadId === s.id}
+                            onClick={() => toggleHead(s, setStoreManagerStaff)}
+                            title={s.is_head ? 'ถอด Head' : 'ตั้งเป็น Head'}
+                            className={`text-lg mr-2 disabled:opacity-40 transition-opacity ${s.is_head ? 'opacity-100' : 'opacity-20 hover:opacity-60'}`}
+                          >⚜️</button>
+                          {savingStoreManagerRankId === s.id && <span className="text-xs text-gray-400">กำลังบันทึก...</span>}
+                          {storeManagerRankSavedId === s.id && <span className="text-xs text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>}
+                          <button
+                            disabled={deletingStaffId === s.id}
+                            onClick={() => deleteStaff(s, setStoreManagerStaff)}
                             title="ลบพนักงานนี้"
                             className="text-[#DC2626] text-sm opacity-100 transition-opacity disabled:opacity-20 ml-2"
                           >🗑️</button>
