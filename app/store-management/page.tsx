@@ -14,28 +14,27 @@ interface SystemLink {
   system_password: string
 }
 
+const EMPTY_LINK: SystemLink = { url: '', system_id: '', system_password: '' }
+
 const DEFAULT_LINKS: Record<string, SystemLink> = {
-  store_bandai: {
-    url: 'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home',
-    system_id: '',
-    system_password: '',
-  },
-  store_pokemon: {
-    url: 'https://event.asia.pokemon-card.com/login/th',
-    system_id: '',
-    system_password: '',
-  },
-  store_liftbound: {
-    url: 'https://www.carde.io/',
-    system_id: '',
-    system_password: '',
-  },
+  store_bandai: { url: 'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', system_id: '', system_password: '' },
+  store_pokemon: { url: 'https://event.asia.pokemon-card.com/login/th', system_id: '', system_password: '' },
+  store_liftbound: { url: 'https://www.carde.io/', system_id: '', system_password: '' },
+  gap7card_bandai: { url: '', system_id: '', system_password: '' },
+  gap7card_pokemon: { url: '', system_id: '', system_password: '' },
+  gap7card_liftbound: { url: '', system_id: '', system_password: '' },
+  catramen_bandai: { url: '', system_id: '', system_password: '' },
+  catramen_pokemon: { url: '', system_id: '', system_password: '' },
+  catramen_liftbound: { url: '', system_id: '', system_password: '' },
+  ninjabear_bandai: { url: '', system_id: '', system_password: '' },
+  ninjabear_pokemon: { url: '', system_id: '', system_password: '' },
+  ninjabear_liftbound: { url: '', system_id: '', system_password: '' },
 }
 
 const SYSTEMS = [
-  { key: 'store_bandai', emoji: '🎮', label: 'Bandai TCG+' },
-  { key: 'store_pokemon', emoji: '🎴', label: 'Pokemon' },
-  { key: 'store_liftbound', emoji: '⚡', label: 'Liftbound & Lorcana' },
+  { key: 'store_bandai', credBase: 'bandai', emoji: '🎮', label: 'Bandai TCG+' },
+  { key: 'store_pokemon', credBase: 'pokemon', emoji: '🎴', label: 'Pokemon' },
+  { key: 'store_liftbound', credBase: 'liftbound', emoji: '⚡', label: 'Liftbound & Lorcana' },
 ] as const
 
 export default function StoreManagementPage() {
@@ -104,11 +103,13 @@ export default function StoreManagementPage() {
             <p className="text-sm font-bold text-[#374151] mb-3">เข้าระบบ</p>
             <div className="flex flex-col gap-3">
               {SYSTEMS.map((sys) => {
-                const info = links[sys.key]
+                const urlInfo = links[sys.key] ?? EMPTY_LINK
+                const credKey = `${selectedStore}_${sys.credBase}`
+                const credInfo = links[credKey] ?? EMPTY_LINK
                 return (
                   <div key={sys.key}>
                     <a
-                      href={info.url}
+                      href={urlInfo.url || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 bg-[#F5F6F8] hover:bg-[#1E3A5F]/10 rounded-xl px-4 py-3 transition-colors"
@@ -122,12 +123,12 @@ export default function StoreManagementPage() {
                     <div className="mt-1 bg-[#1E3A5F]/5 rounded-xl px-3 py-2 flex flex-col gap-1.5">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-10 shrink-0">ID</span>
-                        {info.system_id ? (
+                        {credInfo.system_id ? (
                           <>
-                            <span className="text-xs font-mono text-[#374151] flex-1 break-all">{info.system_id}</span>
+                            <span className="text-xs font-mono text-[#374151] flex-1 break-all">{credInfo.system_id}</span>
                             <button
                               type="button"
-                              onClick={() => navigator.clipboard.writeText(info.system_id)}
+                              onClick={() => navigator.clipboard.writeText(credInfo.system_id)}
                               className="text-[10px] text-gray-400 hover:text-[#1E3A5F] shrink-0 px-1.5 py-0.5 border border-gray-200 rounded"
                             >
                               คัดลอก
@@ -139,21 +140,21 @@ export default function StoreManagementPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-400 w-10 shrink-0">รหัส</span>
-                        {info.system_password ? (
+                        {credInfo.system_password ? (
                           <>
                             <span className="text-xs font-mono text-[#374151] flex-1 break-all">
-                              {showPassword[sys.key] ? info.system_password : '••••••••'}
+                              {showPassword[credKey] ? credInfo.system_password : '••••••••'}
                             </span>
                             <button
                               type="button"
-                              onClick={() => setShowPassword((p) => ({ ...p, [sys.key]: !p[sys.key] }))}
+                              onClick={() => setShowPassword((p) => ({ ...p, [credKey]: !p[credKey] }))}
                               className="text-[10px] text-gray-400 hover:text-[#1E3A5F] shrink-0 px-1.5 py-0.5 border border-gray-200 rounded"
                             >
-                              {showPassword[sys.key] ? 'ซ่อน' : 'ดู'}
+                              {showPassword[credKey] ? 'ซ่อน' : 'ดู'}
                             </button>
                             <button
                               type="button"
-                              onClick={() => navigator.clipboard.writeText(info.system_password)}
+                              onClick={() => navigator.clipboard.writeText(credInfo.system_password)}
                               className="text-[10px] text-gray-400 hover:text-[#1E3A5F] shrink-0 px-1.5 py-0.5 border border-gray-200 rounded"
                             >
                               คัดลอก

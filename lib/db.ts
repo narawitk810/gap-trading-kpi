@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 23
+const SCHEMA_VERSION = 24
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -468,6 +468,21 @@ export async function ensureSchema(): Promise<void> {
   await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('store_liftbound', 'https://www.carde.io/', 'Liftbound & Lorcana', '')`)
   try { await db.execute(`ALTER TABLE system_links ADD COLUMN system_id TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE system_links ADD COLUMN system_password TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+
+  const STORE_CRED_ROWS: [string, string, string][] = [
+    ['gap7card_bandai',     'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', 'gap7card – Bandai TCG+'],
+    ['gap7card_pokemon',    'https://event.asia.pokemon-card.com/login/th',                       'gap7card – Pokemon'],
+    ['gap7card_liftbound',  'https://www.carde.io/',                                              'gap7card – Liftbound & Lorcana'],
+    ['catramen_bandai',     'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', 'catramen – Bandai TCG+'],
+    ['catramen_pokemon',    'https://event.asia.pokemon-card.com/login/th',                       'catramen – Pokemon'],
+    ['catramen_liftbound',  'https://www.carde.io/',                                              'catramen – Liftbound & Lorcana'],
+    ['ninjabear_bandai',    'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', 'ninjabear – Bandai TCG+'],
+    ['ninjabear_pokemon',   'https://event.asia.pokemon-card.com/login/th',                       'ninjabear – Pokemon'],
+    ['ninjabear_liftbound', 'https://www.carde.io/',                                              'ninjabear – Liftbound & Lorcana'],
+  ]
+  for (const [key, url, label] of STORE_CRED_ROWS) {
+    await db.execute({ sql: `INSERT OR IGNORE INTO system_links (key, url, label, system_id, system_password, updated_at) VALUES (?, ?, ?, '', '', '')`, args: [key, url, label] })
+  }
 
   g.dbVersion = SCHEMA_VERSION
 }

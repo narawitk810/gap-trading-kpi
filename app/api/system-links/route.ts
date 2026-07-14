@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb, ensureSchema } from '@/lib/db'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
-const VALID_KEYS = ['store_bandai', 'store_pokemon', 'store_liftbound']
+const VALID_KEYS = [
+  'store_bandai', 'store_pokemon', 'store_liftbound',
+  'gap7card_bandai', 'gap7card_pokemon', 'gap7card_liftbound',
+  'catramen_bandai', 'catramen_pokemon', 'catramen_liftbound',
+  'ninjabear_bandai', 'ninjabear_pokemon', 'ninjabear_liftbound',
+]
 
 export async function GET() {
   await ensureSchema()

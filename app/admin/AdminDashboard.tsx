@@ -3022,54 +3022,104 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {sysLinks.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm overflow-hidden mt-4">
-              <div className="px-5 py-4 border-b border-[#E2E8F0]">
-                <h2 className="font-bold text-[#1E3A5F] text-base">ลิ้งระบบหน้าร้าน</h2>
-                <p className="text-xs text-gray-400 mt-0.5">แก้ไข URL / ID / Password ของแต่ละระบบ</p>
-              </div>
-              <div className="px-5 py-4 flex flex-col gap-4">
-                {sysLinks.map((link) => (
-                  <div key={link.key} className="border border-[#E2E8F0] rounded-xl p-3">
-                    <p className="text-xs font-bold text-[#374151] mb-2">{link.label}</p>
-                    {(
-                      [
-                        { field: 'url', label: 'URL' },
-                        { field: 'system_id', label: 'ID' },
-                        { field: 'system_password', label: 'Password' },
-                      ] as const
-                    ).map((f) => (
-                      <div key={f.field} className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[11px] text-gray-400 w-16 shrink-0">{f.label}</span>
-                        <input
-                          type="text"
-                          value={sysLinksEdit[`${link.key}_${f.field}`] ?? ''}
-                          onChange={(e) => setSysLinksEdit((prev) => ({ ...prev, [`${link.key}_${f.field}`]: e.target.value }))}
-                          className="flex-1 text-xs border border-[#E2E8F0] rounded-lg px-2 py-1.5 focus:border-[#1E3A5F] outline-none min-w-0"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            fetch(`/api/system-links?key=${ADMIN_KEY}`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ key: link.key, [f.field]: sysLinksEdit[`${link.key}_${f.field}`] ?? '' }),
-                            })
-                              .then((r) => r.json())
-                              .then((d) => { if (d.ok) { alert('บันทึกแล้ว') } else { alert(d.error || 'เกิดข้อผิดพลาด') } })
-                              .catch(() => alert('เกิดข้อผิดพลาด'))
-                          }
-                          className="px-2 py-1.5 bg-[#1E3A5F] text-white text-[11px] rounded-lg shrink-0 font-semibold"
-                        >
-                          บันทึก
-                        </button>
-                      </div>
-                    ))}
+          {sysLinks.length > 0 && (() => {
+            const URL_KEYS = ['store_bandai', 'store_pokemon', 'store_liftbound']
+            const urlLinks = sysLinks.filter((l) => URL_KEYS.includes(l.key))
+            const STORE_GROUPS = [
+              { storeId: 'gap7card', label: 'gap7card' },
+              { storeId: 'catramen', label: 'catramen card&boardgame cafe' },
+              { storeId: 'ninjabear', label: 'ninjabear card shop' },
+            ]
+            const SYS_BASES: { base: string; label: string }[] = [
+              { base: 'bandai', label: 'Bandai TCG+' },
+              { base: 'pokemon', label: 'Pokemon' },
+              { base: 'liftbound', label: 'Liftbound & Lorcana' },
+            ]
+            const saveSysField = (key: string, field: string, value: string) =>
+              fetch(`/api/system-links?key=${ADMIN_KEY}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key, [field]: value }),
+              })
+                .then((r) => r.json())
+                .then((d) => { if (d.ok) { alert('บันทึกแล้ว') } else { alert(d.error || 'เกิดข้อผิดพลาด') } })
+                .catch(() => alert('เกิดข้อผิดพลาด'))
+            return (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden mt-4">
+                <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                  <h2 className="font-bold text-[#1E3A5F] text-base">ลิ้งระบบหน้าร้าน</h2>
+                </div>
+                <div className="px-5 py-4 flex flex-col gap-6">
+                  {/* ส่วน URL (shared per system) */}
+                  <div>
+                    <p className="text-xs font-bold text-[#374151] mb-3">URL ระบบ</p>
+                    <div className="flex flex-col gap-3">
+                      {urlLinks.map((link) => (
+                        <div key={link.key} className="border border-[#E2E8F0] rounded-xl p-3">
+                          <p className="text-[11px] font-semibold text-[#374151] mb-2">{link.label}</p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={sysLinksEdit[`${link.key}_url`] ?? ''}
+                              onChange={(e) => setSysLinksEdit((prev) => ({ ...prev, [`${link.key}_url`]: e.target.value }))}
+                              className="flex-1 text-xs border border-[#E2E8F0] rounded-lg px-2 py-1.5 focus:border-[#1E3A5F] outline-none min-w-0"
+                              placeholder="https://..."
+                            />
+                            <button
+                              type="button"
+                              onClick={() => saveSysField(link.key, 'url', sysLinksEdit[`${link.key}_url`] ?? '')}
+                              className="px-2 py-1.5 bg-[#1E3A5F] text-white text-[11px] rounded-lg shrink-0 font-semibold"
+                            >
+                              บันทึก
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                  {/* ส่วน Credentials แยกตามร้าน */}
+                  <div>
+                    <p className="text-xs font-bold text-[#374151] mb-3">รหัสเข้าระบบ (แยกตามร้าน)</p>
+                    <div className="flex flex-col gap-4">
+                      {STORE_GROUPS.map((store) => (
+                        <div key={store.storeId} className="border border-[#E2E8F0] rounded-xl p-3">
+                          <p className="text-xs font-bold text-[#1E3A5F] mb-3">🏪 {store.label}</p>
+                          <div className="flex flex-col gap-3">
+                            {SYS_BASES.map((sys) => {
+                              const credKey = `${store.storeId}_${sys.base}`
+                              return (
+                                <div key={credKey}>
+                                  <p className="text-[11px] text-gray-500 mb-1.5">{sys.label}</p>
+                                  {(['system_id', 'system_password'] as const).map((field) => (
+                                    <div key={field} className="flex items-center gap-2 mb-1.5">
+                                      <span className="text-[11px] text-gray-400 w-16 shrink-0">{field === 'system_id' ? 'ID' : 'Password'}</span>
+                                      <input
+                                        type="text"
+                                        value={sysLinksEdit[`${credKey}_${field}`] ?? ''}
+                                        onChange={(e) => setSysLinksEdit((prev) => ({ ...prev, [`${credKey}_${field}`]: e.target.value }))}
+                                        className="flex-1 text-xs border border-[#E2E8F0] rounded-lg px-2 py-1.5 focus:border-[#1E3A5F] outline-none min-w-0"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => saveSysField(credKey, field, sysLinksEdit[`${credKey}_${field}`] ?? '')}
+                                        className="px-2 py-1.5 bg-[#1E3A5F] text-white text-[11px] rounded-lg shrink-0 font-semibold"
+                                      >
+                                        บันทึก
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
       )}
 
