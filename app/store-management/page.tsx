@@ -37,10 +37,58 @@ const SYSTEMS = [
   { key: 'store_liftbound', credBase: 'liftbound', emoji: '⚡', label: 'Liftbound & Lorcana' },
 ] as const
 
+const TOURNAMENT_SCHEDULE = [
+  { days: 'จันทร์ – อังคาร', dayNums: [1, 2], storeId: 'catramen', label: 'catramen card&boardgame cafe' },
+  { days: 'พุธ – พฤหัส',     dayNums: [3, 4], storeId: 'ninjabear', label: 'ninjabear card shop' },
+  { days: 'ศุกร์ – เสาร์',   dayNums: [5, 6], storeId: 'gap7card',  label: 'gap7card' },
+]
+
+const CHECKLIST_ITEMS = [
+  'ลงทะเบียนผู้เล่นในระบบ',
+  'ประกาศในไลน์กลุ่ม',
+  'ถ่ายรูปและบันทึกผลการแข่ง',
+]
+
+function getIsoWeekKey(): string {
+  const now = new Date()
+  const jan4 = new Date(now.getFullYear(), 0, 4)
+  const dayOfYear = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000)
+  const weekNum = Math.ceil((dayOfYear + jan4.getDay()) / 7)
+  return `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`
+}
+
 export default function StoreManagementPage() {
   const [selectedStore, setSelectedStore] = useState('')
   const [links, setLinks] = useState<Record<string, SystemLink>>(DEFAULT_LINKS)
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({})
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({})
+  const todayDay = new Date().getDay()
+
+  useEffect(() => {
+    const weekKey = getIsoWeekKey()
+    const saved: Record<string, boolean> = {}
+    TOURNAMENT_SCHEDULE.forEach((slot) => {
+      CHECKLIST_ITEMS.forEach((_, idx) => {
+        const key = `tournament_check_${weekKey}_${slot.storeId}_${idx}`
+        try {
+          if (localStorage.getItem(key) === '1') saved[`${slot.storeId}_${idx}`] = true
+        } catch { /* */ }
+      })
+    })
+    setCheckedItems(saved)
+  }, [])
+
+  function toggleCheck(storeId: string, idx: number) {
+    const itemKey = `${storeId}_${idx}`
+    const next = !checkedItems[itemKey]
+    setCheckedItems((prev) => ({ ...prev, [itemKey]: next }))
+    try {
+      const weekKey = getIsoWeekKey()
+      const lsKey = `tournament_check_${weekKey}_${storeId}_${idx}`
+      if (next) localStorage.setItem(lsKey, '1')
+      else localStorage.removeItem(lsKey)
+    } catch { /* */ }
+  }
 
   useEffect(() => {
     const updated: Record<string, SystemLink> = { ...DEFAULT_LINKS }
@@ -99,6 +147,65 @@ export default function StoreManagementPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 flex flex-col gap-4">
+
+        {/* ตารางแข่งประจำสัปดาห์ */}
+        <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
+          <p className="text-sm font-bold text-[#374151] mb-3">📅 ตารางแข่งประจำสัปดาห์</p>
+          <div className="flex flex-col gap-3">
+            {TOURNAMENT_SCHEDULE.map((slot) => {
+              const isToday = slot.dayNums.includes(todayDay)
+              const doneCount = CHECKLIST_ITEMS.filter((_, i) => checkedItems[`${slot.storeId}_${i}`]).length
+              return (
+                <div
+                  key={slot.storeId}
+                  className={`rounded-xl border p-3 transition-colors ${
+                    isToday ? 'border-[#1E3A5F] bg-[#1E3A5F]/5' : 'border-[#E2E8F0] bg-[#F5F6F8]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <span className="text-sm font-bold text-[#1E3A5F]">{slot.days}</span>
+                      <span className="ml-2 text-xs text-gray-400">{slot.label}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {isToday && (
+                        <span className="text-[10px] font-semibold bg-[#1E3A5F] text-white px-2 py-0.5 rounded-full">
+                          วันนี้
+                        </span>
+                      )}
+                      <span className="text-[10px] text-gray-400">
+                        {doneCount}/{CHECKLIST_ITEMS.length}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {CHECKLIST_ITEMS.map((item, idx) => {
+                      const checked = !!checkedItems[`${slot.storeId}_${idx}`]
+                      return (
+                        <label key={idx} className="flex items-center gap-2.5 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleCheck(slot.storeId, idx)}
+                            className="w-4 h-4 rounded accent-[#1E3A5F] shrink-0"
+                          />
+                          <span className={`text-sm transition-colors ${
+                            checked ? 'line-through text-gray-400' : 'text-[#374151]'
+                          }`}>
+                            {item}
+                          </span>
+                          {checked && <span className="text-[#16A34A] text-xs shrink-0">✓</span>}
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* เลือกร้านค้า */}
         <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
           <p className="text-sm font-bold text-[#374151] mb-3">เลือกร้านค้า</p>
           <div className="flex flex-col gap-2">
@@ -191,12 +298,16 @@ export default function StoreManagementPage() {
               })}
             </div>
           </div>
+        )}
 
+        {selectedStore && (
           <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
             <p className="text-sm font-bold text-[#374151] mb-3">จัดแข่งนอกระบบ</p>
             <p className="text-xs text-gray-400">ยังไม่มีข้อมูล — อยู่ระหว่างเพิ่มเติม</p>
           </div>
+        )}
 
+        {selectedStore && (
           <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
             <p className="text-sm font-bold text-[#374151] mb-3">จัดแข่งผ่าน app</p>
             <p className="text-xs text-gray-400">ยังไม่มีข้อมูล — อยู่ระหว่างเพิ่มเติม</p>
