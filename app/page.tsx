@@ -245,6 +245,7 @@ const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 
 interface ChannelEntry {
   liveStaffName: string
+  shift: '' | 'เช้า' | 'บ่าย'
   liveHours: string
   adsCost: string
   grossRevenue: string
@@ -268,6 +269,7 @@ const MARKETING_METRICS: { field: keyof ChannelEntry; label: string; unit: strin
 
 const emptyChannelEntry: ChannelEntry = {
   liveStaffName: '',
+  shift: '',
   liveHours: '',
   adsCost: '',
   grossRevenue: '',
@@ -1505,38 +1507,68 @@ export default function Home() {
           </InputField>
           {formData.department === 'การตลาด' && (
             <InputField label="ช่องที่ ROI ต่ำกว่า 15" required error={errors.channelName}>
+              {/* ช่องที่เลือกแล้ว + ปุ่มกะ */}
+              {formData.channelName.length > 0 && (
+                <div className="space-y-1.5 mb-3">
+                  {formData.channelName.map((ch) => {
+                    const shift = channelEntries[ch]?.shift || ''
+                    return (
+                      <div key={ch} className="flex items-center gap-2 bg-[#1E3A5F]/5 rounded-xl px-3 py-2">
+                        <span className="text-xs font-semibold text-[#1E3A5F] flex-1 min-w-0 truncate">✓ {ch}</span>
+                        <div className="flex gap-1 shrink-0">
+                          {(['เช้า', 'บ่าย'] as const).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setChannelEntries((prev) => ({
+                                ...prev,
+                                [ch]: { ...(prev[ch] || emptyChannelEntry), shift: s },
+                              }))}
+                              className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                                shift === s
+                                  ? s === 'เช้า' ? 'bg-amber-400 text-white' : 'bg-indigo-500 text-white'
+                                  : 'bg-white border border-[#E2E8F0] text-gray-400'
+                              }`}
+                            >
+                              {s === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => {
+                              const next = prev.channelName.filter((c) => c !== ch)
+                              setActiveChannelTab((t) => t === ch ? (next[0] || '') : t)
+                              return { ...prev, channelName: next }
+                            })
+                            setChannelEntries((prev) => { const n = { ...prev }; delete n[ch]; return n })
+                            setErrors((prev) => ({ ...prev, channelName: '' }))
+                          }}
+                          className="text-gray-300 hover:text-red-400 text-base ml-1 shrink-0 leading-none"
+                        >×</button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {/* ปุ่มเลือกช่องที่ยังไม่ได้เลือก */}
               <div className="flex flex-wrap gap-2 pt-0.5">
-                {CHANNEL_LIST.map((ch) => {
-                  const selected = formData.channelName.includes(ch)
-                  return (
-                    <button
-                      key={ch}
-                      type="button"
-                      onClick={() => {
-                        if (selected) {
-                          setFormData((prev) => {
-                            const next = prev.channelName.filter((c) => c !== ch)
-                            setActiveChannelTab((t) => t === ch ? (next[0] || '') : t)
-                            return { ...prev, channelName: next }
-                          })
-                          setChannelEntries((prev) => { const n = { ...prev }; delete n[ch]; return n })
-                        } else {
-                          setFormData((prev) => ({ ...prev, channelName: [...prev.channelName, ch] }))
-                          setChannelEntries((prev) => ({ ...prev, [ch]: { ...emptyChannelEntry } }))
-                          setActiveChannelTab((t) => t || ch)
-                        }
-                        setErrors((prev) => ({ ...prev, channelName: '' }))
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                        selected
-                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
-                      }`}
-                    >
-                      {ch}
-                    </button>
-                  )
-                })}
+                {CHANNEL_LIST.filter((ch) => !formData.channelName.includes(ch)).map((ch) => (
+                  <button
+                    key={ch}
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, channelName: [...prev.channelName, ch] }))
+                      setChannelEntries((prev) => ({ ...prev, [ch]: { ...emptyChannelEntry } }))
+                      setActiveChannelTab((t) => t || ch)
+                      setErrors((prev) => ({ ...prev, channelName: '' }))
+                    }}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F] transition-colors"
+                  >
+                    {ch}
+                  </button>
+                ))}
               </div>
             </InputField>
           )}
@@ -1552,6 +1584,7 @@ export default function Home() {
                       type="button"
                       onClick={() => {
                         setFormData((prev) => ({ ...prev, bestRoiChannel: selected ? '' : ch }))
+                        if (selected) setBestRoiEntry((prev) => ({ ...prev, shift: '' }))
                         setErrors((prev) => ({ ...prev, bestRoiChannel: '' }))
                       }}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
@@ -1565,6 +1598,25 @@ export default function Home() {
                   )
                 })}
               </div>
+              {formData.bestRoiChannel && (
+                <div className="flex items-center gap-2 mt-2.5 pl-1">
+                  <span className="text-xs text-gray-500 shrink-0">กะของ {formData.bestRoiChannel}:</span>
+                  {(['เช้า', 'บ่าย'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setBestRoiEntry((prev) => ({ ...prev, shift: s }))}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                        bestRoiEntry.shift === s
+                          ? s === 'เช้า' ? 'bg-amber-400 text-white' : 'bg-indigo-500 text-white'
+                          : 'bg-white border border-[#E2E8F0] text-gray-400'
+                      }`}
+                    >
+                      {s === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </InputField>
           )}
           {['ไลฟ์สด', 'Sales Admin', 'Creative'].includes(formData.department) && (
@@ -2053,6 +2105,11 @@ export default function Home() {
                       <tr className="bg-green-50 border-b border-green-100">
                         <td className="sticky left-0 z-10 bg-green-50 px-3 py-2 font-semibold text-green-700 whitespace-nowrap" style={{ minWidth: 80 }}>
                           ⭐ {formData.bestRoiChannel}
+                          {bestRoiEntry.shift && (
+                            <span className={`block text-[10px] font-semibold mt-0.5 ${bestRoiEntry.shift === 'เช้า' ? 'text-amber-500' : 'text-indigo-500'}`}>
+                              {bestRoiEntry.shift === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                            </span>
+                          )}
                         </td>
                         {COLS.map(c => (
                           <td key={c.key} className="px-1 py-1">
@@ -2072,6 +2129,11 @@ export default function Home() {
                         <tr key={ch} className={`${bg} border-b border-[#E2E8F0]`}>
                           <td className={`sticky left-0 z-10 ${bg} px-3 py-2 font-medium text-[#374151] whitespace-nowrap`} style={{ minWidth: 80 }}>
                             {ch}
+                            {channelEntries[ch]?.shift && (
+                              <span className={`block text-[10px] font-semibold mt-0.5 ${channelEntries[ch].shift === 'เช้า' ? 'text-amber-500' : 'text-indigo-500'}`}>
+                                {channelEntries[ch].shift === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                              </span>
+                            )}
                           </td>
                           {COLS.map(c => (
                             <td key={c.key} className="px-1 py-1">
