@@ -433,7 +433,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -592,6 +592,20 @@ export default function AdminDashboard() {
   const [preorderImages, setPreorderImages] = useState<PreorderImgPair[]>([])
   const [preorderFileKey, setPreorderFileKey] = useState(0)
   const [preorderCompressing, setPreorderCompressing] = useState(false)
+
+  type TournamentEvent = { id: string; kpi_id: string; store_id: string; nickname: string; facebook_url: string; event_date: string; start_time: string; created_at: string }
+  const [tournamentEvents, setTournamentEvents] = useState<TournamentEvent[]>([])
+  const [loadingTournamentEvents, setLoadingTournamentEvents] = useState(false)
+
+  async function fetchTournamentEvents() {
+    setLoadingTournamentEvents(true)
+    try {
+      const res = await fetch('/api/tournament-events')
+      const data = await res.json()
+      setTournamentEvents(data.events || [])
+    } catch { /* */ }
+    finally { setLoadingTournamentEvents(false) }
+  }
 
   function parsePreorderImages(raw: string): PreorderImgPair[] {
     if (!raw) return []
@@ -1601,6 +1615,16 @@ export default function AdminDashboard() {
             }`}
           >
             รหัสจัดงานแข่ง
+          </button>
+          <button
+            onClick={() => { setActiveTab('tournament-schedule'); fetchTournamentEvents() }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'tournament-schedule'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            📅 ปฏิทินแข่ง
           </button>
         </div>
       </div>
@@ -5385,6 +5409,66 @@ export default function AdminDashboard() {
                 ))}
               </div>
             </div>
+          </div>
+        )
+      })()}
+
+      {/* Tournament Schedule Tab */}
+      {activeTab === 'tournament-schedule' && (() => {
+        const today = new Date().toLocaleDateString('sv-SE')
+        const storeLabel: Record<string, string> = { catramen: 'catramen card&boardgame cafe', ninjabear: 'ninjabear card shop', gap7card: 'gap7card' }
+        return (
+          <div className="max-w-4xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-[#1E3A5F]">ปฏิทินงานแข่งขัน</h2>
+              <button onClick={fetchTournamentEvents} disabled={loadingTournamentEvents} className="text-xs bg-[#1E3A5F] text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-60">
+                {loadingTournamentEvents ? 'กำลังโหลด...' : 'รีเฟรช'}
+              </button>
+            </div>
+            {loadingTournamentEvents ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : tournamentEvents.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีข้อมูลปฏิทินงานแข่ง</div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[600px]">
+                    <thead>
+                      <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold uppercase tracking-wider">
+                        <th className="text-left px-4 py-3">วันที่จัด</th>
+                        <th className="text-left px-4 py-3">เวลา</th>
+                        <th className="text-left px-4 py-3">ร้าน</th>
+                        <th className="text-left px-4 py-3">โดย</th>
+                        <th className="text-left px-4 py-3">ลิ้ง Facebook</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tournamentEvents.map((ev) => (
+                        <tr key={ev.id} className={`border-t border-[#E2E8F0] ${ev.event_date === today ? 'bg-[#1E3A5F]/5' : 'bg-white'}`}>
+                          <td className="px-4 py-3 font-semibold text-[#1E3A5F] whitespace-nowrap">
+                            {ev.event_date === today && <span className="mr-1.5 text-[10px] bg-[#1E3A5F] text-white px-1.5 py-0.5 rounded-full">วันนี้</span>}
+                            {ev.event_date}
+                          </td>
+                          <td className="px-4 py-3 text-[#374151]">{ev.start_time || '—'}</td>
+                          <td className="px-4 py-3 text-[#374151]">{storeLabel[ev.store_id] || ev.store_id}</td>
+                          <td className="px-4 py-3 text-gray-500">{ev.nickname}</td>
+                          <td className="px-4 py-3">
+                            {ev.facebook_url ? (
+                              <a href={ev.facebook_url} target="_blank" rel="noopener noreferrer" className="text-[#1E3A5F] text-xs underline truncate block max-w-[180px]">
+                                ดูโพส
+                              </a>
+                            ) : <span className="text-gray-300">—</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-2 border-t border-[#E2E8F0] text-xs text-gray-400">
+                  {tournamentEvents.length} รายการ
+                </div>
+              </div>
+            )}
           </div>
         )
       })()}

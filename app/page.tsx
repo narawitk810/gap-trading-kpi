@@ -389,6 +389,9 @@ export default function Home() {
   const [storeManagerStaff, setStoreManagerStaff] = useState<LiveStaffMember[]>([])
   const [storeManagerPickerOpen, setStoreManagerPickerOpen] = useState(true)
   const [loadingStoreManager, setLoadingStoreManager] = useState(false)
+  const [smFacebookUrl, setSmFacebookUrl] = useState('')
+  const [smEventDate, setSmEventDate] = useState('')
+  const [smStartTime, setSmStartTime] = useState('')
   useEffect(() => {
     if (formData.department !== 'ไลฟ์สด') return
     setPickerOpen(!formData.nickname)
@@ -591,7 +594,10 @@ export default function Home() {
   async function handleConfirm() {
     setPageState('submitting')
     const validTasks = formData.tasks.filter((t) => t.trim())
-    const extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelRows)
+    let extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelRows)
+    if (formData.department === 'ผู้จัดการหน้าร้าน' && smEventDate) {
+      extra_data = { facebook_url: smFacebookUrl, event_date: smEventDate, start_time: smStartTime }
+    }
     if (formData.department === 'การตลาด' && formData.bestRoiChannel && extra_data) {
       extra_data.best_roi = {
         channel: formData.bestRoiChannel,
@@ -794,6 +800,9 @@ export default function Home() {
                   setBestRoiEntry({ ...emptyBestRoiEntry })
                   setPickerOpen(true)
                   setCreativePickerOpen(true)
+                  setSmFacebookUrl('')
+                  setSmEventDate('')
+                  setSmStartTime('')
                   setErrors((prev) => ({ ...prev, department: '', nickname: '' }))
                   setCodeVerified(isCodeVerifiedLocally(dept))
                   setCodeInput('')
@@ -1794,6 +1803,53 @@ export default function Home() {
         </div>
 
         {/* ── Department-specific fields ── */}
+
+        {/* ผู้จัดการหน้าร้าน — โพสงานแข่ง Facebook */}
+        {formData.department === 'ผู้จัดการหน้าร้าน' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">
+              📢 โพสงานแข่ง Facebook
+              <span className="ml-2 text-xs font-normal text-gray-400">(ถ้ามี — ไม่บังคับ)</span>
+            </p>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">ลิ้งโพส Facebook</label>
+                <input
+                  type="url"
+                  value={smFacebookUrl}
+                  onChange={(e) => setSmFacebookUrl(e.target.value)}
+                  placeholder="https://www.facebook.com/..."
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">วันที่จัดงาน</label>
+                  <input
+                    type="date"
+                    value={smEventDate}
+                    onChange={(e) => setSmEventDate(e.target.value)}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">เวลาเริ่มแข่ง</label>
+                  <input
+                    type="time"
+                    value={smStartTime}
+                    onChange={(e) => setSmStartTime(e.target.value)}
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                  />
+                </div>
+              </div>
+              {smEventDate && (
+                <p className="text-[11px] text-[#1E3A5F] bg-[#1E3A5F]/5 rounded-lg px-3 py-1.5">
+                  ✓ ข้อมูลนี้จะบันทึกเป็นปฏิทินงานแข่งในระบบ Admin
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ระบบเบิกจ่าย — บัญชี / ธุรการ / บุคคล / การตลาด / Creative */}
         {['บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'การตลาด', 'Creative'].includes(formData.department) && (

@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 25
+const SCHEMA_VERSION = 26
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -500,6 +500,19 @@ export async function ensureSchema(): Promise<void> {
       await db.execute(`INSERT OR IGNORE INTO tournament_creds (store, system, updated_at) VALUES ('${store}', '${system}', '')`)
     }
   }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tournament_events (
+      id           TEXT PRIMARY KEY,
+      kpi_id       TEXT NOT NULL,
+      store_id     TEXT NOT NULL,
+      nickname     TEXT NOT NULL,
+      facebook_url TEXT NOT NULL DEFAULT '',
+      event_date   TEXT NOT NULL,
+      start_time   TEXT NOT NULL DEFAULT '',
+      created_at   TEXT NOT NULL
+    )
+  `)
 
   g.dbVersion = SCHEMA_VERSION
 }

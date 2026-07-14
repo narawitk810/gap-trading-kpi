@@ -110,5 +110,19 @@ export async function POST(request: NextRequest) {
 
   appendKPIRow(entry)
 
+  if (body.department === 'ผู้จัดการหน้าร้าน' && body.extra_data) {
+    const ed = body.extra_data as Record<string, string>
+    if (ed.event_date) {
+      try {
+        const dow = new Date(ed.event_date).getDay()
+        const storeId = [3, 4].includes(dow) ? 'ninjabear' : [5, 6].includes(dow) ? 'gap7card' : dow === 0 ? 'gap7card' : 'catramen'
+        await db.execute({
+          sql: `INSERT INTO tournament_events (id, kpi_id, store_id, nickname, facebook_url, event_date, start_time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [generateId(), id, storeId, entry.nickname, ed.facebook_url || '', ed.event_date, ed.start_time || '', now],
+        })
+      } catch (e) { console.error('tournament_events insert failed', e) }
+    }
+  }
+
   return NextResponse.json({ id }, { status: 201 })
 }
