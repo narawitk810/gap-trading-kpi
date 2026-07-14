@@ -2008,101 +2008,85 @@ export default function Home() {
           </div>
         )}
 
-        {/* การตลาด — ช่องที่ ROI สูงสุด metrics */}
-        {formData.department === 'การตลาด' && formData.bestRoiChannel && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3 border-l-4 border-[#16A34A]">
-            <p className="text-sm font-bold text-[#16A34A]">ช่องที่ ROI สูงสุด: {formData.bestRoiChannel}</p>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-[#374151] font-medium w-28 shrink-0">พนักงานไลฟ์</span>
-              <input
-                type="text"
-                placeholder="ชื่อพนักงาน"
-                value={bestRoiEntry.liveStaffName}
-                onChange={(e) => setBestRoiEntry((prev) => ({ ...prev, liveStaffName: e.target.value }))}
-                className={inputClass}
-              />
-            </div>
-            {MARKETING_METRICS.map(({ field, label, unit }) => (
-              <div key={field} className="flex items-center gap-3">
-                <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
-                <div className="relative w-36">
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={bestRoiEntry[field]}
-                    onChange={(e) => setBestRoiEntry((prev) => ({ ...prev, [field]: e.target.value }))}
-                    className={inputClass + ' pr-14'}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* การตลาด — tab-based metrics */}
-        {formData.department === 'การตลาด' && formData.channelName.length > 0 && (() => {
-          const currentTab = activeChannelTab || formData.channelName[0] || ''
-          const entry = channelEntries[currentTab] || emptyChannelEntry
-          const isFilled = (e: ChannelEntry) => Object.values(e).some((v) => v.trim())
-          const updateEntry = (field: keyof ChannelEntry, value: string) =>
-            setChannelEntries((prev) => ({ ...prev, [currentTab]: { ...(prev[currentTab] || emptyChannelEntry), [field]: value } }))
+        {/* การตลาด — ตาราง metrics (แถว=ช่อง, คอลัมน์=metrics) */}
+        {formData.department === 'การตลาด' && (formData.bestRoiChannel || formData.channelName.length > 0) && (() => {
+          const COLS: { key: keyof ChannelEntry; label: string; unit: string; type: string }[] = [
+            { key: 'liveStaffName',    label: 'พนักงาน', unit: '',     type: 'text'   },
+            { key: 'adsCost',          label: 'ads',      unit: 'บาท',  type: 'number' },
+            { key: 'grossRevenue',     label: 'รายได้',   unit: 'บาท',  type: 'number' },
+            { key: 'roi',              label: 'ROI',      unit: 'บาท',  type: 'number' },
+            { key: 'costPerOrder',     label: '/order',   unit: 'บาท',  type: 'number' },
+            { key: 'costPer10SecView', label: '/10วิ',   unit: 'บาท',  type: 'number' },
+            { key: 'avgViewDuration',  label: 'ดูเฉลี่ย', unit: 'วิ',   type: 'number' },
+            { key: 'newFollowers',     label: 'ติดตาม',  unit: 'user', type: 'number' },
+            { key: 'liveHours',        label: 'ชม.',      unit: 'ชม.',  type: 'number' },
+          ]
+          const otherChannels = formData.channelName.filter(ch => ch !== formData.bestRoiChannel)
+          const renderCell = (value: string, onChange: (v: string) => void, type: string) => (
+            <input
+              type={type}
+              min={type === 'number' ? '0' : undefined}
+              value={value}
+              onChange={e => onChange(e.target.value)}
+              className="w-full text-xs text-center bg-transparent outline-none border-b border-gray-200 focus:border-[#1E3A5F] py-1.5 placeholder-gray-300"
+              placeholder={type === 'number' ? '0' : '-'}
+            />
+          )
           return (
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-              {/* Tab bar */}
-              <div className="flex overflow-x-auto gap-1 p-3 border-b border-[#E2E8F0] scrollbar-none">
-                {formData.channelName.map((ch) => {
-                  const filled = isFilled(channelEntries[ch] || emptyChannelEntry)
-                  const isActive = ch === currentTab
-                  return (
-                    <button
-                      key={ch}
-                      type="button"
-                      onClick={() => setActiveChannelTab(ch)}
-                      className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap flex items-center gap-1 ${
-                        isActive
-                          ? 'bg-[#1E3A5F] text-white'
-                          : filled
-                          ? 'bg-[#1E3A5F]/10 text-[#1E3A5F]'
-                          : 'bg-[#F5F6F8] text-gray-400'
-                      }`}
-                    >
-                      {ch}
-                      {filled && !isActive && <span className="text-[#16A34A]">✓</span>}
-                    </button>
-                  )
-                })}
-              </div>
-              {/* Form สำหรับ tab ที่ active */}
-              <div className="p-4 space-y-3">
-                <p className="text-xs text-gray-400">{formData.channelName.indexOf(currentTab) + 1}/{formData.channelName.length} ช่อง</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-[#374151] font-medium w-28 shrink-0">พนักงานไลฟ์</span>
-                  <input
-                    type="text"
-                    placeholder="ชื่อพนักงาน"
-                    value={entry.liveStaffName}
-                    onChange={(e) => updateEntry('liveStaffName', e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                {MARKETING_METRICS.map(({ field, label, unit }) => (
-                  <div key={field} className="flex items-center gap-3">
-                    <span className="text-sm text-[#374151] font-medium flex-1">{label}</span>
-                    <div className="relative w-36">
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={entry[field]}
-                        onChange={(e) => updateEntry(field, e.target.value)}
-                        className={inputClass + ' pr-14'}
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">{unit}</span>
-                    </div>
-                  </div>
-                ))}
+              <p className="text-sm font-bold text-[#1E3A5F] px-4 pt-4 pb-2">📊 ข้อมูล metrics แต่ละช่อง</p>
+              <div className="overflow-x-auto">
+                <table className="text-xs border-collapse" style={{ width: 'max-content', minWidth: '100%' }}>
+                  <thead>
+                    <tr className="border-b border-[#E2E8F0] bg-[#F5F6F8]">
+                      <th className="sticky left-0 z-10 bg-[#F5F6F8] px-3 py-2 text-left font-semibold text-[#374151] whitespace-nowrap" style={{ minWidth: 80 }}>ช่อง</th>
+                      {COLS.map(c => (
+                        <th key={c.key} className="px-2 py-2 text-center font-semibold text-[#374151] whitespace-nowrap" style={{ minWidth: c.key === 'liveStaffName' ? 72 : 60 }}>
+                          {c.label}
+                          {c.unit && <span className="block text-[10px] font-normal text-gray-400">{c.unit}</span>}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.bestRoiChannel && (
+                      <tr className="bg-green-50 border-b border-green-100">
+                        <td className="sticky left-0 z-10 bg-green-50 px-3 py-2 font-semibold text-green-700 whitespace-nowrap" style={{ minWidth: 80 }}>
+                          ⭐ {formData.bestRoiChannel}
+                        </td>
+                        {COLS.map(c => (
+                          <td key={c.key} className="px-1 py-1">
+                            {renderCell(
+                              bestRoiEntry[c.key],
+                              v => setBestRoiEntry(prev => ({ ...prev, [c.key]: v })),
+                              c.type
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    )}
+                    {otherChannels.map((ch, idx) => {
+                      const entry = channelEntries[ch] || emptyChannelEntry
+                      const bg = idx % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/60'
+                      return (
+                        <tr key={ch} className={`${bg} border-b border-[#E2E8F0]`}>
+                          <td className={`sticky left-0 z-10 ${bg} px-3 py-2 font-medium text-[#374151] whitespace-nowrap`} style={{ minWidth: 80 }}>
+                            {ch}
+                          </td>
+                          {COLS.map(c => (
+                            <td key={c.key} className="px-1 py-1">
+                              {renderCell(
+                                entry[c.key],
+                                v => setChannelEntries(prev => ({ ...prev, [ch]: { ...(prev[ch] || emptyChannelEntry), [c.key]: v } })),
+                                c.type
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )
