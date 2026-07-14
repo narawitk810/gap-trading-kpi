@@ -243,9 +243,11 @@ const TCG_DEPTS = ['ผู้จัดการหน้าร้าน']
 const PROMO_THRESHOLD_DEPTS = ['การตลาด']
 const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 
-interface ChannelEntry {
+interface ChannelRow {
+  id: string
+  channel: string
+  shift: 'เช้า' | 'บ่าย'
   liveStaffName: string
-  shift: '' | 'เช้า' | 'บ่าย'
   liveHours: string
   adsCost: string
   grossRevenue: string
@@ -256,20 +258,22 @@ interface ChannelEntry {
   newFollowers: string
 }
 
-const MARKETING_METRICS: { field: keyof ChannelEntry; label: string; unit: string }[] = [
-  { field: 'adsCost', label: 'ต้นทุน ads', unit: 'บาท' },
-  { field: 'grossRevenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
-  { field: 'roi', label: 'ROI', unit: 'บาท' },
-  { field: 'costPerOrder', label: 'ต้นทุนต่อคำสั่งซื้อ', unit: 'บาท' },
-  { field: 'costPer10SecView', label: 'ค่าใช้จ่ายต่อการดูไลฟ์ 10 วิ', unit: 'บาท' },
-  { field: 'avgViewDuration', label: 'ระยะการดู live โดยเฉลี่ย', unit: 'วินาที' },
-  { field: 'newFollowers', label: 'ยอดติดตามจาก live', unit: 'user' },
-  { field: 'liveHours', label: 'ชั่วโมงไลฟ์', unit: 'ชม.' },
-]
+interface BestRoiEntry {
+  shift: '' | 'เช้า' | 'บ่าย'
+  liveStaffName: string
+  liveHours: string
+  adsCost: string
+  grossRevenue: string
+  roi: string
+  costPerOrder: string
+  costPer10SecView: string
+  avgViewDuration: string
+  newFollowers: string
+}
 
-const emptyChannelEntry: ChannelEntry = {
-  liveStaffName: '',
+const emptyBestRoiEntry: BestRoiEntry = {
   shift: '',
+  liveStaffName: '',
   liveHours: '',
   adsCost: '',
   grossRevenue: '',
@@ -280,7 +284,7 @@ const emptyChannelEntry: ChannelEntry = {
   newFollowers: '',
 }
 
-function buildExtraDataPayload(dept: string, extra: ExtraData, channelEntries: Record<string, ChannelEntry> = {}): Record<string, unknown> | undefined {
+function buildExtraDataPayload(dept: string, extra: ExtraData, channelRows: ChannelRow[] = []): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
     const payload: Record<string, unknown> = {}
     if (extra.liveHours.trim()) payload.live_hours = extra.liveHours.trim()
@@ -301,17 +305,18 @@ function buildExtraDataPayload(dept: string, extra: ExtraData, channelEntries: R
     return validLinks.length > 0 ? { clip_links: validLinks } : undefined
   }
   if (dept === 'การตลาด') {
-    const channels = Object.entries(channelEntries).map(([ch, e]) => ({
-      channel: ch,
-      ...(e.liveStaffName && { live_staff_name: e.liveStaffName }),
-      ...(e.adsCost && { ads_cost: e.adsCost }),
-      ...(e.grossRevenue && { gross_revenue: e.grossRevenue }),
-      ...(e.roi && { roi: e.roi }),
-      ...(e.costPerOrder && { cost_per_order: e.costPerOrder }),
-      ...(e.costPer10SecView && { cost_per_10sec_view: e.costPer10SecView }),
-      ...(e.avgViewDuration && { avg_view_duration: e.avgViewDuration }),
-      ...(e.newFollowers && { new_followers: e.newFollowers }),
-      ...(e.liveHours && { live_hours: e.liveHours }),
+    const channels = channelRows.map((row) => ({
+      channel: row.channel,
+      shift: row.shift,
+      ...(row.liveStaffName && { live_staff_name: row.liveStaffName }),
+      ...(row.adsCost && { ads_cost: row.adsCost }),
+      ...(row.grossRevenue && { gross_revenue: row.grossRevenue }),
+      ...(row.roi && { roi: row.roi }),
+      ...(row.costPerOrder && { cost_per_order: row.costPerOrder }),
+      ...(row.costPer10SecView && { cost_per_10sec_view: row.costPer10SecView }),
+      ...(row.avgViewDuration && { avg_view_duration: row.avgViewDuration }),
+      ...(row.newFollowers && { new_followers: row.newFollowers }),
+      ...(row.liveHours && { live_hours: row.liveHours }),
     }))
     return channels.length > 0 ? { channels } : undefined
   }
@@ -333,9 +338,8 @@ export default function Home() {
   const [pageState, setPageState] = useState<PageState>('form')
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [channelEntries, setChannelEntries] = useState<Record<string, ChannelEntry>>({})
-  const [bestRoiEntry, setBestRoiEntry] = useState<ChannelEntry>({ ...emptyChannelEntry })
-  const [activeChannelTab, setActiveChannelTab] = useState<string>('')
+  const [channelRows, setChannelRows] = useState<ChannelRow[]>([])
+  const [bestRoiEntry, setBestRoiEntry] = useState<BestRoiEntry>({ ...emptyBestRoiEntry })
 
   const [hasDraft, setHasDraft] = useState(false)
   const [draftSaved, setDraftSaved] = useState(false)
@@ -549,7 +553,7 @@ export default function Home() {
     if (!formData.department) e.department = 'กรุณาเลือกแผนก'
     if (!formData.date) e.date = 'กรุณาเลือกวันที่'
     if (!formData.nickname.trim()) e.nickname = (formData.department === 'ไลฟ์สด' || formData.department === 'Creative') ? 'กรุณาเลือกชื่อ' : 'กรุณากรอกชื่อเล่น'
-    if (CHANNEL_DEPTS.includes(formData.department) && formData.channelName.length === 0) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
+    if (CHANNEL_DEPTS.includes(formData.department) && (formData.department === 'การตลาด' ? channelRows.length === 0 : formData.channelName.length === 0)) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
@@ -563,10 +567,11 @@ export default function Home() {
   async function handleConfirm() {
     setPageState('submitting')
     const validTasks = formData.tasks.filter((t) => t.trim())
-    const extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelEntries)
+    const extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelRows)
     if (formData.department === 'การตลาด' && formData.bestRoiChannel && extra_data) {
       extra_data.best_roi = {
         channel: formData.bestRoiChannel,
+        ...(bestRoiEntry.shift && { shift: bestRoiEntry.shift }),
         ...(bestRoiEntry.liveStaffName && { live_staff_name: bestRoiEntry.liveStaffName }),
         ...(bestRoiEntry.adsCost && { ads_cost: bestRoiEntry.adsCost }),
         ...(bestRoiEntry.grossRevenue && { gross_revenue: bestRoiEntry.grossRevenue }),
@@ -587,7 +592,9 @@ export default function Home() {
           date: formData.date,
           time: formData.time,
           nickname: formData.nickname.trim(),
-          channel_name: formData.channelName.join(', '),
+          channel_name: formData.department === 'การตลาด'
+            ? channelRows.map(r => `${r.channel}(${r.shift})`).join(', ')
+            : formData.channelName.join(', '),
           tasks: validTasks,
           obstacles: formData.obstacles.trim(),
           extra_data,
@@ -664,9 +671,8 @@ export default function Home() {
       obstacles: '',
       extraData: { ...defaultExtraData, clipLinks: [''] },
     })
-    setChannelEntries({})
-    setBestRoiEntry({ ...emptyChannelEntry })
-    setActiveChannelTab('')
+    setChannelRows([])
+    setBestRoiEntry({ ...emptyBestRoiEntry })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -693,7 +699,7 @@ export default function Home() {
 
   const validTaskCount = formData.tasks.filter((t) => t.trim()).length
   const extra = formData.extraData
-  const extraPayload = buildExtraDataPayload(formData.department, extra, channelEntries)
+  const extraPayload = buildExtraDataPayload(formData.department, extra, channelRows)
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
@@ -755,9 +761,8 @@ export default function Home() {
                     bestRoiChannel: '',
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
-                  setChannelEntries({})
-                  setBestRoiEntry({ ...emptyChannelEntry })
-                  setActiveChannelTab('')
+                  setChannelRows([])
+                  setBestRoiEntry({ ...emptyBestRoiEntry })
                   setPickerOpen(true)
                   setCreativePickerOpen(true)
                   setErrors((prev) => ({ ...prev, department: '', nickname: '' }))
@@ -1507,68 +1512,47 @@ export default function Home() {
           </InputField>
           {formData.department === 'การตลาด' && (
             <InputField label="ช่องที่ ROI ต่ำกว่า 15" required error={errors.channelName}>
-              {/* ช่องที่เลือกแล้ว + ปุ่มกะ */}
-              {formData.channelName.length > 0 && (
-                <div className="space-y-1.5 mb-3">
-                  {formData.channelName.map((ch) => {
-                    const shift = channelEntries[ch]?.shift || ''
-                    return (
-                      <div key={ch} className="flex items-center gap-2 bg-[#1E3A5F]/5 rounded-xl px-3 py-2">
-                        <span className="text-xs font-semibold text-[#1E3A5F] flex-1 min-w-0 truncate">✓ {ch}</span>
-                        <div className="flex gap-1 shrink-0">
-                          {(['เช้า', 'บ่าย'] as const).map((s) => (
+              <div className="space-y-1.5">
+                {CHANNEL_LIST.map((ch) => {
+                  const hasMorning = channelRows.some(r => r.channel === ch && r.shift === 'เช้า')
+                  const hasAfternoon = channelRows.some(r => r.channel === ch && r.shift === 'บ่าย')
+                  return (
+                    <div key={ch} className="flex items-center gap-2 bg-[#F5F6F8] rounded-xl px-3 py-2">
+                      <span className="text-xs font-semibold text-[#374151] flex-1 min-w-0 truncate">{ch}</span>
+                      <div className="flex gap-1.5 shrink-0">
+                        {(['เช้า', 'บ่าย'] as const).map((s) => {
+                          const active = s === 'เช้า' ? hasMorning : hasAfternoon
+                          return (
                             <button
                               key={s}
                               type="button"
-                              onClick={() => setChannelEntries((prev) => ({
-                                ...prev,
-                                [ch]: { ...(prev[ch] || emptyChannelEntry), shift: s },
-                              }))}
-                              className={`px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                                shift === s
+                              onClick={() => {
+                                if (active) {
+                                  setChannelRows(prev => prev.filter(r => !(r.channel === ch && r.shift === s)))
+                                } else {
+                                  setChannelRows(prev => [...prev, {
+                                    id: `${ch}_${s}_${Date.now()}`,
+                                    channel: ch, shift: s,
+                                    liveStaffName: '', liveHours: '', adsCost: '', grossRevenue: '',
+                                    roi: '', costPerOrder: '', costPer10SecView: '', avgViewDuration: '', newFollowers: '',
+                                  }])
+                                  setErrors(prev => ({ ...prev, channelName: '' }))
+                                }
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                                active
                                   ? s === 'เช้า' ? 'bg-amber-400 text-white' : 'bg-indigo-500 text-white'
                                   : 'bg-white border border-[#E2E8F0] text-gray-400'
                               }`}
                             >
                               {s === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
                             </button>
-                          ))}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => {
-                              const next = prev.channelName.filter((c) => c !== ch)
-                              setActiveChannelTab((t) => t === ch ? (next[0] || '') : t)
-                              return { ...prev, channelName: next }
-                            })
-                            setChannelEntries((prev) => { const n = { ...prev }; delete n[ch]; return n })
-                            setErrors((prev) => ({ ...prev, channelName: '' }))
-                          }}
-                          className="text-gray-300 hover:text-red-400 text-base ml-1 shrink-0 leading-none"
-                        >×</button>
+                          )
+                        })}
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-              {/* ปุ่มเลือกช่องที่ยังไม่ได้เลือก */}
-              <div className="flex flex-wrap gap-2 pt-0.5">
-                {CHANNEL_LIST.filter((ch) => !formData.channelName.includes(ch)).map((ch) => (
-                  <button
-                    key={ch}
-                    type="button"
-                    onClick={() => {
-                      setFormData((prev) => ({ ...prev, channelName: [...prev.channelName, ch] }))
-                      setChannelEntries((prev) => ({ ...prev, [ch]: { ...emptyChannelEntry } }))
-                      setActiveChannelTab((t) => t || ch)
-                      setErrors((prev) => ({ ...prev, channelName: '' }))
-                    }}
-                    className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F] transition-colors"
-                  >
-                    {ch}
-                  </button>
-                ))}
+                    </div>
+                  )
+                })}
               </div>
             </InputField>
           )}
@@ -2061,8 +2045,9 @@ export default function Home() {
         )}
 
         {/* การตลาด — ตาราง metrics (แถว=ช่อง, คอลัมน์=metrics) */}
-        {formData.department === 'การตลาด' && (formData.bestRoiChannel || formData.channelName.length > 0) && (() => {
-          const COLS: { key: keyof ChannelEntry; label: string; unit: string; type: string }[] = [
+        {formData.department === 'การตลาด' && (formData.bestRoiChannel || channelRows.length > 0) && (() => {
+          type MetricKey = 'liveStaffName' | 'adsCost' | 'grossRevenue' | 'roi' | 'costPerOrder' | 'costPer10SecView' | 'avgViewDuration' | 'newFollowers' | 'liveHours'
+          const COLS: { key: MetricKey; label: string; unit: string; type: string }[] = [
             { key: 'liveStaffName',    label: 'พนักงาน', unit: '',     type: 'text'   },
             { key: 'adsCost',          label: 'ads',      unit: 'บาท',  type: 'number' },
             { key: 'grossRevenue',     label: 'รายได้',   unit: 'บาท',  type: 'number' },
@@ -2073,7 +2058,6 @@ export default function Home() {
             { key: 'newFollowers',     label: 'ติดตาม',  unit: 'user', type: 'number' },
             { key: 'liveHours',        label: 'ชม.',      unit: 'ชม.',  type: 'number' },
           ]
-          const otherChannels = formData.channelName.filter(ch => ch !== formData.bestRoiChannel)
           const renderCell = (value: string, onChange: (v: string) => void, type: string) => (
             <input
               type={type}
@@ -2091,7 +2075,7 @@ export default function Home() {
                 <table className="text-xs border-collapse" style={{ width: 'max-content', minWidth: '100%' }}>
                   <thead>
                     <tr className="border-b border-[#E2E8F0] bg-[#F5F6F8]">
-                      <th className="sticky left-0 z-10 bg-[#F5F6F8] px-3 py-2 text-left font-semibold text-[#374151] whitespace-nowrap" style={{ minWidth: 80 }}>ช่อง</th>
+                      <th className="sticky left-0 z-10 bg-[#F5F6F8] px-3 py-2 text-left font-semibold text-[#374151] whitespace-nowrap" style={{ minWidth: 88 }}>ช่อง</th>
                       {COLS.map(c => (
                         <th key={c.key} className="px-2 py-2 text-center font-semibold text-[#374151] whitespace-nowrap" style={{ minWidth: c.key === 'liveStaffName' ? 72 : 60 }}>
                           {c.label}
@@ -2103,8 +2087,8 @@ export default function Home() {
                   <tbody>
                     {formData.bestRoiChannel && (
                       <tr className="bg-green-50 border-b border-green-100">
-                        <td className="sticky left-0 z-10 bg-green-50 px-3 py-2 font-semibold text-green-700 whitespace-nowrap" style={{ minWidth: 80 }}>
-                          ⭐ {formData.bestRoiChannel}
+                        <td className="sticky left-0 z-10 bg-green-50 px-3 py-2 font-semibold text-green-700 whitespace-nowrap" style={{ minWidth: 88 }}>
+                          <span className="block leading-tight">⭐ {formData.bestRoiChannel}</span>
                           {bestRoiEntry.shift && (
                             <span className={`block text-[10px] font-semibold mt-0.5 ${bestRoiEntry.shift === 'เช้า' ? 'text-amber-500' : 'text-indigo-500'}`}>
                               {bestRoiEntry.shift === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
@@ -2122,24 +2106,21 @@ export default function Home() {
                         ))}
                       </tr>
                     )}
-                    {otherChannels.map((ch, idx) => {
-                      const entry = channelEntries[ch] || emptyChannelEntry
+                    {channelRows.map((row, idx) => {
                       const bg = idx % 2 === 0 ? 'bg-white' : 'bg-[#F5F6F8]/60'
                       return (
-                        <tr key={ch} className={`${bg} border-b border-[#E2E8F0]`}>
-                          <td className={`sticky left-0 z-10 ${bg} px-3 py-2 font-medium text-[#374151] whitespace-nowrap`} style={{ minWidth: 80 }}>
-                            {ch}
-                            {channelEntries[ch]?.shift && (
-                              <span className={`block text-[10px] font-semibold mt-0.5 ${channelEntries[ch].shift === 'เช้า' ? 'text-amber-500' : 'text-indigo-500'}`}>
-                                {channelEntries[ch].shift === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
-                              </span>
-                            )}
+                        <tr key={row.id} className={`${bg} border-b border-[#E2E8F0]`}>
+                          <td className={`sticky left-0 z-10 ${bg} px-3 py-2 font-medium text-[#374151] whitespace-nowrap`} style={{ minWidth: 88 }}>
+                            <span className="block leading-tight">{row.channel}</span>
+                            <span className={`block text-[10px] font-semibold mt-0.5 ${row.shift === 'เช้า' ? 'text-amber-500' : 'text-indigo-500'}`}>
+                              {row.shift === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                            </span>
                           </td>
                           {COLS.map(c => (
                             <td key={c.key} className="px-1 py-1">
                               {renderCell(
-                                entry[c.key],
-                                v => setChannelEntries(prev => ({ ...prev, [ch]: { ...(prev[ch] || emptyChannelEntry), [c.key]: v } })),
+                                row[c.key],
+                                v => setChannelRows(prev => prev.map(r => r.id === row.id ? { ...r, [c.key]: v } : r)),
                                 c.type
                               )}
                             </td>
@@ -2360,8 +2341,13 @@ export default function Home() {
                 <ConfirmRow label="แผนก" value={formData.department} />
                 <ConfirmRow label="วันที่ / เวลา" value={`${formData.date}  ${formData.time} น.`} />
                 <ConfirmRow label="ชื่อเล่น" value={formData.nickname} />
-                {formData.channelName.length > 0 && (
-                  <ConfirmRow label={formData.department === 'การตลาด' ? 'ช่องที่ ROI ต่ำกว่า 15' : 'ช่องที่ดูแล'} value={formData.channelName.join(', ')} />
+                {(formData.department === 'การตลาด' ? channelRows.length > 0 : formData.channelName.length > 0) && (
+                  <ConfirmRow
+                    label={formData.department === 'การตลาด' ? 'ช่องที่ ROI ต่ำกว่า 15' : 'ช่องที่ดูแล'}
+                    value={formData.department === 'การตลาด'
+                      ? channelRows.map(r => `${r.channel}(${r.shift})`).join(', ')
+                      : formData.channelName.join(', ')}
+                  />
                 )}
                 {formData.department === 'การตลาด' && formData.bestRoiChannel && (
                   <ConfirmRow label="ช่องที่ ROI สูงสุด" value={formData.bestRoiChannel} />
@@ -2409,15 +2395,20 @@ export default function Home() {
                 )}
 
               {/* Extra fields in confirm — การตลาด */}
-              {formData.department === 'การตลาด' && formData.channelName.length > 0 && (
+              {formData.department === 'การตลาด' && channelRows.length > 0 && (
                 <div className="pt-1 border-t border-[#E2E8F0]">
-                  <p className="text-xs text-gray-500 mb-2">ข้อมูลช่อง ({formData.channelName.length} ช่อง)</p>
+                  <p className="text-xs text-gray-500 mb-2">ข้อมูลช่อง ({channelRows.length} แถว)</p>
                   <div className="space-y-2">
-                    {formData.channelName.map((ch) => (
-                      <div key={ch} className="bg-[#F5F6F8] rounded-xl p-2.5">
-                        <p className="text-xs font-bold text-[#1E3A5F]">{ch}</p>
-                        {channelEntries[ch]?.liveStaffName && (
-                          <p className="text-xs text-gray-500 mt-0.5">พนักงานไลฟ์: {channelEntries[ch].liveStaffName}</p>
+                    {channelRows.map((row) => (
+                      <div key={row.id} className="bg-[#F5F6F8] rounded-xl p-2.5">
+                        <p className="text-xs font-bold text-[#1E3A5F]">
+                          {row.channel}
+                          <span className={`ml-1.5 text-[10px] font-semibold ${row.shift === 'เช้า' ? 'text-amber-500' : 'text-indigo-500'}`}>
+                            {row.shift === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                          </span>
+                        </p>
+                        {row.liveStaffName && (
+                          <p className="text-xs text-gray-500 mt-0.5">พนักงานไลฟ์: {row.liveStaffName}</p>
                         )}
                       </div>
                     ))}
