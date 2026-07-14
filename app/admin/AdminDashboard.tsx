@@ -5317,7 +5317,7 @@ export default function AdminDashboard() {
         ]
         const saveCred = (store: string, system: string, field: 'system_id' | 'system_password', value: string) =>
           fetch(`/api/tournament-creds?key=${ADMIN_KEY}`, {
-            method: 'PUT',
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ store, system, [field]: value }),
           })
