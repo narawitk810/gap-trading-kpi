@@ -1649,8 +1649,8 @@ export default function Home() {
 
         {/* ── Department-specific fields ── */}
 
-        {/* บัญชี / สต๊อค&จัดซื้อ — ระบบเบิกจ่าย (อยู่บนสุด) */}
-        {['บัญชี&การเงิน', 'ธุรการ', 'บุคคล'].includes(formData.department) && (
+        {/* ระบบเบิกจ่าย — บัญชี / ธุรการ / บุคคล / การตลาด / Creative */}
+        {['บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'การตลาด', 'Creative'].includes(formData.department) && (
           <Link
             href="/disbursement"
             className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl p-4 hover:bg-orange-100 transition-colors"
