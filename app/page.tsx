@@ -782,6 +782,21 @@ export default function Home() {
         {formData.department === 'สต๊อค&จัดซื้อ' && (
           <div className="space-y-2">
             <Link
+              href="/disbursement"
+              className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl p-4 hover:bg-orange-100 transition-colors"
+            >
+              <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+                💸
+              </div>
+              <div>
+                <p className="text-sm font-bold text-orange-800">ระบบเบิกจ่าย</p>
+                <p className="text-xs text-gray-400 mt-0.5">ยืนยันสั่งซื้อ · รายการที่บัญชีอนุมัติแล้ว</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-orange-600 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <Link
               href="/restock"
               className="flex items-center gap-3 bg-[#DC2626]/5 border border-[#DC2626]/20 rounded-2xl p-4 hover:bg-[#DC2626]/10 transition-colors"
             >
@@ -1635,7 +1650,7 @@ export default function Home() {
         {/* ── Department-specific fields ── */}
 
         {/* บัญชี / สต๊อค&จัดซื้อ — ระบบเบิกจ่าย (อยู่บนสุด) */}
-        {['บัญชี&การเงิน', 'สต๊อค&จัดซื้อ', 'ธุรการ', 'บุคคล'].includes(formData.department) && (
+        {['บัญชี&การเงิน', 'ธุรการ', 'บุคคล'].includes(formData.department) && (
           <Link
             href="/disbursement"
             className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl p-4 hover:bg-orange-100 transition-colors"
