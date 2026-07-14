@@ -186,6 +186,16 @@ const STORE_RETAIL_RANKS = [
   { rank_order: 7, rank_name: 'Legend Store Retail', rank_emoji: '💎' },
   { rank_order: 8, rank_name: 'Grandmaster Store Retail', rank_emoji: '👑' },
 ]
+const STORE_MANAGER_RANKS = [
+  { rank_order: 1, rank_name: 'Junior Store Manager', rank_emoji: '🥉' },
+  { rank_order: 2, rank_name: 'Store Manager', rank_emoji: '🥈' },
+  { rank_order: 3, rank_name: 'Senior Store Manager', rank_emoji: '🥇' },
+  { rank_order: 4, rank_name: 'Expert Store Manager', rank_emoji: '🏅' },
+  { rank_order: 5, rank_name: 'Master Store Manager', rank_emoji: '🏆' },
+  { rank_order: 6, rank_name: 'Elite Store Manager', rank_emoji: '💠' },
+  { rank_order: 7, rank_name: 'Legend Store Manager', rank_emoji: '💎' },
+  { rank_order: 8, rank_name: 'Grandmaster Store Manager', rank_emoji: '👑' },
+]
 const STOCK_PURCHASING_RANKS = [
   { rank_order: 1, rank_name: 'Junior Stock & Purchasing', rank_emoji: '🥉' },
   { rank_order: 2, rank_name: 'Stock & Purchasing', rank_emoji: '🥈' },
@@ -376,6 +386,9 @@ export default function Home() {
   const [liveManagerStaff, setLiveManagerStaff] = useState<LiveStaffMember[]>([])
   const [liveManagerPickerOpen, setLiveManagerPickerOpen] = useState(true)
   const [loadingLiveManager, setLoadingLiveManager] = useState(false)
+  const [storeManagerStaff, setStoreManagerStaff] = useState<LiveStaffMember[]>([])
+  const [storeManagerPickerOpen, setStoreManagerPickerOpen] = useState(true)
+  const [loadingStoreManager, setLoadingStoreManager] = useState(false)
   useEffect(() => {
     if (formData.department !== 'ไลฟ์สด') return
     setPickerOpen(!formData.nickname)
@@ -493,6 +506,17 @@ export default function Home() {
       .then((d) => setLiveManagerStaff(d.staff || []))
       .catch(() => setLiveManagerStaff([]))
       .finally(() => setLoadingLiveManager(false))
+  }, [formData.department])
+
+  useEffect(() => {
+    if (formData.department !== 'ผู้จัดการหน้าร้าน') return
+    setStoreManagerPickerOpen(!formData.nickname)
+    setLoadingStoreManager(true)
+    fetch('/api/live-staff?department=' + encodeURIComponent('ผู้จัดการหน้าร้าน'))
+      .then((r) => r.json())
+      .then((d) => setStoreManagerStaff(d.staff || []))
+      .catch(() => setStoreManagerStaff([]))
+      .finally(() => setLoadingStoreManager(false))
   }, [formData.department])
 
   useEffect(() => {
@@ -895,7 +919,7 @@ export default function Home() {
 
         {/* Nickname + Channel */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-          <InputField label={(formData.department === 'ไลฟ์สด' || formData.department === 'Creative' || formData.department === 'การตลาด' || formData.department === 'Sales Admin' || formData.department === 'Store Retail' || formData.department === 'สต๊อค&จัดซื้อ' || formData.department === 'แพค' || formData.department === 'บัญชี&การเงิน' || formData.department === 'ธุรการ' || formData.department === 'บุคคล' || formData.department === 'ผู้จัดการไลฟ์สด') ? 'เลือกชื่อ (สิทธิพิเศษเริ่มใช้ 2570)' : 'ชื่อเล่น'} required error={errors.nickname}>
+          <InputField label={(formData.department === 'ไลฟ์สด' || formData.department === 'Creative' || formData.department === 'การตลาด' || formData.department === 'Sales Admin' || formData.department === 'Store Retail' || formData.department === 'สต๊อค&จัดซื้อ' || formData.department === 'แพค' || formData.department === 'บัญชี&การเงิน' || formData.department === 'ธุรการ' || formData.department === 'บุคคล' || formData.department === 'ผู้จัดการไลฟ์สด' || formData.department === 'ผู้จัดการหน้าร้าน') ? 'เลือกชื่อ (สิทธิพิเศษเริ่มใช้ 2570)' : 'ชื่อเล่น'} required error={errors.nickname}>
             {formData.department === 'ไลฟ์สด' ? (
               !pickerOpen && formData.nickname ? (
                 <div className="flex items-center gap-3 pt-0.5">
@@ -1483,6 +1507,61 @@ export default function Home() {
                                 setFormData((prev) => ({ ...prev, nickname: m.name }))
                                 setErrors((prev) => ({ ...prev, nickname: '' }))
                                 setLiveManagerPickerOpen(false)
+                              }}
+                              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                                formData.nickname === m.name
+                                  ? 'bg-[#1E3A5F] text-white border-[#1E3A5F] font-semibold'
+                                  : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                              }`}
+                            >
+                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            ) : formData.department === 'ผู้จัดการหน้าร้าน' ? (
+              !storeManagerPickerOpen && formData.nickname ? (
+                <div className="flex items-center gap-3 pt-0.5">
+                  <span className="px-4 py-2 rounded-full bg-[#1E3A5F] text-white text-sm font-semibold">
+                    ✓ {formData.nickname}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStoreManagerPickerOpen(true)}
+                    className="text-xs text-[#1E3A5F] underline underline-offset-2"
+                  >
+                    เปลี่ยน
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {loadingStoreManager ? (
+                    <div className="py-4 text-center text-xs text-gray-400">กำลังโหลด...</div>
+                  ) : storeManagerStaff.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-gray-400">ไม่พบข้อมูลพนักงาน — กรุณาแจ้ง Admin</div>
+                  ) : STORE_MANAGER_RANKS.map((rank) => {
+                    const members = storeManagerStaff.filter((s) => s.rank_order === rank.rank_order)
+                    const isEmpty = members.length === 0
+                    return (
+                      <div key={rank.rank_order} className={isEmpty ? 'opacity-40' : ''}>
+                        <p className="text-xs font-semibold text-gray-400 mb-1.5">
+                          {rank.rank_emoji} {rank.rank_name}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {isEmpty ? (
+                            <span className="text-xs text-gray-300 italic">— ยังไม่มีสมาชิก</span>
+                          ) : members.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({ ...prev, nickname: m.name }))
+                                setErrors((prev) => ({ ...prev, nickname: '' }))
+                                setStoreManagerPickerOpen(false)
                               }}
                               className={`px-4 py-2 rounded-full text-sm border transition-colors ${
                                 formData.nickname === m.name
