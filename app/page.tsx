@@ -339,6 +339,7 @@ export default function Home() {
   const [submittedId, setSubmittedId] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [channelRows, setChannelRows] = useState<ChannelRow[]>([])
+  const [pendingChannel, setPendingChannel] = useState('')
   const [bestRoiEntry, setBestRoiEntry] = useState<BestRoiEntry>({ ...emptyBestRoiEntry })
 
   const [hasDraft, setHasDraft] = useState(false)
@@ -672,6 +673,7 @@ export default function Home() {
       extraData: { ...defaultExtraData, clipLinks: [''] },
     })
     setChannelRows([])
+    setPendingChannel('')
     setBestRoiEntry({ ...emptyBestRoiEntry })
     setErrors({})
     setPageState('form')
@@ -762,6 +764,7 @@ export default function Home() {
                     extraData: { ...defaultExtraData, clipLinks: [''] },
                   }))
                   setChannelRows([])
+                  setPendingChannel('')
                   setBestRoiEntry({ ...emptyBestRoiEntry })
                   setPickerOpen(true)
                   setCreativePickerOpen(true)
@@ -1512,48 +1515,74 @@ export default function Home() {
           </InputField>
           {formData.department === 'การตลาด' && (
             <InputField label="ช่องที่ ROI ต่ำกว่า 15" required error={errors.channelName}>
-              <div className="space-y-1.5">
-                {CHANNEL_LIST.map((ch) => {
-                  const hasMorning = channelRows.some(r => r.channel === ch && r.shift === 'เช้า')
-                  const hasAfternoon = channelRows.some(r => r.channel === ch && r.shift === 'บ่าย')
-                  return (
-                    <div key={ch} className="flex items-center gap-2 bg-[#F5F6F8] rounded-xl px-3 py-2">
-                      <span className="text-xs font-semibold text-[#374151] flex-1 min-w-0 truncate">{ch}</span>
-                      <div className="flex gap-1.5 shrink-0">
-                        {(['เช้า', 'บ่าย'] as const).map((s) => {
-                          const active = s === 'เช้า' ? hasMorning : hasAfternoon
-                          return (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => {
-                                if (active) {
-                                  setChannelRows(prev => prev.filter(r => !(r.channel === ch && r.shift === s)))
-                                } else {
-                                  setChannelRows(prev => [...prev, {
-                                    id: `${ch}_${s}_${Date.now()}`,
-                                    channel: ch, shift: s,
-                                    liveStaffName: '', liveHours: '', adsCost: '', grossRevenue: '',
-                                    roi: '', costPerOrder: '', costPer10SecView: '', avgViewDuration: '', newFollowers: '',
-                                  }])
-                                  setErrors(prev => ({ ...prev, channelName: '' }))
-                                }
-                              }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                                active
-                                  ? s === 'เช้า' ? 'bg-amber-400 text-white' : 'bg-indigo-500 text-white'
-                                  : 'bg-white border border-[#E2E8F0] text-gray-400'
-                              }`}
-                            >
-                              {s === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
+              {/* Selected rows — compact tags */}
+              {channelRows.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {channelRows.map(row => (
+                    <span
+                      key={row.id}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        row.shift === 'เช้า' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'
+                      }`}
+                    >
+                      {row.channel} {row.shift === 'เช้า' ? '🌅' : '🌙'} {row.shift}
+                      <button
+                        type="button"
+                        onClick={() => setChannelRows(prev => prev.filter(r => r.id !== row.id))}
+                        className="ml-0.5 opacity-60 hover:opacity-100 hover:text-red-500 leading-none"
+                      >×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {/* Channel pills */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {CHANNEL_LIST.map(ch => (
+                  <button
+                    key={ch}
+                    type="button"
+                    onClick={() => setPendingChannel(ch === pendingChannel ? '' : ch)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                      pendingChannel === ch
+                        ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                        : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                    }`}
+                  >
+                    {ch}
+                  </button>
+                ))}
               </div>
+              {/* Shift selector */}
+              {pendingChannel && (
+                <div className="flex items-center gap-2 bg-[#1E3A5F]/5 rounded-xl px-3 py-2">
+                  <span className="text-xs text-[#374151] font-semibold flex-1 min-w-0 truncate">
+                    กะของ {pendingChannel}:
+                  </span>
+                  {(['เช้า', 'บ่าย'] as const).map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => {
+                        setChannelRows(prev => [...prev, {
+                          id: `${pendingChannel}_${s}_${Date.now()}`,
+                          channel: pendingChannel, shift: s,
+                          liveStaffName: '', liveHours: '', adsCost: '', grossRevenue: '',
+                          roi: '', costPerOrder: '', costPer10SecView: '', avgViewDuration: '', newFollowers: '',
+                        }])
+                        setErrors(prev => ({ ...prev, channelName: '' }))
+                        setPendingChannel('')
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 ${
+                        s === 'เช้า'
+                          ? 'bg-amber-400 hover:bg-amber-500 text-white'
+                          : 'bg-indigo-500 hover:bg-indigo-600 text-white'
+                      }`}
+                    >
+                      {s === 'เช้า' ? '🌅 เช้า' : '🌙 บ่าย'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </InputField>
           )}
           {formData.department === 'การตลาด' && (
