@@ -121,7 +121,7 @@ export default function StoreManagementPage() {
 
         {selectedStore && (
           <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
-            <p className="text-sm font-bold text-[#374151] mb-3">เข้าระบบ</p>
+            <p className="text-sm font-bold text-[#374151] mb-3">จัดแข่งในระบบ</p>
             <div className="flex flex-col gap-3">
               {SYSTEMS.map((sys) => {
                 const urlInfo = links[sys.key] ?? EMPTY_LINK
@@ -190,6 +190,16 @@ export default function StoreManagementPage() {
                 )
               })}
             </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
+            <p className="text-sm font-bold text-[#374151] mb-3">จัดแข่งนอกระบบ</p>
+            <p className="text-xs text-gray-400">ยังไม่มีข้อมูล — อยู่ระหว่างเพิ่มเติม</p>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
+            <p className="text-sm font-bold text-[#374151] mb-3">จัดแข่งผ่าน app</p>
+            <p className="text-xs text-gray-400">ยังไม่มีข้อมูล — อยู่ระหว่างเพิ่มเติม</p>
           </div>
         )}
       </div>
