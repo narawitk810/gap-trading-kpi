@@ -433,12 +433,14 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds'>('kpi')
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const [sysLinks, setSysLinks] = useState<{ key: string; url: string; label: string; system_id: string; system_password: string }[]>([])
   const [sysLinksEdit, setSysLinksEdit] = useState<Record<string, string>>({})
+  const [tournamentCreds, setTournamentCreds] = useState<Record<string, { system_id: string; system_password: string }>>({})
+  const [tournamentCredsEdit, setTournamentCredsEdit] = useState<Record<string, string>>({})
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
   const [loadingRestock, setLoadingRestock] = useState(false)
   const [notingId, setNotingId] = useState<string | null>(null)
@@ -920,6 +922,24 @@ export default function AdminDashboard() {
     } catch { /* silent */ }
   }, [])
 
+  const fetchTournamentCreds = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tournament-creds')
+      if (!res.ok) return
+      const data = await res.json()
+      const map: Record<string, { system_id: string; system_password: string }> = {}
+      const edit: Record<string, string> = {}
+      ;(data.creds || []).forEach((r: { store: string; system: string; system_id: string; system_password: string }) => {
+        const k = `${r.store}_${r.system}`
+        map[k] = { system_id: r.system_id || '', system_password: r.system_password || '' }
+        edit[`${k}_system_id`] = r.system_id || ''
+        edit[`${k}_system_password`] = r.system_password || ''
+      })
+      setTournamentCreds(map)
+      setTournamentCredsEdit(edit)
+    } catch { /* silent */ }
+  }, [])
+
   async function handleRegen() {
     setRegenerating(true)
     try {
@@ -1347,8 +1367,9 @@ export default function AdminDashboard() {
       fetchPromoThresholds()
       fetchEquipment()
       fetchMeetings()
+      fetchTournamentCreds()
     }
-  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings])
+  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings, fetchTournamentCreds])
 
   if (!authed) {
     return (
@@ -1403,7 +1424,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment(); fetchMeetings() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment(); fetchMeetings(); fetchTournamentCreds() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -1570,6 +1591,16 @@ export default function AdminDashboard() {
             }`}
           >
             Pre-Order
+          </button>
+          <button
+            onClick={() => { setActiveTab('tournament-creds'); fetchTournamentCreds() }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'tournament-creds'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            รหัสจัดงานแข่ง
           </button>
         </div>
       </div>
@@ -5371,6 +5402,90 @@ export default function AdminDashboard() {
           )}
         </div>
       )}
+
+      {/* Tab รหัสจัดงานแข่ง */}
+      {activeTab === 'tournament-creds' && (() => {
+        const STORES = [
+          { id: 'gap7card', label: 'gap7card' },
+          { id: 'catramen', label: 'catramen card&boardgame cafe' },
+          { id: 'ninjabear', label: 'ninjabear card shop' },
+        ]
+        const SYSTEMS = [
+          { id: 'bandai', label: 'Bandai TCG+' },
+          { id: 'pokemon', label: 'Pokemon' },
+          { id: 'liftbound', label: 'Liftbound & Lorcana' },
+        ]
+        const saveCred = (store: string, system: string, field: 'system_id' | 'system_password', value: string) =>
+          fetch(`/api/tournament-creds?key=${ADMIN_KEY}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ store, system, [field]: value }),
+          })
+            .then(async (r) => {
+              const d = await r.json().catch(() => ({}))
+              if ((d as { ok?: boolean }).ok) {
+                setTournamentCreds((prev) => ({
+                  ...prev,
+                  [`${store}_${system}`]: {
+                    system_id: field === 'system_id' ? value : (prev[`${store}_${system}`]?.system_id ?? ''),
+                    system_password: field === 'system_password' ? value : (prev[`${store}_${system}`]?.system_password ?? ''),
+                  },
+                }))
+                alert('บันทึกแล้ว')
+              } else {
+                alert((d as { error?: string }).error || 'เกิดข้อผิดพลาด')
+              }
+            })
+            .catch(() => alert('เกิดข้อผิดพลาด'))
+        return (
+          <div className="max-w-2xl mx-auto px-4 pb-10">
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">รหัสจัดงานแข่ง</h2>
+                <p className="text-xs text-gray-400 mt-0.5">รหัส ID และ Password แยกตามร้านค้าและระบบ</p>
+              </div>
+              <div className="px-5 py-4 flex flex-col gap-5">
+                {STORES.map((store) => (
+                  <div key={store.id} className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+                    <div className="bg-[#F5F6F8] px-4 py-2.5 border-b border-[#E2E8F0]">
+                      <p className="text-sm font-bold text-[#1E3A5F]">🏪 {store.label}</p>
+                    </div>
+                    <div className="divide-y divide-[#E2E8F0]">
+                      {SYSTEMS.map((sys) => {
+                        const k = `${store.id}_${sys.id}`
+                        return (
+                          <div key={sys.id} className="px-4 py-3">
+                            <p className="text-xs font-semibold text-[#374151] mb-2">{sys.label}</p>
+                            {(['system_id', 'system_password'] as const).map((field) => (
+                              <div key={field} className="flex items-center gap-2 mb-1.5">
+                                <span className="text-[11px] text-gray-400 w-16 shrink-0">{field === 'system_id' ? 'ID' : 'Password'}</span>
+                                <input
+                                  type="text"
+                                  value={tournamentCredsEdit[`${k}_${field}`] ?? ''}
+                                  onChange={(e) => setTournamentCredsEdit((prev) => ({ ...prev, [`${k}_${field}`]: e.target.value }))}
+                                  className="flex-1 text-xs border border-[#E2E8F0] rounded-lg px-2 py-1.5 focus:border-[#1E3A5F] outline-none min-w-0 font-mono"
+                                  placeholder={field === 'system_id' ? 'กรอก ID' : 'กรอก Password'}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => saveCred(store.id, sys.id, field, tournamentCredsEdit[`${k}_${field}`] ?? '')}
+                                  className="px-2.5 py-1.5 bg-[#1E3A5F] text-white text-[11px] rounded-lg shrink-0 font-semibold hover:opacity-90"
+                                >
+                                  บันทึก
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

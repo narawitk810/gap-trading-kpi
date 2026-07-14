@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 24
+const SCHEMA_VERSION = 25
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -482,6 +482,23 @@ export async function ensureSchema(): Promise<void> {
   ]
   for (const [key, url, label] of STORE_CRED_ROWS) {
     await db.execute(`INSERT OR IGNORE INTO system_links (key, url, label, updated_at) VALUES ('${key}', '${url}', '${label}', '')`)
+  }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tournament_creds (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      store        TEXT NOT NULL,
+      system       TEXT NOT NULL,
+      system_id    TEXT NOT NULL DEFAULT '',
+      system_password TEXT NOT NULL DEFAULT '',
+      updated_at   TEXT NOT NULL DEFAULT '',
+      UNIQUE(store, system)
+    )
+  `)
+  for (const store of ['gap7card', 'catramen', 'ninjabear']) {
+    for (const system of ['bandai', 'pokemon', 'liftbound']) {
+      await db.execute(`INSERT OR IGNORE INTO tournament_creds (store, system, updated_at) VALUES ('${store}', '${system}', '')`)
+    }
   }
 
   g.dbVersion = SCHEMA_VERSION

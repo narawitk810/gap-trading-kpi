@@ -43,11 +43,13 @@ export default function StoreManagementPage() {
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
+    const updated: Record<string, SystemLink> = { ...DEFAULT_LINKS }
+    const applyUpdates = () => setLinks({ ...updated })
+
     fetch('/api/system-links')
       .then((r) => r.json())
       .then((data) => {
         if (data.links) {
-          const updated: Record<string, SystemLink> = { ...DEFAULT_LINKS }
           ;(data.links as { key: string; url: string; system_id: string; system_password: string }[]).forEach((l) => {
             if (updated[l.key]) {
               updated[l.key] = {
@@ -57,7 +59,26 @@ export default function StoreManagementPage() {
               }
             }
           })
-          setLinks(updated)
+          applyUpdates()
+        }
+      })
+      .catch(() => {})
+
+    fetch('/api/tournament-creds')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.creds) {
+          ;(data.creds as { store: string; system: string; system_id: string; system_password: string }[]).forEach((c) => {
+            const key = `${c.store}_${c.system}`
+            if (updated[key] !== undefined) {
+              updated[key] = {
+                url: updated[key].url,
+                system_id: c.system_id || '',
+                system_password: c.system_password || '',
+              }
+            }
+          })
+          applyUpdates()
         }
       })
       .catch(() => {})
