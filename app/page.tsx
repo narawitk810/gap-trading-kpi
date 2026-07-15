@@ -249,7 +249,7 @@ const LIVE_MANAGER_RANKS = [
 ]
 const TAX_INVOICE_DEPTS = ['บัญชี&การเงิน', 'สต๊อค&จัดซื้อ', 'ธุรการ']
 const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน']
-const TCG_DEPTS = ['ผู้จัดการหน้าร้าน']
+const TCG_DEPTS = ['ผู้จัดการหน้าร้าน', 'ธุรการ']
 const PROMO_THRESHOLD_DEPTS = ['การตลาด']
 const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 
@@ -2083,14 +2083,14 @@ export default function Home() {
         {TCG_DEPTS.includes(formData.department) && (
           <Link
             href="/store-management"
-            className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
+            className="flex items-center gap-3 bg-[#16A34A]/5 border border-[#16A34A]/20 rounded-2xl p-4 hover:bg-[#16A34A]/10 transition-colors"
           >
-            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">🏪</div>
+            <div className="w-10 h-10 bg-[#16A34A] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">🏪</div>
             <div>
-              <p className="text-sm font-bold text-[#1E3A5F]">ระบบจัดการหน้าร้าน</p>
+              <p className="text-sm font-bold text-[#16A34A]">ระบบจัดการหน้าร้าน</p>
               <p className="text-xs text-gray-400 mt-0.5">เลือกร้าน แล้วเข้าระบบทัวร์นาเมนต์</p>
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>
