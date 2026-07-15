@@ -98,7 +98,7 @@ export default function EquipmentPage() {
           action: action,
           description: description.trim(),
           image_data: imageData,
-          amount: requestType === 'ads' ? Number(amount) : 0,
+          amount: Number(amount) || 0,
         }),
       })
       const data = await res.json()
@@ -188,7 +188,7 @@ export default function EquipmentPage() {
               <p className="text-xs text-gray-500 mb-0.5">คำอธิบาย</p>
               <p className="text-sm text-[#374151]">{description}</p>
             </div>
-            {requestType === 'ads' && (
+            {Number(amount) > 0 && (
               <div>
                 <p className="text-xs text-gray-500 mb-0.5">จำนวนเงินที่ขอเบิก</p>
                 <p className="font-semibold text-orange-700">
@@ -419,10 +419,13 @@ export default function EquipmentPage() {
             {errors.description && <p className="text-[#DC2626] text-xs mt-1">{errors.description}</p>}
           </div>
 
-          {requestType === 'ads' && (
-            <div>
+          <div>
               <label className="block text-sm font-semibold text-[#374151] mb-2">
-                จำนวนเงินที่ขอเบิก <span className="text-[#DC2626]">*</span>
+                จำนวนเงินที่ขอเบิก{' '}
+                {requestType === 'ads'
+                  ? <span className="text-[#DC2626]">*</span>
+                  : <span className="text-xs font-normal text-gray-400">(ถ้ามี)</span>
+                }
               </label>
               <div className="relative">
                 <input
@@ -435,7 +438,6 @@ export default function EquipmentPage() {
               </div>
               {errors.amount && <p className="text-[#DC2626] text-xs mt-1">{errors.amount}</p>}
             </div>
-          )}
 
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-2">
