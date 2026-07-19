@@ -639,7 +639,7 @@ export default function DisbursementDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setShowHelp(true)} className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
-              ?
+              คู่มือ
             </button>
             <button onClick={() => load()} className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
               ↻
