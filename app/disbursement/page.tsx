@@ -800,6 +800,19 @@ export default function DisbursementDashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                          {selectedStage === 'ordered' && (
+                            <div className="mt-1.5">
+                              {(['สำรองจ่าย', 'qr'] as string[]).includes(item.payment_method) && !item.reimbursed_at ? (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                                  ⏳ รอบริษัทจ่ายคืน
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F]">
+                                  ⏳ รอบันทึกจ่ายเงิน
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-bold text-orange-700">
