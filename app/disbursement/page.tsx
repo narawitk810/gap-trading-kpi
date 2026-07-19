@@ -666,6 +666,9 @@ export default function DisbursementDashboard() {
                         : 'bg-[#F5F6F8] border-[#E2E8F0]'
                     }`}
                   >
+                    <span className="text-[8px] font-semibold text-gray-400 leading-none mb-0.5">
+                      สถานะที่ {idx + 1}
+                    </span>
                     <span className="text-2xl">{stage.icon}</span>
                     <span className="text-[9px] font-bold text-center text-[#374151] leading-tight mt-1 h-7 flex items-center">
                       {stage.label}
