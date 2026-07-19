@@ -167,6 +167,7 @@ export default function DisbursementDashboard() {
   const [selected, setSelected] = useState<Disbursement | null>(null)
   const [modalState, setModalState] = useState<ModalState>('detail')
   const [selectedStage, setSelectedStage] = useState<DisbursementStatus>('pending_approval')
+  const [showHelp, setShowHelp] = useState(false)
   const [equipmentItems, setEquipmentItems] = useState<EquipmentRequest[]>([])
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentRequest | null>(null)
   const [eqModalState, setEqModalState] = useState<EqModalState>('detail')
@@ -637,6 +638,9 @@ export default function DisbursementDashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowHelp(true)} className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
+              ?
+            </button>
             <button onClick={() => load()} className="bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-3 py-2 rounded-xl transition-colors">
               ↻
             </button>
@@ -1843,6 +1847,73 @@ export default function DisbursementDashboard() {
                 className="flex-1 py-2.5 rounded-xl bg-[#DC2626] text-white text-sm font-semibold disabled:opacity-50"
               >
                 {deleting ? 'กำลังลบ...' : 'ยืนยันลบ'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help modal */}
+      {showHelp && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div className="bg-[#1E3A5F] text-white px-5 py-4 rounded-t-2xl flex items-center justify-between">
+              <h2 className="font-bold text-base">📋 วิธีใช้งานระบบเบิกจ่าย</h2>
+              <button onClick={() => setShowHelp(false)} className="text-white/70 hover:text-white text-xl leading-none">×</button>
+            </div>
+            <div className="px-5 py-4 space-y-5 text-sm">
+
+              <div className="space-y-1.5">
+                <p className="font-bold text-[#1E3A5F]">สถานะที่ 1 → 2 · การอนุมัติ</p>
+                <p className="text-gray-600 leading-relaxed">รายการต้องได้รับการอนุมัติจาก <span className="font-semibold text-[#374151]">Boss</span> หรือ <span className="font-semibold text-[#374151]">แผนกบัญชี</span> เท่านั้น จึงจะเข้าสู่สถานะถัดไปได้</p>
+              </div>
+
+              <div className="border-t border-[#E2E8F0]" />
+
+              <div className="space-y-2">
+                <p className="font-bold text-[#1E3A5F]">ผู้ที่มีสิทธิ์ใช้งานระบบ</p>
+                <div className="space-y-1.5">
+                  {[
+                    { dept: '📢 การตลาด', purpose: 'เบิกค่า Ads เท่านั้น' },
+                    { dept: '🎨 Creative', purpose: 'เบิกค่าเกรดเท่านั้น' },
+                    { dept: '🛒 จัดซื้อ', purpose: 'เบิกสินค้า' },
+                    { dept: '📝 ธุรการ', purpose: 'บันทึกยอด' },
+                    { dept: '💰 บัญชี', purpose: 'โอนเงิน' },
+                    { dept: '👤 บุคคล', purpose: 'เบิกอุปกรณ์สำนักงาน' },
+                  ].map(({ dept, purpose }) => (
+                    <div key={dept} className="flex items-center justify-between bg-[#F5F6F8] rounded-xl px-3 py-2">
+                      <span className="font-semibold text-[#374151]">{dept}</span>
+                      <span className="text-xs text-gray-500">{purpose}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-red-50 rounded-xl px-3 py-2 border border-red-100">
+                  <p className="text-xs font-semibold text-red-600">⚠️ นอกเหนือจาก 6 แผนกข้างต้น ถือว่าทุจริต</p>
+                </div>
+              </div>
+
+              <div className="border-t border-[#E2E8F0]" />
+
+              <div className="space-y-1.5">
+                <p className="font-bold text-[#1E3A5F]">สถานะที่ 2 → 4 · ผู้ดำเนินการ</p>
+                <p className="text-gray-600 leading-relaxed">ทั้ง 6 แผนกต้องดำเนินการตั้งแต่สถานะที่ 2 ถึงสถานะที่ 4 <span className="font-semibold text-[#374151]">ด้วยตนเอง</span></p>
+              </div>
+
+              <div className="border-t border-[#E2E8F0]" />
+
+              <div className="space-y-1.5">
+                <p className="font-bold text-[#1E3A5F]">สถานะที่ 3 · เงื่อนไขพิเศษ</p>
+                <ul className="space-y-1.5 text-gray-600">
+                  <li className="flex gap-2"><span>•</span><span>หากเป็นรายการสำรองจ่าย ต้องรอ Boss หรือแผนกบัญชี <span className="font-semibold text-[#374151]">โอนคืนก่อน</span> ดูสถานะได้ที่แถบด้านล่างของรายการ</span></li>
+                  <li className="flex gap-2"><span>•</span><span>การจะไปสถานะที่ 4 ได้ ต้องแนบ <span className="font-semibold text-[#374151]">ใบกำกับภาษี / ใบเสร็จรับเงิน / บิลเงินสด</span> ทุกครั้ง</span></li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => setShowHelp(false)}
+                className="w-full py-3 rounded-xl font-semibold text-sm bg-[#1E3A5F] text-white"
+              >
+                รับทราบ
               </button>
             </div>
           </div>
