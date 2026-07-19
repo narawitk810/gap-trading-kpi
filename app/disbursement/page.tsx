@@ -1146,6 +1146,12 @@ export default function DisbursementDashboard() {
                               <p className="text-xs font-semibold text-green-700">
                                 ✅ {selected.payment_method === 'qr' ? 'บริษัทชำระแล้ว' : 'บริษัทจ่ายคืนแล้ว'}
                               </p>
+                              {selected.payment_method !== 'qr' && selected.bank_account && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  โอนไปที่: <span className="font-semibold text-[#374151]">{selected.bank_account}</span>
+                                  {selected.bank_name ? ` (${selected.bank_name})` : ''}
+                                </p>
+                              )}
                               {selected.reimbursement_slip && (
                                 <>
                                   <img src={selected.reimbursement_slip} alt="สลิปยืนยัน" className="w-full max-h-32 object-cover rounded-xl border border-green-200 mt-2" />
@@ -1697,6 +1703,25 @@ export default function DisbursementDashboard() {
                         {selected.payment_method === 'qr' ? 'แนบสลิปยืนยันที่บริษัทชำระ QR แล้ว' : 'แนบสลิปที่บริษัทจ่ายคืนให้เพื่อดำเนินการขั้นตอนถัดไป'}
                       </p>
                     </div>
+                    {selected.payment_method === 'สำรองจ่าย' && (
+                      <div className="bg-blue-50 rounded-xl px-3 py-3 border border-blue-100">
+                        <p className="text-xs font-bold text-blue-700 mb-2">🏦 บัญชีรับโอนของผู้กรอก</p>
+                        {selected.bank_account ? (
+                          <div className="space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-xs text-gray-500">เลขบัญชี / พร้อมเพย์</span>
+                              <span className="text-xs font-semibold text-[#374151]">{selected.bank_account}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-xs text-gray-500">ธนาคาร</span>
+                              <span className="text-xs font-semibold text-[#374151]">{selected.bank_name || '—'}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-orange-600">⚠️ ยังไม่มีข้อมูลบัญชี — กลับไปกรอกในขั้นตอนก่อนหน้า</p>
+                        )}
+                      </div>
+                    )}
                     <div>
                       <label className="block text-sm font-semibold text-[#374151] mb-1.5">
                         สลิปที่บริษัทจ่ายคืน <span className="text-[#DC2626]">*</span>
