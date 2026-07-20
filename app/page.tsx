@@ -389,11 +389,10 @@ export default function Home() {
   const [storeManagerStaff, setStoreManagerStaff] = useState<LiveStaffMember[]>([])
   const [storeManagerPickerOpen, setStoreManagerPickerOpen] = useState(true)
   const [loadingStoreManager, setLoadingStoreManager] = useState(false)
-  const [smFacebookUrl, setSmFacebookUrl] = useState('')
-  const [smActivities, setSmActivities] = useState([{ activityName: '', eventDate: '', startTime: '' }])
-  const addSmActivity = () => { if (smActivities.length < 10) setSmActivities(prev => [...prev, { activityName: '', eventDate: '', startTime: '' }]) }
+  const [smActivities, setSmActivities] = useState([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
+  const addSmActivity = () => { if (smActivities.length < 10) setSmActivities(prev => [...prev, { activityName: '', eventDate: '', startTime: '', facebookUrl: '' }]) }
   const removeSmActivity = (i: number) => setSmActivities(prev => prev.filter((_, idx) => idx !== i))
-  const updateSmActivity = (i: number, field: 'activityName' | 'eventDate' | 'startTime', value: string) => setSmActivities(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a))
+  const updateSmActivity = (i: number, field: 'activityName' | 'eventDate' | 'startTime' | 'facebookUrl', value: string) => setSmActivities(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a))
   useEffect(() => {
     if (formData.department !== 'ไลฟ์สด') return
     setPickerOpen(!formData.nickname)
@@ -599,8 +598,8 @@ export default function Home() {
     let extra_data = buildExtraDataPayload(formData.department, formData.extraData, channelRows)
     if (formData.department === 'ผู้จัดการหน้าร้าน') {
       const filledActivities = smActivities.filter(a => a.eventDate || a.activityName)
-      if (filledActivities.length > 0 || smFacebookUrl) {
-        extra_data = { facebook_url: smFacebookUrl, activities: filledActivities }
+      if (filledActivities.length > 0) {
+        extra_data = { activities: filledActivities }
       }
     }
     if (formData.department === 'การตลาด' && formData.bestRoiChannel && extra_data) {
@@ -709,8 +708,7 @@ export default function Home() {
     setChannelRows([])
     setPendingChannel('')
     setBestRoiEntry({ ...emptyBestRoiEntry })
-    setSmFacebookUrl('')
-    setSmActivities([{ activityName: '', eventDate: '', startTime: '' }])
+    setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -807,8 +805,7 @@ export default function Home() {
                   setBestRoiEntry({ ...emptyBestRoiEntry })
                   setPickerOpen(true)
                   setCreativePickerOpen(true)
-                  setSmFacebookUrl('')
-                  setSmActivities([{ activityName: '', eventDate: '', startTime: '' }])
+                  setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
                   setErrors((prev) => ({ ...prev, department: '', nickname: '' }))
                   setCodeVerified(isCodeVerifiedLocally(dept))
                   setCodeInput('')
@@ -1818,16 +1815,6 @@ export default function Home() {
               <span className="ml-2 text-xs font-normal text-gray-400">(ถ้ามี — ไม่บังคับ)</span>
             </p>
             <div className="flex flex-col gap-3">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">ลิ้งโพส Facebook</label>
-                <input
-                  type="url"
-                  value={smFacebookUrl}
-                  onChange={(e) => setSmFacebookUrl(e.target.value)}
-                  placeholder="https://www.facebook.com/..."
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-                />
-              </div>
               <div className="space-y-2">
                 {smActivities.map((act, i) => (
                   <div key={i} className="bg-[#F5F6F8] rounded-xl p-3 space-y-2">
@@ -1843,6 +1830,13 @@ export default function Home() {
                       value={act.activityName}
                       onChange={(e) => updateSmActivity(i, 'activityName', e.target.value)}
                       placeholder="ชื่อกิจกรรม"
+                      className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                    />
+                    <input
+                      type="url"
+                      value={act.facebookUrl}
+                      onChange={(e) => updateSmActivity(i, 'facebookUrl', e.target.value)}
+                      placeholder="ลิ้งโพส Facebook (ถ้ามี)"
                       className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
                     />
                     <div className="grid grid-cols-2 gap-2">

@@ -112,8 +112,8 @@ export async function POST(request: NextRequest) {
 
   if (body.department === 'ผู้จัดการหน้าร้าน' && body.extra_data) {
     const ed = body.extra_data as Record<string, unknown>
-    const activities = ed.activities as Array<{ activityName: string; eventDate: string; startTime: string }> | undefined
-    const list = activities ?? (ed.event_date ? [{ activityName: '', eventDate: ed.event_date as string, startTime: (ed.start_time as string) || '' }] : [])
+    const activities = ed.activities as Array<{ activityName: string; eventDate: string; startTime: string; facebookUrl?: string }> | undefined
+    const list = activities ?? (ed.event_date ? [{ activityName: '', eventDate: ed.event_date as string, startTime: (ed.start_time as string) || '', facebookUrl: '' }] : [])
     for (const act of list) {
       if (!act.eventDate) continue
       try {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         const storeId = [3, 4].includes(dow) ? 'ninjabear' : [5, 6].includes(dow) ? 'gap7card' : dow === 0 ? 'gap7card' : 'catramen'
         await db.execute({
           sql: `INSERT INTO tournament_events (id, kpi_id, store_id, nickname, facebook_url, event_date, start_time, activity_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          args: [generateId(), id, storeId, entry.nickname, (ed.facebook_url as string) || '', act.eventDate, act.startTime || '', act.activityName || '', now],
+          args: [generateId(), id, storeId, entry.nickname, act.facebookUrl || (ed.facebook_url as string) || '', act.eventDate, act.startTime || '', act.activityName || '', now],
         })
       } catch (e) { console.error('tournament_events insert failed', e) }
     }
