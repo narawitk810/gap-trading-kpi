@@ -393,7 +393,7 @@ export default function Home() {
   const [smActivities, setSmActivities] = useState([{ activityName: '', eventDate: '', startTime: '' }])
   const addSmActivity = () => { if (smActivities.length < 10) setSmActivities(prev => [...prev, { activityName: '', eventDate: '', startTime: '' }]) }
   const removeSmActivity = (i: number) => setSmActivities(prev => prev.filter((_, idx) => idx !== i))
-  const updateSmActivity = (i: number, field: string, value: string) => setSmActivities(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a))
+  const updateSmActivity = (i: number, field: 'activityName' | 'eventDate' | 'startTime', value: string) => setSmActivities(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a))
   useEffect(() => {
     if (formData.department !== 'ไลฟ์สด') return
     setPickerOpen(!formData.nickname)
