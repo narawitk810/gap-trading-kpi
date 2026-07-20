@@ -513,6 +513,7 @@ export async function ensureSchema(): Promise<void> {
       created_at   TEXT NOT NULL
     )
   `)
+  await db.execute(`ALTER TABLE tournament_events ADD COLUMN activity_name TEXT NOT NULL DEFAULT ''`).catch(() => {})
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tournament_games (
