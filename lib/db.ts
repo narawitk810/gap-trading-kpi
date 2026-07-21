@@ -408,6 +408,7 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  try { await db.execute(`ALTER TABLE disbursements ADD COLUMN request_doc TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN equipment_id TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN payment_method TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE disbursements ADD COLUMN order_disburse_slip TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }

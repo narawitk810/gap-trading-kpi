@@ -718,16 +718,25 @@ export default function DisbursementDashboard() {
                           onClick={() => openItem(item)}
                           className="flex-1 p-3 text-left active:bg-gray-50 min-w-0 rounded-l-xl"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
-                              <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-sm font-bold text-orange-700">
-                                {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
-                              </p>
-                              <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
+                          <div className="flex items-start gap-3">
+                            {item.request_doc && (
+                              <img
+                                src={item.request_doc}
+                                alt="เอกสาร"
+                                className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-[#374151] truncate">{item.requester}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{item.item_list}</p>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-sm font-bold text-orange-700">
+                                  {item.requested_amount.toLocaleString('th-TH', { minimumFractionDigits: 0 })}
+                                </p>
+                                <p className="text-xs text-gray-400">{formatDate(item.request_date)}</p>
+                              </div>
                             </div>
                           </div>
                         </button>
