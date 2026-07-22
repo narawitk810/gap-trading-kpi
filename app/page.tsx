@@ -584,6 +584,7 @@ export default function Home() {
     if (!formData.nickname.trim()) e.nickname = (formData.department === 'ไลฟ์สด' || formData.department === 'Creative') ? 'กรุณาเลือกชื่อ' : 'กรุณากรอกชื่อเล่น'
     if (CHANNEL_DEPTS.includes(formData.department) && (formData.department === 'การตลาด' ? channelRows.length === 0 : formData.channelName.length === 0)) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
+    if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -1830,6 +1831,9 @@ export default function Home() {
                 </label>
               ))}
             </div>
+            {errors.marketingChecklist && (
+              <p className="text-[#DC2626] text-xs mt-2">{errors.marketingChecklist}</p>
+            )}
           </div>
         )}
 
