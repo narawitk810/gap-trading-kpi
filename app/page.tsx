@@ -1814,7 +1814,7 @@ export default function Home() {
         {/* การตลาด — checklist */}
         {formData.department === 'การตลาด' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist</p>
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
             <div className="space-y-2.5">
               {([
                 { key: 'newProductDiscount', label: 'สินค้าเข้าใหม่ทำส่วนลด 10%' },
