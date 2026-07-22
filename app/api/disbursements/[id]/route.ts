@@ -101,14 +101,8 @@ export async function PATCH(
     })
   } else if (action === 'record_payment') {
     const tis = body.tax_invoice_status as string
-    if (!['yes', 'no'].includes(tis)) {
-      return NextResponse.json({ error: 'กรุณาระบุสถานะใบกำกับภาษี' }, { status: 400 })
-    }
-    if (tis === 'yes' && !body.tax_invoice_image) {
-      return NextResponse.json({ error: 'กรุณาแนบรูปใบกำกับภาษี' }, { status: 400 })
-    }
-    if (tis === 'no' && !body.tax_invoice_no_reason?.trim()) {
-      return NextResponse.json({ error: 'กรุณาระบุเหตุผลที่ไม่มีใบกำกับภาษี' }, { status: 400 })
+    if (!['yes', 'receipt', 'cash', 'no'].includes(tis)) {
+      return NextResponse.json({ error: 'กรุณาระบุสถานะเอกสาร' }, { status: 400 })
     }
     const rows = await db.execute({
       sql: `SELECT payment_method, reimbursed_at FROM disbursements WHERE id=? AND status='ordered'`,
@@ -118,18 +112,20 @@ export async function PATCH(
     if (row && ['สำรองจ่าย', 'qr'].includes(row.payment_method as string) && !row.reimbursed_at) {
       return NextResponse.json({ error: row.payment_method === 'qr' ? 'กรุณารอบริษัทชำระก่อน' : 'กรุณารอการจ่ายคืนจากบริษัทก่อน' }, { status: 400 })
     }
+    const imagesArr = Array.isArray(body.tax_invoice_images) ? body.tax_invoice_images as string[] : []
     await db.execute({
       sql: `UPDATE disbursements
             SET status='payment_recorded', payment_note=?, remaining_note=?, payment_recorded_at=?,
-                tax_invoice_status=?, tax_invoice_image=?, tax_invoice_no_reason=?
+                tax_invoice_status=?, tax_invoice_image=?, tax_invoice_pdf=?, tax_invoice_no_reason=?
             WHERE id=? AND status='ordered'`,
       args: [
         body.payment_note.trim(),
         body.remaining_note?.trim() || '',
         now,
         tis,
-        tis === 'yes' ? body.tax_invoice_image : '',
-        tis === 'no' ? body.tax_invoice_no_reason.trim() : '',
+        imagesArr.length > 0 ? JSON.stringify(imagesArr) : '',
+        body.tax_invoice_pdf || '',
+        '',
         params.id,
       ],
     })
@@ -164,7 +160,7 @@ export async function PATCH(
       sql: `UPDATE disbursements
             SET status='ordered',
                 payment_note='', remaining_note='', payment_recorded_at='',
-                tax_invoice_status='', tax_invoice_image='', tax_invoice_no_reason=''
+                tax_invoice_status='', tax_invoice_image='', tax_invoice_pdf='', tax_invoice_no_reason=''
             WHERE id=? AND status='payment_recorded'`,
       args: [params.id],
     })

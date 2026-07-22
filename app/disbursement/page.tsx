@@ -71,6 +71,7 @@ type Disbursement = {
   qr_slip: string
   tax_invoice_status: string
   tax_invoice_image: string
+  tax_invoice_pdf: string
   tax_invoice_no_reason: string
   payment_note: string
   remaining_note: string
@@ -197,8 +198,10 @@ export default function DisbursementDashboard() {
   const [qrSlipData, setQrSlipData] = useState<string | null>(null)
   const [qrSlipName, setQrSlipName] = useState('')
   const [taxInvoiceStatus, setTaxInvoiceStatus] = useState<'yes' | 'receipt' | 'cash' | ''>('')
-  const [taxInvoiceImageData, setTaxInvoiceImageData] = useState<string | null>(null)
-  const [taxInvoiceImageName, setTaxInvoiceImageName] = useState('')
+  const [taxInvoiceImages, setTaxInvoiceImages] = useState<string[]>([])
+  const [taxInvoiceImageNames, setTaxInvoiceImageNames] = useState<string[]>([])
+  const [taxInvoicePdfData, setTaxInvoicePdfData] = useState<string | null>(null)
+  const [taxInvoicePdfName, setTaxInvoicePdfName] = useState('')
   const [taxInvoiceNoReason, setTaxInvoiceNoReason] = useState('')
   const [reimbursementSlipData, setReimbursementSlipData] = useState<string | null>(null)
   const [reimbursementSlipName, setReimbursementSlipName] = useState('')
@@ -225,6 +228,7 @@ export default function DisbursementDashboard() {
   const orderChannelImageRef = useRef<HTMLInputElement>(null)
   const qrSlipRef = useRef<HTMLInputElement>(null)
   const taxInvoiceImageRef = useRef<HTMLInputElement>(null)
+  const taxInvoicePdfRef = useRef<HTMLInputElement>(null)
 
   async function load() {
     setLoading(true)
@@ -292,7 +296,7 @@ export default function DisbursementDashboard() {
     setReimbursementSlipData(null); setReimbursementSlipName('')
     setOrderChannel('offline'); setOrderChannelImageData(null); setOrderChannelImageName('')
     setQrSlipData(null); setQrSlipName('')
-    setTaxInvoiceStatus(''); setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); setTaxInvoiceNoReason('')
+    setTaxInvoiceStatus(''); setTaxInvoiceImages([]); setTaxInvoiceImageNames([]); setTaxInvoicePdfData(null); setTaxInvoicePdfName(''); setTaxInvoiceNoReason('')
     setPaymentNote(''); setRemainingNote('')
     setCloseMonth(''); setClosedBy('')
     setBankAccount(item.bank_account || ''); setBankName(item.bank_name || '')
@@ -402,7 +406,47 @@ export default function DisbursementDashboard() {
   const handleReimbursementSlipFile = makeImageHandler(setReimbursementSlipData, setReimbursementSlipName, 'reimbursementSlip')
   const handleOrderChannelImageFile = makeImageHandler(setOrderChannelImageData, setOrderChannelImageName, 'orderChannelImage')
   const handleQrSlipFile = makeImageHandler(setQrSlipData, setQrSlipName, 'qrSlip')
-  const handleTaxInvoiceImageFile = makeImageHandler(setTaxInvoiceImageData, setTaxInvoiceImageName, 'taxInvoiceImage')
+  async function handleTaxInvoiceImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setFormErrors((p) => ({ ...p, taxInvoiceImage: '' }))
+    const slots = 4 - taxInvoiceImages.length
+    const toProcess = files.slice(0, slots)
+    const newImages: string[] = []
+    const newNames: string[] = []
+    for (const file of toProcess) {
+      if (!file.type.startsWith('image/')) continue
+      try {
+        const data = await compressImage(file)
+        newImages.push(data)
+        newNames.push(file.name)
+      } catch { /* skip */ }
+    }
+    setTaxInvoiceImages((prev) => [...prev, ...newImages])
+    setTaxInvoiceImageNames((prev) => [...prev, ...newNames])
+    if (taxInvoiceImageRef.current) taxInvoiceImageRef.current.value = ''
+  }
+
+  async function handleTaxInvoicePdfFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      setFormErrors((p) => ({ ...p, taxInvoicePdf: 'รองรับเฉพาะไฟล์ PDF' }))
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setFormErrors((p) => ({ ...p, taxInvoicePdf: 'ไฟล์ PDF ต้องไม่เกิน 10 MB' }))
+      return
+    }
+    setFormErrors((p) => ({ ...p, taxInvoicePdf: '' }))
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setTaxInvoicePdfData(ev.target?.result as string)
+      setTaxInvoicePdfName(file.name)
+    }
+    reader.readAsDataURL(file)
+    if (taxInvoicePdfRef.current) taxInvoicePdfRef.current.value = ''
+  }
 
   function validateAction() {
     const e: Record<string, string> = {}
@@ -423,7 +467,6 @@ export default function DisbursementDashboard() {
       if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
-      if (['yes', 'receipt'].includes(taxInvoiceStatus) && !taxInvoiceImageData) e.taxInvoiceImage = 'กรุณาแนบรูปเอกสาร'
     } else if (selected.status === 'payment_recorded') {
       if (!closeMonth.trim()) e.closeMonth = 'กรุณาระบุเดือน (ปี-เดือน)'
       if (!closedBy.trim()) e.closedBy = 'กรุณากรอกชื่อผู้ปิดงบ'
@@ -558,7 +601,8 @@ export default function DisbursementDashboard() {
         payment_note: paymentNote.trim(),
         remaining_note: remainingNote.trim(),
         tax_invoice_status: taxInvoiceStatus,
-        tax_invoice_image: ['yes', 'receipt', 'cash'].includes(taxInvoiceStatus) ? taxInvoiceImageData : '',
+        tax_invoice_images: taxInvoiceImages,
+        tax_invoice_pdf: taxInvoicePdfData || '',
         tax_invoice_no_reason: '',
       }
     } else if (selected.status === 'payment_recorded') {
@@ -1233,11 +1277,24 @@ export default function DisbursementDashboard() {
                           {selected.tax_invoice_no_reason && (
                             <p className="text-xs text-gray-500 mt-0.5">เหตุผล: {selected.tax_invoice_no_reason}</p>
                           )}
-                          {selected.tax_invoice_image && (
-                            <>
-                              <img src={selected.tax_invoice_image} alt="เอกสาร" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0] mt-2" />
-                              <button onClick={() => downloadImage(selected.tax_invoice_image, 'tax-invoice.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
-                            </>
+                          {selected.tax_invoice_image && (() => {
+                            let imgs: string[] = []
+                            try { imgs = JSON.parse(selected.tax_invoice_image) } catch { imgs = [selected.tax_invoice_image] }
+                            return imgs.length > 0 ? (
+                              <div className="grid grid-cols-2 gap-1.5 mt-2">
+                                {imgs.map((img, i) => (
+                                  <div key={i}>
+                                    <img src={img} alt={`เอกสาร ${i+1}`} className="w-full h-20 object-cover rounded-lg border border-[#E2E8F0]" />
+                                    <button onClick={() => downloadImage(img, `tax-invoice-${i+1}.jpg`)} className="text-xs text-[#1E3A5F] font-semibold">⬇</button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null
+                          })()}
+                          {selected.tax_invoice_pdf && (
+                            <a href={selected.tax_invoice_pdf} download="tax-invoice.pdf" className="flex items-center gap-1.5 text-xs text-[#1E3A5F] font-semibold mt-2">
+                              <span>📄</span> ดาวน์โหลด PDF
+                            </a>
                           )}
                         </div>
                       )}
@@ -1597,7 +1654,7 @@ export default function DisbursementDashboard() {
                           <div className="grid grid-cols-3 gap-2">
                             {(['yes', 'receipt', 'cash'] as const).map((v) => (
                               <button key={v} type="button"
-                                onClick={() => { setTaxInvoiceStatus(v); setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); if (taxInvoiceImageRef.current) taxInvoiceImageRef.current.value = ''; setFormErrors((p) => ({ ...p, taxInvoiceStatus: '', taxInvoiceImage: '' })) }}
+                                onClick={() => { setTaxInvoiceStatus(v); setTaxInvoiceImages([]); setTaxInvoiceImageNames([]); setTaxInvoicePdfData(null); setTaxInvoicePdfName(''); if (taxInvoiceImageRef.current) taxInvoiceImageRef.current.value = ''; setFormErrors((p) => ({ ...p, taxInvoiceStatus: '', taxInvoiceImage: '' })) }}
                                 className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${taxInvoiceStatus === v ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
                                 {v === 'yes' ? '🧾 ใบกำกับภาษี' : v === 'receipt' ? '🧾 ใบเสร็จรับเงิน' : '💵 บิลเงินสด'}
                               </button>
@@ -1606,27 +1663,57 @@ export default function DisbursementDashboard() {
                           {formErrors.taxInvoiceStatus && <p className="text-[#DC2626] text-xs mt-1">{formErrors.taxInvoiceStatus}</p>}
                         </div>
                         {['yes', 'receipt', 'cash'].includes(taxInvoiceStatus) && (
-                          <div>
-                            <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                              {taxInvoiceStatus === 'yes' ? 'รูปใบกำกับภาษี' : taxInvoiceStatus === 'receipt' ? 'รูปใบเสร็จรับเงิน' : 'รูปบิลเงินสด'} {taxInvoiceStatus !== 'cash' && <span className="text-[#DC2626]">*</span>}
-                            </label>
-                            <input ref={taxInvoiceImageRef} type="file" accept="image/*" onChange={handleTaxInvoiceImageFile} className="hidden" />
-                            {taxInvoiceImageData ? (
-                              <div className="space-y-1">
-                                <img src={taxInvoiceImageData} alt="เอกสาร" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
-                                <div className="flex items-center justify-between">
-                                  <p className="text-xs text-gray-400 truncate">{taxInvoiceImageName}</p>
-                                  <button type="button" onClick={() => { setTaxInvoiceImageData(null); setTaxInvoiceImageName(''); if (taxInvoiceImageRef.current) taxInvoiceImageRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
-                                </div>
+                          <div className="space-y-3">
+                            {/* รูปสูงสุด 4 รูป */}
+                            <div>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                                รูปเอกสาร <span className="text-xs font-normal text-gray-400">(สูงสุด 4 รูป)</span>
+                              </label>
+                              <input ref={taxInvoiceImageRef} type="file" accept="image/*" multiple onChange={handleTaxInvoiceImageFile} className="hidden" />
+                              <div className="grid grid-cols-2 gap-2">
+                                {taxInvoiceImages.map((img, i) => (
+                                  <div key={i} className="relative">
+                                    <img src={img} alt={`เอกสาร ${i+1}`} className="w-full h-24 object-cover rounded-xl border border-[#E2E8F0]" />
+                                    <button
+                                      type="button"
+                                      onClick={() => { setTaxInvoiceImages((p) => p.filter((_, idx) => idx !== i)); setTaxInvoiceImageNames((p) => p.filter((_, idx) => idx !== i)) }}
+                                      className="absolute top-1 right-1 bg-white/90 text-[#DC2626] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow"
+                                    >×</button>
+                                  </div>
+                                ))}
+                                {taxInvoiceImages.length < 4 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => taxInvoiceImageRef.current?.click()}
+                                    className="h-24 border-2 border-dashed border-[#E2E8F0] rounded-xl flex flex-col items-center justify-center gap-1 hover:border-[#1E3A5F] transition-colors"
+                                  >
+                                    <span className="text-xl text-gray-300">+</span>
+                                    <span className="text-xs text-gray-400">เพิ่มรูป</span>
+                                  </button>
+                                )}
                               </div>
-                            ) : (
-                              <button type="button" onClick={() => taxInvoiceImageRef.current?.click()}
-                                className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
-                                <span className="text-2xl">{taxInvoiceStatus === 'cash' ? '💵' : '🧾'}</span>
-                                <span className="text-xs text-gray-400">แนบรูปเอกสาร</span>
-                              </button>
-                            )}
-                            {formErrors.taxInvoiceImage && <p className="text-[#DC2626] text-xs mt-1">{formErrors.taxInvoiceImage}</p>}
+                            </div>
+                            {/* PDF 1 ไฟล์ */}
+                            <div>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                                ไฟล์ PDF <span className="text-xs font-normal text-gray-400">(ถ้ามี)</span>
+                              </label>
+                              <input ref={taxInvoicePdfRef} type="file" accept="application/pdf" onChange={handleTaxInvoicePdfFile} className="hidden" />
+                              {taxInvoicePdfData ? (
+                                <div className="flex items-center gap-2 bg-blue-50 rounded-xl px-3 py-2.5">
+                                  <span className="text-lg">📄</span>
+                                  <p className="text-xs text-[#374151] flex-1 truncate">{taxInvoicePdfName}</p>
+                                  <button type="button" onClick={() => { setTaxInvoicePdfData(null); setTaxInvoicePdfName('') }} className="text-[#DC2626] text-xs font-semibold shrink-0">ลบ</button>
+                                </div>
+                              ) : (
+                                <button type="button" onClick={() => taxInvoicePdfRef.current?.click()}
+                                  className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-4 flex items-center justify-center gap-2 hover:border-[#1E3A5F] transition-colors">
+                                  <span className="text-lg text-gray-300">📎</span>
+                                  <span className="text-xs text-gray-400">แนบ PDF</span>
+                                </button>
+                              )}
+                              {formErrors.taxInvoicePdf && <p className="text-[#DC2626] text-xs mt-1">{formErrors.taxInvoicePdf}</p>}
+                            </div>
                           </div>
                         )}
                       </>
