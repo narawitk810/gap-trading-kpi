@@ -214,6 +214,8 @@ export default function DisbursementDashboard() {
   const [deleting, setDeleting] = useState(false)
   const [deleteEqTarget, setDeleteEqTarget] = useState<EquipmentRequest | null>(null)
   const [deletingEq, setDeletingEq] = useState(false)
+  const [loadingImages, setLoadingImages] = useState(false)
+  const [loadingEqImage, setLoadingEqImage] = useState(false)
 
   const slipRef = useRef<HTMLInputElement>(null)
   const orderDisburseSlipRef = useRef<HTMLInputElement>(null)
@@ -279,9 +281,7 @@ export default function DisbursementDashboard() {
   useEffect(() => { load() }, [])
 
   async function openItem(item: Disbursement) {
-    const res = await fetch(`/api/disbursements/${item.id}`)
-    const full = await res.json()
-    setSelected(full)
+    setSelected(item)
     setModalState('detail')
     setApprovedBy(''); setTransferAmount(''); setSlipData(null); setSlipName('')
     setOrderedBy(''); setActualAmount(''); setOrderNote('')
@@ -297,19 +297,33 @@ export default function DisbursementDashboard() {
     setCloseMonth(''); setClosedBy('')
     setBankAccount(item.bank_account || ''); setBankName(item.bank_name || '')
     setFormErrors({})
+    setLoadingImages(true)
+    try {
+      const res = await fetch(`/api/disbursements/${item.id}`)
+      if (res.ok) setSelected(await res.json())
+    } finally {
+      setLoadingImages(false)
+    }
   }
 
   function closeModal() {
     setSelected(null)
   }
 
-  function openEquipment(eq: EquipmentRequest) {
+  async function openEquipment(eq: EquipmentRequest) {
     setSelectedEquipment(eq)
     setEqModalState('detail')
     setEqAmount('')
     setEqAmountError('')
     setEqApprovedBy('')
     setEqApprovedByError('')
+    setLoadingEqImage(true)
+    try {
+      const res = await fetch(`/api/equipment/${eq.id}`)
+      if (res.ok) setSelectedEquipment(await res.json())
+    } finally {
+      setLoadingEqImage(false)
+    }
   }
 
   async function handleEqApprove() {
@@ -753,13 +767,6 @@ export default function DisbursementDashboard() {
                           className="flex-1 p-3 text-left active:bg-gray-50 min-w-0 rounded-l-xl"
                         >
                           <div className="flex items-start gap-3">
-                            {eq.image_data && (
-                              <img
-                                src={eq.image_data}
-                                alt="รูปอุปกรณ์"
-                                className="w-12 h-12 object-cover rounded-lg shrink-0 border border-[#E2E8F0]"
-                              />
-                            )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className="text-sm font-semibold text-[#374151]">{eq.nickname}</p>
@@ -895,10 +902,12 @@ export default function DisbursementDashboard() {
                     <p className="text-xs text-gray-500 mb-0.5">วันที่แจ้ง</p>
                     <p className="text-sm font-semibold text-[#374151]">{formatDate(selectedEquipment.created_at)}</p>
                   </div>
-                  {selectedEquipment.image_data && (
+                  {loadingEqImage ? (
+                    <div className="w-full h-20 flex items-center justify-center text-gray-400 text-sm rounded-xl bg-gray-50">กำลังโหลดรูป...</div>
+                  ) : selectedEquipment.image_data ? (
                     <img src={selectedEquipment.image_data} alt="รูปอุปกรณ์"
                       className="w-full max-h-64 object-contain rounded-xl border border-[#E2E8F0]" />
-                  )}
+                  ) : null}
                   <div className="flex gap-3">
                     <button onClick={() => setSelectedEquipment(null)}
                       className="flex-1 border border-[#E2E8F0] text-[#374151] py-3 rounded-xl font-semibold text-sm">
@@ -1046,12 +1055,14 @@ export default function DisbursementDashboard() {
                       <p className="text-xs text-gray-500">ยอดที่ขอเบิก</p>
                       <p className="font-bold text-orange-700 text-base">{formatMoney(selected.requested_amount)}</p>
                     </div>
-                    {selected.request_doc && (
+                    {loadingImages ? (
+                      <div className="w-full h-20 flex items-center justify-center text-gray-400 text-sm rounded-xl bg-gray-50">กำลังโหลดรูป...</div>
+                    ) : selected.request_doc ? (
                       <div>
                         <img src={selected.request_doc} alt="เอกสาร" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
                         <button onClick={() => downloadImage(selected.request_doc, 'request-doc.jpg')} className="text-xs text-[#1E3A5F] font-semibold mt-1">⬇ บันทึกรูป</button>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Step 2 info */}
@@ -1069,7 +1080,9 @@ export default function DisbursementDashboard() {
                           {selected.bank_name && <p className="text-[#374151]">ธนาคาร: <span className="font-semibold">{selected.bank_name}</span></p>}
                         </div>
                       )}
-                      {selected.payment_slip && (
+                      {loadingImages ? (
+                        <div className="w-full h-16 flex items-center justify-center text-gray-400 text-sm rounded-xl bg-gray-50">กำลังโหลดรูป...</div>
+                      ) : selected.payment_slip ? (
                         <div className="space-y-2">
                           <img src={selected.payment_slip} alt="สลิป" className="w-full max-h-32 object-cover rounded-xl border border-[#E2E8F0]" />
                           <div className="flex gap-2">
@@ -1077,7 +1090,7 @@ export default function DisbursementDashboard() {
                             <button onClick={() => handleClearSlip(selected.id)} className="flex-1 border border-red-200 text-red-600 py-2 rounded-xl text-xs font-semibold">ลบสลิปการโอน</button>
                           </div>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   )}
 
