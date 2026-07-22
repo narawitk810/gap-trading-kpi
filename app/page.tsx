@@ -362,6 +362,7 @@ export default function Home() {
   const [marketingStaff, setMarketingStaff] = useState<LiveStaffMember[]>([])
   const [marketingPickerOpen, setMarketingPickerOpen] = useState(true)
   const [loadingMarketing, setLoadingMarketing] = useState(false)
+  const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -617,6 +618,9 @@ export default function Home() {
         ...(bestRoiEntry.liveHours && { live_hours: bestRoiEntry.liveHours }),
       }
     }
+    if (formData.department === 'การตลาด' && extra_data) {
+      extra_data.checklist = marketingChecklist
+    }
     try {
       const res = await fetch('/api/kpi', {
         method: 'POST',
@@ -709,6 +713,7 @@ export default function Home() {
     setPendingChannel('')
     setBestRoiEntry({ ...emptyBestRoiEntry })
     setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
+    setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -1804,6 +1809,29 @@ export default function Home() {
             </button>
           )}
         </div>
+
+        {/* การตลาด — checklist */}
+        {formData.department === 'การตลาด' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist</p>
+            <div className="space-y-2.5">
+              {([
+                { key: 'newProductDiscount', label: 'สินค้าเข้าใหม่ทำส่วนลด 10%' },
+                { key: 'tiktokAiPromo', label: 'กดโปรโมชั่น AI ใน TikTok Seller' },
+              ] as { key: keyof typeof marketingChecklist; label: string }[]).map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={marketingChecklist[key]}
+                    onChange={(e) => setMarketingChecklist(prev => ({ ...prev, [key]: e.target.checked }))}
+                    className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                  />
+                  <span className="text-sm text-[#374151]">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Department-specific fields ── */}
 
