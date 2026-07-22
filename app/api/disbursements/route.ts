@@ -8,9 +8,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const isPublic = searchParams.get('public') === 'true'
 
+  const LIST_COLS = `id, requester, item_list, requested_amount, request_date,
+    approved_by, transfer_amount, approved_at, ordered_by, actual_amount,
+    order_note, ordered_at, payment_note, remaining_note, payment_recorded_at,
+    close_month, closed_by, closed_at, status, equipment_id, created_at,
+    payment_method, reimbursed_at, order_channel,
+    tax_invoice_status, tax_invoice_no_reason, bank_account, bank_name`
+
   if (isPublic) {
     const result = await db.execute(
-      'SELECT * FROM disbursements ORDER BY created_at DESC LIMIT 200'
+      `SELECT ${LIST_COLS} FROM disbursements ORDER BY created_at DESC LIMIT 200`
     )
     return NextResponse.json(result.rows)
   }
@@ -18,7 +25,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status')
   const requester = searchParams.get('requester')
 
-  let query = 'SELECT * FROM disbursements WHERE 1=1'
+  let query = `SELECT ${LIST_COLS} FROM disbursements WHERE 1=1`
   const args: (string | number)[] = []
 
   if (status) {
