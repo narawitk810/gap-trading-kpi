@@ -277,6 +277,9 @@ export default function AnnouncementsPage() {
                                 <div className="bg-[#F5F6F8] rounded-xl p-2.5">
                                   <p className="text-[10px] text-gray-400 font-medium">แยกซอง (โยนนอก)</p>
                                   <p className="text-sm font-bold text-[#374151] mt-0.5">{fmt(pricing.pack_price_external)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
+                                  {pricing.break_enabled && (
+                                    <span className="inline-block text-[10px] text-[#D97706] bg-orange-50 rounded px-1 mt-1">เปิด break</span>
+                                  )}
                                 </div>
                               </div>
 
