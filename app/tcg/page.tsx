@@ -47,6 +47,7 @@ interface TcgRanking {
 }
 
 type TableStatus = 'empty' | 'waiting' | 'playing'
+type AuthScreen = 'entry' | 'login' | 'register' | null
 
 interface TableInfo {
   tableNumber: number
@@ -56,9 +57,16 @@ interface TableInfo {
 
 export default function TcgPage() {
   const [tab, setTab] = useState<'tables' | 'rankings'>('tables')
+  const [authScreen, setAuthScreen] = useState<AuthScreen>('entry')
   const [nickname, setNickname] = useState('')
   const [nicknameInput, setNicknameInput] = useState('')
   const [matchType, setMatchType] = useState<'friendly' | 'ranking'>('friendly')
+  const [regName, setRegName] = useState('')
+  const [regPhone, setRegPhone] = useState('')
+  const [regNick, setRegNick] = useState('')
+  const [loginNick, setLoginNick] = useState('')
+  const [loginPhone, setLoginPhone] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
   const [sessions, setSessions] = useState<TcgSession[]>([])
   const [mySessionId, setMySessionId] = useState<string | null>(null)
   const [mySession, setMySession] = useState<TcgSession | null>(null)
@@ -139,7 +147,7 @@ export default function TcgPage() {
   // โหลด nickname + sessionId + check-in จาก localStorage
   useEffect(() => {
     const saved = localStorage.getItem('tcg_nickname')
-    if (saved) { setNickname(saved); setNicknameInput(saved) }
+    if (saved) { setNickname(saved); setNicknameInput(saved); setAuthScreen(null) }
     const sid = localStorage.getItem('tcg_session_id')
     if (sid) setMySessionId(sid)
     const ci = localStorage.getItem('tcg_checkin')
@@ -240,6 +248,54 @@ export default function TcgPage() {
     if (!n) return
     setNickname(n)
     localStorage.setItem('tcg_nickname', n)
+  }
+
+  const handleRegister = async () => {
+    if (!regName.trim() || !regPhone.trim() || !regNick.trim()) {
+      showError('กรุณากรอกข้อมูลให้ครบถ้วน')
+      return
+    }
+    setAuthLoading(true)
+    try {
+      const res = await fetch('/api/tcg/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name: regName.trim(), phone: regPhone.trim(), nickname: regNick.trim(), branch: BRANCH }),
+      })
+      const data = await res.json()
+      if (!res.ok) { showError(data.error || 'เกิดข้อผิดพลาด'); return }
+      showSuccess('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ')
+      setRegName(''); setRegPhone(''); setRegNick('')
+      setAuthScreen('entry')
+    } catch { showError('ไม่สามารถเชื่อมต่อได้') }
+    finally { setAuthLoading(false) }
+  }
+
+  const handleLogin = async () => {
+    if (!loginNick.trim() || !loginPhone.trim()) {
+      showError('กรุณากรอกฉายาและเบอร์โทร')
+      return
+    }
+    setAuthLoading(true)
+    try {
+      const res = await fetch(`/api/tcg/members?nickname=${encodeURIComponent(loginNick.trim())}&phone=${encodeURIComponent(loginPhone.trim())}&branch=${BRANCH}`)
+      const data = await res.json()
+      if (!res.ok) { showError(data.error || 'ไม่พบข้อมูลสมาชิก'); return }
+      setNickname(data.nickname)
+      setNicknameInput(data.nickname)
+      localStorage.setItem('tcg_nickname', data.nickname)
+      setAuthScreen(null)
+    } catch { showError('ไม่สามารถเชื่อมต่อได้') }
+    finally { setAuthLoading(false) }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('tcg_nickname')
+    setNickname('')
+    setNicknameInput('')
+    setLoginNick('')
+    setLoginPhone('')
+    setAuthScreen('entry')
   }
 
   const buildTables = (): TableInfo[] => {
@@ -444,6 +500,155 @@ export default function TcgPage() {
     return '🔴'
   }
 
+  // ---- Auth Screens ----
+  if (authScreen !== null) {
+    return (
+      <main className="min-h-screen bg-[#F5F6F8] flex flex-col" onClick={startAudio}>
+        {/* Header */}
+        <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
+          <div className="flex items-center gap-3">
+            <img src="/IMG_3291.JPG" alt="GAP7" className="w-10 h-10 rounded-xl object-cover" />
+            <div>
+              <h1 className="text-lg font-bold">GAP7 CARD SHOP</h1>
+              <p className="text-xs opacity-70">Match Making TCG</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Toast */}
+        {error && (
+          <div className="mx-4 mt-3 bg-[#DC2626] text-white text-sm rounded-xl px-4 py-3 font-medium">{error}</div>
+        )}
+        {successMsg && (
+          <div className="mx-4 mt-3 bg-[#16A34A] text-white text-sm rounded-xl px-4 py-3 font-medium">{successMsg}</div>
+        )}
+
+        <div className="flex-1 px-4 pt-8 pb-10">
+          {/* Entry Screen */}
+          {authScreen === 'entry' && (
+            <div className="space-y-4">
+              <div className="text-center mb-8">
+                <p className="text-2xl font-bold text-[#1E3A5F]">ยินดีต้อนรับ</p>
+                <p className="text-sm text-gray-400 mt-1">เลือกตัวเลือกด้านล่างเพื่อเริ่มใช้งาน</p>
+              </div>
+              <button
+                onClick={() => setAuthScreen('login')}
+                className="w-full py-4 bg-[#1E3A5F] text-white text-base font-bold rounded-2xl shadow-sm"
+              >
+                เข้าสู่ระบบ
+              </button>
+              <button
+                onClick={() => setAuthScreen('register')}
+                className="w-full py-4 bg-white text-[#1E3A5F] text-base font-bold rounded-2xl border-2 border-[#1E3A5F] shadow-sm"
+              >
+                สมัครสมาชิก
+              </button>
+            </div>
+          )}
+
+          {/* Login Screen */}
+          {authScreen === 'login' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-6">
+                <button onClick={() => setAuthScreen('entry')} className="text-[#1E3A5F] text-sm font-semibold">← กลับ</button>
+                <p className="text-lg font-bold text-[#1E3A5F]">เข้าสู่ระบบ</p>
+              </div>
+              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">ฉายา</p>
+                  <input
+                    value={loginNick}
+                    onChange={(e) => setLoginNick(e.target.value)}
+                    placeholder="กรอกฉายาของคุณ"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">เบอร์โทร</p>
+                  <input
+                    value={loginPhone}
+                    onChange={(e) => setLoginPhone(e.target.value)}
+                    placeholder="กรอกเบอร์โทรศัพท์"
+                    type="tel"
+                    inputMode="numeric"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleLogin}
+                disabled={authLoading}
+                className="w-full py-4 bg-[#1E3A5F] text-white text-base font-bold rounded-2xl shadow-sm disabled:opacity-50"
+              >
+                {authLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
+              </button>
+              <p className="text-center text-sm text-gray-400">
+                ยังไม่มีบัญชี?{' '}
+                <button onClick={() => setAuthScreen('register')} className="text-[#1E3A5F] font-semibold underline">
+                  สมัครสมาชิก
+                </button>
+              </p>
+            </div>
+          )}
+
+          {/* Register Screen */}
+          {authScreen === 'register' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-6">
+                <button onClick={() => setAuthScreen('entry')} className="text-[#1E3A5F] text-sm font-semibold">← กลับ</button>
+                <p className="text-lg font-bold text-[#1E3A5F]">สมัครสมาชิก</p>
+              </div>
+              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">ชื่อ-นามสกุล</p>
+                  <input
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    placeholder="กรอกชื่อ-นามสกุลจริง"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">เบอร์โทร</p>
+                  <input
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.target.value)}
+                    placeholder="กรอกเบอร์โทรศัพท์"
+                    type="tel"
+                    inputMode="numeric"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">ฉายา</p>
+                  <input
+                    value={regNick}
+                    onChange={(e) => setRegNick(e.target.value)}
+                    placeholder="ตั้งชื่อเล่น / ฉายา"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleRegister}
+                disabled={authLoading}
+                className="w-full py-4 bg-[#1E3A5F] text-white text-base font-bold rounded-2xl shadow-sm disabled:opacity-50"
+              >
+                {authLoading ? 'กำลังสมัคร...' : 'สมัครสมาชิก'}
+              </button>
+              <p className="text-center text-sm text-gray-400">
+                มีบัญชีแล้ว?{' '}
+                <button onClick={() => setAuthScreen('login')} className="text-[#1E3A5F] font-semibold underline">
+                  เข้าสู่ระบบ
+                </button>
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className="min-h-screen bg-[#F5F6F8] pb-8">
       {/* Header */}
@@ -511,27 +716,18 @@ export default function TcgPage() {
 
       {tab === 'tables' && (
         <div className="px-4 mt-4 space-y-4">
-          {/* Nickname */}
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-[#374151] mb-2">ชื่อผู้เล่น</p>
-            <div className="flex gap-2">
-              <input
-                value={nicknameInput}
-                onChange={(e) => setNicknameInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') saveNickname() }}
-                placeholder="กรอกชื่อเล่น"
-                className="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
-              />
-              <button
-                onClick={saveNickname}
-                className="px-4 py-2.5 bg-[#1E3A5F] text-white text-sm font-semibold rounded-xl"
-              >
-                ยืนยัน
-              </button>
+          {/* Player info */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-400 mb-0.5">ผู้เล่น</p>
+              <p className="text-sm font-bold text-[#1E3A5F]">{nickname}</p>
             </div>
-            {nickname && (
-              <p className="text-xs text-[#16A34A] mt-2 font-medium">ผู้เล่น: {nickname}</p>
-            )}
+            <button
+              onClick={handleLogout}
+              className="text-xs text-gray-400 underline"
+            >
+              ออกจากระบบ
+            </button>
           </div>
 
           {/* Match Type */}
