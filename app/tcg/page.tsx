@@ -891,7 +891,7 @@ export default function TcgPage() {
                 <p className="text-sm font-bold text-[#1E3A5F]">{nickname}</p>
                 {(() => {
                   const pos = rankings.findIndex(r => r.nickname === nickname)
-                  if (pos === -1) return null
+                  if (pos === -1) return <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${TIER_COLOR['E']}`}>E</span>
                   const tier = getTier(pos + 1)
                   return <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${TIER_COLOR[tier]}`}>{tier}</span>
                 })()}
