@@ -120,6 +120,24 @@ export async function ensureSchema(): Promise<void> {
     await db.execute('ALTER TABLE stock_arrivals ADD COLUMN old_pricing_data TEXT')
   } catch { /* column already exists */ }
 
+  try {
+    await db.execute('ALTER TABLE stock_arrivals ADD COLUMN tiktok_listed_at TEXT DEFAULT ""')
+  } catch { /* column already exists */ }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id          TEXT PRIMARY KEY,
+      title       TEXT NOT NULL,
+      content     TEXT NOT NULL,
+      image_data  TEXT DEFAULT '',
+      is_pinned   INTEGER DEFAULT 0,
+      is_active   INTEGER DEFAULT 1,
+      created_by  TEXT NOT NULL,
+      created_at  TEXT NOT NULL,
+      updated_at  TEXT NOT NULL
+    )
+  `)
+
   await db.execute(`
     CREATE TABLE IF NOT EXISTS promo_thresholds (
       id               TEXT PRIMARY KEY,

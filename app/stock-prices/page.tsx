@@ -29,6 +29,7 @@ type StockPrice = {
   pricing_data: string | null
   old_pricing_data: string | null
   status: string
+  tiktok_listed_at: string | null
 }
 
 function formatDate(iso: string) {
@@ -63,6 +64,7 @@ export default function StockPricesPage() {
   const [editingItem, setEditingItem] = useState<StockPrice | null>(null)
   const [editForm, setEditForm] = useState({ product_name: '', quantity: '', packs_per_box: '', cost: '', note: '', old_box_system: '', old_box_external: '', old_pack_system: '', old_pack_external: '' })
   const [savingEdit, setSavingEdit] = useState(false)
+  const [togglingTiktok, setTogglingTiktok] = useState<string | null>(null)
 
   const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
@@ -77,6 +79,26 @@ export default function StockPricesPage() {
     const interval = setInterval(fetchData, 30_000)
     return () => clearInterval(interval)
   }, [fetchData])
+
+  async function handleToggleTiktok(item: StockPrice) {
+    const action = item.tiktok_listed_at ? 'unmark_tiktok' : 'mark_tiktok'
+    if (item.tiktok_listed_at && !confirm('ยืนยันการยกเลิกสถานะ TikTok Seller?')) return
+    setTogglingTiktok(item.id)
+    try {
+      const res = await fetch('/api/stock-arrival', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, action }),
+      })
+      if (res.ok) {
+        setItems((prev) => prev.map((r) =>
+          r.id === item.id ? { ...r, tiktok_listed_at: action === 'mark_tiktok' ? new Date().toISOString() : null } : r
+        ))
+      }
+    } catch { /* silent */ } finally {
+      setTogglingTiktok(null)
+    }
+  }
 
   async function handleEditSave() {
     if (!editingItem) return
@@ -386,12 +408,25 @@ export default function StockPricesPage() {
                           )}
                         </td>
                         <td className="px-3 py-3 text-center">
-                          <button
-                            onClick={() => openPricingModal(r)}
-                            className="border border-[#1E3A5F] text-[#1E3A5F] px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
-                          >
-                            แก้ไขราคา
-                          </button>
+                          <div className="flex flex-col items-center gap-1.5">
+                            <button
+                              onClick={() => openPricingModal(r)}
+                              className="border border-[#1E3A5F] text-[#1E3A5F] px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap hover:bg-[#F5F6F8]"
+                            >
+                              แก้ไขราคา
+                            </button>
+                            <button
+                              onClick={() => handleToggleTiktok(r)}
+                              disabled={togglingTiktok === r.id}
+                              className={`text-xs px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap disabled:opacity-60 ${
+                                r.tiktok_listed_at
+                                  ? 'bg-[#16A34A]/10 text-[#16A34A]'
+                                  : 'bg-[#16A34A] text-white hover:bg-[#15803d]'
+                              }`}
+                            >
+                              {togglingTiktok === r.id ? '...' : r.tiktok_listed_at ? '✅ TikTok แล้ว' : '+ TikTok Seller'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )

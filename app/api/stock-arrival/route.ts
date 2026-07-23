@@ -62,6 +62,23 @@ export async function PATCH(request: NextRequest) {
   await ensureSchema()
   const db = getDb()
 
+  if (body.action === 'mark_tiktok') {
+    const now = new Date().toISOString()
+    await db.execute({
+      sql: `UPDATE stock_arrivals SET tiktok_listed_at = ? WHERE id = ? AND status = 'acknowledged'`,
+      args: [now, body.id],
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'unmark_tiktok') {
+    await db.execute({
+      sql: `UPDATE stock_arrivals SET tiktok_listed_at = '' WHERE id = ? AND status = 'acknowledged'`,
+      args: [body.id],
+    })
+    return NextResponse.json({ ok: true })
+  }
+
   if (isAdmin) {
     const now = new Date().toISOString()
     await db.execute({

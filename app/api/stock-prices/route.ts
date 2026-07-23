@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, ensureSchema } from '@/lib/db'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const acknowledgedOnly = searchParams.get('acknowledged_only') === 'true'
   await ensureSchema()
   const db = getDb()
+  const whereClause = acknowledgedOnly
+    ? `WHERE status = 'acknowledged'`
+    : `WHERE status IN ('pending', 'acknowledged')`
+  const orderClause = acknowledgedOnly
+    ? `ORDER BY COALESCE(acknowledged_at, created_at) DESC`
+    : `ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, COALESCE(acknowledged_at, created_at) DESC`
   const result = await db.execute(
-    `SELECT id, product_name, quantity, packs_per_box, cost, note, image_data, created_at, acknowledged_at, pricing_data, old_pricing_data, status
+    `SELECT id, product_name, quantity, packs_per_box, cost, note, image_data, created_at, acknowledged_at, pricing_data, old_pricing_data, status, tiktok_listed_at
      FROM stock_arrivals
-     WHERE status IN ('pending', 'acknowledged')
-     ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, COALESCE(acknowledged_at, created_at) DESC`
+     ${whereClause}
+     ${orderClause}`
   )
   return NextResponse.json(result.rows)
 }

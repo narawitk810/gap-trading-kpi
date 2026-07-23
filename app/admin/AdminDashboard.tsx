@@ -433,7 +433,13 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements'>('kpi')
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
+  const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
+  const [submittingAnn, setSubmittingAnn] = useState(false)
+  const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
+  const [togglingAnnId, setTogglingAnnId] = useState<string | null>(null)
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -1653,6 +1659,22 @@ export default function AdminDashboard() {
             }`}
           >
             📅 ปฏิทินแข่ง
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('announcements')
+              if (announcements.length === 0) {
+                setLoadingAnnouncements(true)
+                fetch('/api/announcements').then((r) => r.json()).then((data) => { if (Array.isArray(data)) setAnnouncements(data) }).catch(() => {}).finally(() => setLoadingAnnouncements(false))
+              }
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'announcements'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            📢 ประกาศ (HR)
           </button>
         </div>
       </div>
@@ -5743,6 +5765,175 @@ export default function AdminDashboard() {
           </div>
         )
       })()}
+
+      {/* Announcements Tab */}
+      {activeTab === 'announcements' && (
+        <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          {/* Form สร้างประกาศใหม่ */}
+          <div className="bg-white rounded-2xl shadow-sm p-5">
+            <h2 className="text-base font-bold text-[#1E3A5F] mb-4">📢 สร้างประกาศใหม่</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อประกาศ *</label>
+                <input
+                  type="text"
+                  value={annForm.title}
+                  onChange={(e) => setAnnForm((f) => ({ ...f, title: e.target.value }))}
+                  placeholder="หัวข้อ..."
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา *</label>
+                <textarea
+                  value={annForm.content}
+                  onChange={(e) => setAnnForm((f) => ({ ...f, content: e.target.value }))}
+                  placeholder="รายละเอียดประกาศ..."
+                  rows={4}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">ผู้โพสต์ *</label>
+                <input
+                  type="text"
+                  value={annForm.created_by}
+                  onChange={(e) => setAnnForm((f) => ({ ...f, created_by: e.target.value }))}
+                  placeholder="ชื่อ/แผนก HR..."
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">รูปประกอบ (ไม่บังคับ)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = (ev) => setAnnForm((f) => ({ ...f, image_data: ev.target?.result as string || '' }))
+                    reader.readAsDataURL(file)
+                  }}
+                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
+                />
+                {annForm.image_data && (
+                  <div className="mt-2 relative inline-block">
+                    <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                    <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                  </div>
+                )}
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={annForm.is_pinned}
+                  onChange={(e) => setAnnForm((f) => ({ ...f, is_pinned: e.target.checked }))}
+                  className="w-4 h-4 accent-[#1E3A5F]"
+                />
+                <span className="text-sm text-[#374151]">📌 ปักหมุด (แสดงด้านบนสุด)</span>
+              </label>
+              <button
+                onClick={async () => {
+                  if (!annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()) return
+                  setSubmittingAnn(true)
+                  try {
+                    const res = await fetch('/api/announcements', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ...annForm, key: ADMIN_KEY }),
+                    })
+                    if (res.ok) {
+                      const newItem = await res.json()
+                      const now = new Date().toISOString()
+                      setAnnouncements((prev) => [{
+                        id: newItem.id, title: annForm.title, content: annForm.content,
+                        image_data: annForm.image_data, is_pinned: annForm.is_pinned ? 1 : 0,
+                        is_active: 1, created_by: annForm.created_by, created_at: now,
+                      }, ...prev])
+                      setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
+                    }
+                  } catch { /* silent */ } finally {
+                    setSubmittingAnn(false)
+                  }
+                }}
+                disabled={submittingAnn || !annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()}
+                className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+              >
+                {submittingAnn ? 'กำลังสร้าง...' : 'สร้างประกาศ'}
+              </button>
+            </div>
+          </div>
+
+          {/* รายการประกาศ */}
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between">
+              <h2 className="text-sm font-bold text-[#1E3A5F]">รายการประกาศทั้งหมด</h2>
+              <span className="text-xs text-gray-400">{announcements.length} รายการ</span>
+            </div>
+            {loadingAnnouncements ? (
+              <div className="py-12 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : announcements.length === 0 ? (
+              <div className="py-12 text-center text-gray-400 text-sm">ยังไม่มีประกาศ</div>
+            ) : (
+              <div className="divide-y divide-[#E2E8F0]">
+                {announcements.map((ann) => (
+                  <div key={ann.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3 mb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {ann.is_pinned ? <span className="text-xs text-[#1E3A5F] shrink-0">📌</span> : null}
+                        <p className="text-sm font-semibold text-[#374151] truncate">{ann.title}</p>
+                        <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${ann.is_active ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-gray-100 text-gray-400'}`}>
+                          {ann.is_active ? 'แสดงอยู่' : 'ซ่อน'}
+                        </span>
+                      </div>
+                      <div className="flex gap-1.5 shrink-0">
+                        <button
+                          onClick={async () => {
+                            setTogglingAnnId(ann.id)
+                            try {
+                              const res = await fetch('/api/announcements', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: ann.id, action: 'toggle_active', key: ADMIN_KEY }),
+                              })
+                              if (res.ok) setAnnouncements((prev) => prev.map((a) => a.id === ann.id ? { ...a, is_active: a.is_active ? 0 : 1 } : a))
+                            } catch { /* silent */ } finally { setTogglingAnnId(null) }
+                          }}
+                          disabled={togglingAnnId === ann.id}
+                          className="text-xs px-2.5 py-1 rounded-lg border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {togglingAnnId === ann.id ? '...' : ann.is_active ? 'ซ่อน' : 'แสดง'}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('ลบประกาศนี้?')) return
+                            setDeletingAnnId(ann.id)
+                            try {
+                              const res = await fetch('/api/announcements', {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: ann.id, key: ADMIN_KEY }),
+                              })
+                              if (res.ok) setAnnouncements((prev) => prev.filter((a) => a.id !== ann.id))
+                            } catch { /* silent */ } finally { setDeletingAnnId(null) }
+                          }}
+                          disabled={deletingAnnId === ann.id}
+                          className="text-xs px-2.5 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {deletingAnnId === ann.id ? '...' : 'ลบ'}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+                    <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
