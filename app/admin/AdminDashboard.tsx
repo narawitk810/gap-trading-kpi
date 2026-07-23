@@ -442,6 +442,7 @@ export default function AdminDashboard() {
   const [tcgRewardInputs, setTcgRewardInputs] = useState<Record<string, string>>({})
   const [tcgRewardSaving, setTcgRewardSaving] = useState(false)
   const [tcgRewardMsg, setTcgRewardMsg] = useState('')
+  const [tcgRewardImages, setTcgRewardImages] = useState<Record<string, string>>({})
   const [tcgMembers, setTcgMembers] = useState<{id:string,full_name:string,nickname:string,phone:string,created_at:string}[]>([])
   const [tcgMembersLoading, setTcgMembersLoading] = useState(false)
   const [tcgMembersSearch, setTcgMembersSearch] = useState('')
@@ -5997,6 +5998,7 @@ export default function AdminDashboard() {
                   onChange={(e) => {
                     setTcgRewardGame(e.target.value)
                     setTcgRewardInputs({})
+                    setTcgRewardImages({})
                     setTcgRewardMsg('')
                     if (e.target.value) {
                       fetch(`/api/tcg/game-rewards?game_id=${e.target.value}&month=${tcgRewardMonth}`)
@@ -6004,8 +6006,13 @@ export default function AdminDashboard() {
                         .then((rows) => {
                           if (Array.isArray(rows)) {
                             const m: Record<string, string> = {}
-                            rows.forEach((row: { tier: string; reward_text: string }) => { m[row.tier] = row.reward_text })
+                            const imgs: Record<string, string> = {}
+                            rows.forEach((row: { tier: string; reward_text: string; image_url?: string }) => {
+                              m[row.tier] = row.reward_text
+                              if (row.image_url) imgs[row.tier] = row.image_url
+                            })
                             setTcgRewardInputs(m)
+                            setTcgRewardImages(imgs)
                           }
                         }).catch(() => {})
                     }
@@ -6024,6 +6031,7 @@ export default function AdminDashboard() {
                   onChange={(e) => {
                     setTcgRewardMonth(e.target.value)
                     setTcgRewardInputs({})
+                    setTcgRewardImages({})
                     setTcgRewardMsg('')
                     if (tcgRewardGame && e.target.value) {
                       fetch(`/api/tcg/game-rewards?game_id=${tcgRewardGame}&month=${e.target.value}`)
@@ -6031,8 +6039,13 @@ export default function AdminDashboard() {
                         .then((rows) => {
                           if (Array.isArray(rows)) {
                             const m: Record<string, string> = {}
-                            rows.forEach((row: { tier: string; reward_text: string }) => { m[row.tier] = row.reward_text })
+                            const imgs: Record<string, string> = {}
+                            rows.forEach((row: { tier: string; reward_text: string; image_url?: string }) => {
+                              m[row.tier] = row.reward_text
+                              if (row.image_url) imgs[row.tier] = row.image_url
+                            })
                             setTcgRewardInputs(m)
+                            setTcgRewardImages(imgs)
                           }
                         }).catch(() => {})
                     }
@@ -6045,22 +6058,54 @@ export default function AdminDashboard() {
               <div className="mt-4 space-y-3">
                 <p className="text-xs font-semibold text-[#374151]">กรอกรางวัลแต่ละ Tier</p>
                 {['Special', 'S', 'A', 'B', 'C', 'D', 'E'].map((tier) => (
-                  <div key={tier} className="flex items-center gap-3">
-                    <span className={`w-16 text-center text-xs font-bold py-1 rounded-lg shrink-0 ${
-                      tier === 'Special' ? 'bg-yellow-400 text-white' :
-                      tier === 'S' ? 'bg-[#1E3A5F] text-white' :
-                      tier === 'A' ? 'bg-purple-600 text-white' :
-                      tier === 'B' ? 'bg-[#16A34A] text-white' :
-                      tier === 'C' ? 'bg-blue-500 text-white' :
-                      tier === 'D' ? 'bg-gray-500 text-white' :
-                      'bg-gray-200 text-gray-600'
-                    }`}>{tier}</span>
-                    <input
-                      value={tcgRewardInputs[tier] || ''}
-                      onChange={(e) => setTcgRewardInputs((prev) => ({ ...prev, [tier]: e.target.value }))}
-                      placeholder={tier === 'Special' ? 'รางวัลพิเศษ อันดับ 1...' : `รางวัล Tier ${tier}...`}
-                      className="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E3A5F]"
-                    />
+                  <div key={tier} className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-16 text-center text-xs font-bold py-1 rounded-lg shrink-0 ${
+                        tier === 'Special' ? 'bg-yellow-400 text-white' :
+                        tier === 'S' ? 'bg-[#1E3A5F] text-white' :
+                        tier === 'A' ? 'bg-purple-600 text-white' :
+                        tier === 'B' ? 'bg-[#16A34A] text-white' :
+                        tier === 'C' ? 'bg-blue-500 text-white' :
+                        tier === 'D' ? 'bg-gray-500 text-white' :
+                        'bg-gray-200 text-gray-600'
+                      }`}>{tier}</span>
+                      <input
+                        value={tcgRewardInputs[tier] || ''}
+                        onChange={(e) => setTcgRewardInputs((prev) => ({ ...prev, [tier]: e.target.value }))}
+                        placeholder={tier === 'Special' ? 'รางวัลพิเศษ อันดับ 1...' : `รางวัล Tier ${tier}...`}
+                        className="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 pl-[76px]">
+                      {tcgRewardImages[tier] && (
+                        <div className="relative shrink-0">
+                          <img src={tcgRewardImages[tier]} alt={`รูป ${tier}`} className="w-16 h-16 object-cover rounded-lg border border-[#E2E8F0]" />
+                          <button
+                            type="button"
+                            onClick={() => setTcgRewardImages((prev) => { const n = { ...prev }; delete n[tier]; return n })}
+                            className="absolute -top-1 -right-1 w-5 h-5 bg-[#DC2626] text-white rounded-full text-[10px] flex items-center justify-center leading-none"
+                          >✕</button>
+                        </div>
+                      )}
+                      <label className="cursor-pointer text-xs text-[#1E3A5F] border border-[#E2E8F0] rounded-lg px-2 py-1 hover:bg-gray-50 transition-colors">
+                        📷 {tcgRewardImages[tier] ? 'เปลี่ยนรูป' : 'เพิ่มรูป'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const reader = new FileReader()
+                            reader.onload = (ev) => {
+                              setTcgRewardImages((prev) => ({ ...prev, [tier]: ev.target?.result as string }))
+                            }
+                            reader.readAsDataURL(file)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                 ))}
                 {tcgRewardMsg && (
@@ -6076,7 +6121,7 @@ export default function AdminDashboard() {
                         await fetch('/api/tcg/game-rewards', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ game_id: tcgRewardGame, month: tcgRewardMonth, tier, reward_text: tcgRewardInputs[tier] || '' }),
+                          body: JSON.stringify({ game_id: tcgRewardGame, month: tcgRewardMonth, tier, reward_text: tcgRewardInputs[tier] || '', image_url: tcgRewardImages[tier] || '' }),
                         })
                       }
                       setTcgRewardMsg('บันทึกรางวัลสำเร็จ!')

@@ -59,6 +59,7 @@ interface TcgGame {
 interface TcgReward {
   tier: string
   reward_text: string
+  image_url?: string
 }
 
 const TIER_ORDER = ['Special', 'S', 'A', 'B', 'C', 'D', 'E']
@@ -1240,6 +1241,9 @@ export default function TcgPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[11px] text-gray-400">{TIER_RANGES[tier]}</p>
                         <p className="text-sm text-[#374151] mt-0.5">{reward.reward_text || '—'}</p>
+                        {reward.image_url && (
+                          <img src={reward.image_url} alt={`รางวัล ${tier}`} className="w-full max-h-40 object-contain rounded-lg mt-2 border border-[#E2E8F0]" />
+                        )}
                       </div>
                     </div>
                   )
