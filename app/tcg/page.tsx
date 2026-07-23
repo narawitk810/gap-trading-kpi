@@ -1087,9 +1087,14 @@ export default function TcgPage() {
                         <p className="text-[10px] text-[#16A34A] font-medium mt-0.5">ว่าง</p>
                       )}
                       {t.status === 'waiting' && t.session && (
-                        <p className="text-[10px] text-amber-600 font-medium mt-0.5 truncate">
-                          {t.session.player1}
-                        </p>
+                        <div className="flex items-center gap-1 mt-0.5 min-w-0">
+                          <p className="text-[10px] text-amber-600 font-medium truncate min-w-0">{t.session.player1}</p>
+                          {(() => {
+                            const pos = rankings.findIndex(r => r.nickname === t.session!.player1)
+                            const tier = pos === -1 ? 'E' : getTier(pos + 1)
+                            return <span className={`text-[9px] font-bold px-1 rounded shrink-0 ${TIER_COLOR[tier]}`}>{tier}</span>
+                          })()}
+                        </div>
                       )}
                       {t.status === 'playing' && t.session && (
                         <p className="text-[10px] text-[#DC2626] font-medium mt-0.5">กำลังแข่ง</p>
