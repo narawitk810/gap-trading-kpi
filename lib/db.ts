@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 28
+const SCHEMA_VERSION = 29
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -534,6 +534,47 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
   await db.execute(`ALTER TABLE tournament_events ADD COLUMN activity_name TEXT NOT NULL DEFAULT ''`).catch(() => {})
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tcg_games (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      short_name TEXT NOT NULL,
+      is_active  INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )
+  `)
+  {
+    const now = new Date().toISOString()
+    const games: [string, string, string, number][] = [
+      ['onepiece',   'One Piece Card Game', 'ONE PIECE', 1],
+      ['gundam',     'Gundam Card Game',    'GUNDAM',    2],
+      ['vanguard',   'Vanguard D TH',       'VANGUARD',  3],
+      ['talingchan', 'Battle of Talingchan','TALINGCHAN', 4],
+    ]
+    for (const [id, name, short_name, sort_order] of games) {
+      await db.execute({
+        sql: 'INSERT OR IGNORE INTO tcg_games (id, name, short_name, is_active, sort_order, created_at) VALUES (?,?,?,1,?,?)',
+        args: [id, name, short_name, sort_order, now],
+      })
+    }
+  }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tcg_game_rewards (
+      id          TEXT PRIMARY KEY,
+      game_id     TEXT NOT NULL,
+      month       TEXT NOT NULL,
+      tier        TEXT NOT NULL,
+      reward_text TEXT NOT NULL DEFAULT '',
+      updated_at  TEXT NOT NULL,
+      UNIQUE(game_id, month, tier)
+    )
+  `)
+
+  try { await db.execute(`ALTER TABLE tcg_sessions ADD COLUMN game TEXT NOT NULL DEFAULT 'general'`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE tcg_rankings ADD COLUMN game TEXT NOT NULL DEFAULT 'general'`) } catch { /* exists */ }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tcg_members (

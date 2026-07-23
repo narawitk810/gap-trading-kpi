@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { branch = 'gap7card', table_number, match_type, player1 } = body
+  const { branch = 'gap7card', table_number, match_type, player1, game = 'general' } = body
   if (!player1?.trim() || !match_type || !table_number) {
     return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 })
   }
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
   const id = generateId()
   const now = new Date().toISOString()
   await db.execute({
-    sql: `INSERT INTO tcg_sessions (id, branch, table_number, match_type, player1, status, created_at) VALUES (?, ?, ?, ?, ?, 'waiting', ?)`,
-    args: [id, branch, table_number, match_type, player1.trim(), now],
+    sql: `INSERT INTO tcg_sessions (id, branch, table_number, match_type, player1, status, game, created_at) VALUES (?, ?, ?, ?, ?, 'waiting', ?, ?)`,
+    args: [id, branch, table_number, match_type, player1.trim(), game, now],
   })
   return NextResponse.json({ id }, { status: 201 })
 }
@@ -122,11 +122,12 @@ export async function PATCH(request: NextRequest) {
       const player1 = session.player1 as string
       const player2 = session.player2 as string
       const branch = session.branch as string
+      const game = (session.game as string) || 'general'
 
       const ensureRank = async (nick: string) => {
         await db.execute({
-          sql: `INSERT OR IGNORE INTO tcg_rankings (id, branch, nickname, wins, losses, draws, points, updated_at) VALUES (?, ?, ?, 0, 0, 0, 1000, ?)`,
-          args: [generateId(), branch, nick, now],
+          sql: `INSERT OR IGNORE INTO tcg_rankings (id, branch, game, nickname, wins, losses, draws, points, updated_at) VALUES (?, ?, ?, ?, 0, 0, 0, 1000, ?)`,
+          args: [generateId(), branch, game, nick, now],
         })
       }
       await ensureRank(player1)
@@ -134,22 +135,22 @@ export async function PATCH(request: NextRequest) {
 
       if (winner === 'draw') {
         await db.execute({
-          sql: `UPDATE tcg_rankings SET draws = draws + 1, points = MAX(0, points + 5), updated_at = ? WHERE branch = ? AND nickname = ?`,
-          args: [now, branch, player1],
+          sql: `UPDATE tcg_rankings SET draws = draws + 1, points = MAX(0, points + 5), updated_at = ? WHERE branch = ? AND game = ? AND nickname = ?`,
+          args: [now, branch, game, player1],
         })
         await db.execute({
-          sql: `UPDATE tcg_rankings SET draws = draws + 1, points = MAX(0, points + 5), updated_at = ? WHERE branch = ? AND nickname = ?`,
-          args: [now, branch, player2],
+          sql: `UPDATE tcg_rankings SET draws = draws + 1, points = MAX(0, points + 5), updated_at = ? WHERE branch = ? AND game = ? AND nickname = ?`,
+          args: [now, branch, game, player2],
         })
       } else {
         const loser = winner === player1 ? player2 : player1
         await db.execute({
-          sql: `UPDATE tcg_rankings SET wins = wins + 1, points = points + 30, updated_at = ? WHERE branch = ? AND nickname = ?`,
-          args: [now, branch, winner],
+          sql: `UPDATE tcg_rankings SET wins = wins + 1, points = points + 30, updated_at = ? WHERE branch = ? AND game = ? AND nickname = ?`,
+          args: [now, branch, game, winner],
         })
         await db.execute({
-          sql: `UPDATE tcg_rankings SET losses = losses + 1, points = MAX(0, points - 20), updated_at = ? WHERE branch = ? AND nickname = ?`,
-          args: [now, branch, loser],
+          sql: `UPDATE tcg_rankings SET losses = losses + 1, points = MAX(0, points - 20), updated_at = ? WHERE branch = ? AND game = ? AND nickname = ?`,
+          args: [now, branch, game, loser],
         })
       }
     }

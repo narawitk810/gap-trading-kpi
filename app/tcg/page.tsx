@@ -47,7 +47,39 @@ interface TcgRanking {
 }
 
 type TableStatus = 'empty' | 'waiting' | 'playing'
-type AuthScreen = 'entry' | 'login' | 'register' | null
+type AuthScreen = 'entry' | 'login' | 'register' | 'game' | null
+
+interface TcgGame {
+  id: string
+  name: string
+  short_name: string
+  sort_order: number
+}
+
+interface TcgReward {
+  tier: string
+  reward_text: string
+}
+
+const TIER_ORDER = ['Special', 'S', 'A', 'B', 'C', 'D', 'E']
+const TIER_RANGES: Record<string, string> = {
+  Special: 'อันดับ 1',
+  S: 'อันดับ 1-3',
+  A: 'อันดับ 4-6',
+  B: 'อันดับ 7-10',
+  C: 'อันดับ 11-20',
+  D: 'อันดับ 21-30',
+  E: 'อันดับ 31+',
+}
+const TIER_COLOR: Record<string, string> = {
+  Special: 'bg-yellow-400 text-white',
+  S:       'bg-[#1E3A5F] text-white',
+  A:       'bg-purple-600 text-white',
+  B:       'bg-[#16A34A] text-white',
+  C:       'bg-blue-500 text-white',
+  D:       'bg-gray-500 text-white',
+  E:       'bg-gray-300 text-gray-700',
+}
 
 interface TableInfo {
   tableNumber: number
@@ -56,7 +88,7 @@ interface TableInfo {
 }
 
 export default function TcgPage() {
-  const [tab, setTab] = useState<'tables' | 'rankings'>('tables')
+  const [tab, setTab] = useState<'tables' | 'rankings' | 'rewards'>('tables')
   const [authScreen, setAuthScreen] = useState<AuthScreen>('entry')
   const [nickname, setNickname] = useState('')
   const [nicknameInput, setNicknameInput] = useState('')
@@ -67,6 +99,11 @@ export default function TcgPage() {
   const [loginNick, setLoginNick] = useState('')
   const [loginPhone, setLoginPhone] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
+  const [games, setGames] = useState<TcgGame[]>([])
+  const [selectedGame, setSelectedGame] = useState<string>('general')
+  const [selectedGameName, setSelectedGameName] = useState<string>('')
+  const [rewards, setRewards] = useState<TcgReward[]>([])
+  const [rewardsLoading, setRewardsLoading] = useState(false)
   const [sessions, setSessions] = useState<TcgSession[]>([])
   const [mySessionId, setMySessionId] = useState<string | null>(null)
   const [mySession, setMySession] = useState<TcgSession | null>(null)
@@ -144,10 +181,19 @@ export default function TcgPage() {
     }
   }
 
-  // โหลด nickname + sessionId + check-in จาก localStorage
+  // โหลด nickname + sessionId + check-in + game จาก localStorage
   useEffect(() => {
     const saved = localStorage.getItem('tcg_nickname')
-    if (saved) { setNickname(saved); setNicknameInput(saved); setAuthScreen(null) }
+    const savedGame = localStorage.getItem('tcg_game')
+    const savedGameName = localStorage.getItem('tcg_game_name')
+    if (saved && savedGame) {
+      setNickname(saved); setNicknameInput(saved)
+      setSelectedGame(savedGame); setSelectedGameName(savedGameName || '')
+      setAuthScreen(null)
+    } else if (saved) {
+      setNickname(saved); setNicknameInput(saved)
+      setAuthScreen('game')
+    }
     const sid = localStorage.getItem('tcg_session_id')
     if (sid) setMySessionId(sid)
     const ci = localStorage.getItem('tcg_checkin')
@@ -189,13 +235,13 @@ export default function TcgPage() {
 
   const fetchRankings = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tcg/rankings?branch=${BRANCH}&limit=20`)
+      const res = await fetch(`/api/tcg/rankings?branch=${BRANCH}&game=${selectedGame}&limit=20`)
       const data: TcgRanking[] = await res.json()
       setRankings(data)
     } catch {
       // silent
     }
-  }, [])
+  }, [selectedGame])
 
   useEffect(() => {
     fetchSessions()
@@ -284,19 +330,59 @@ export default function TcgPage() {
       setNickname(data.nickname)
       setNicknameInput(data.nickname)
       localStorage.setItem('tcg_nickname', data.nickname)
-      setAuthScreen(null)
+      setAuthScreen('game')
     } catch { showError('ไม่สามารถเชื่อมต่อได้') }
     finally { setAuthLoading(false) }
   }
 
   const handleLogout = () => {
     localStorage.removeItem('tcg_nickname')
+    localStorage.removeItem('tcg_game')
+    localStorage.removeItem('tcg_game_name')
     setNickname('')
     setNicknameInput('')
     setLoginNick('')
     setLoginPhone('')
+    setSelectedGame('general')
+    setSelectedGameName('')
     setAuthScreen('entry')
   }
+
+  const fetchGames = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tcg/games')
+      const data: TcgGame[] = await res.json()
+      setGames(data)
+    } catch { /* silent */ }
+  }, [])
+
+  const handleGameSelect = (game: TcgGame) => {
+    setSelectedGame(game.id)
+    setSelectedGameName(game.name)
+    localStorage.setItem('tcg_game', game.id)
+    localStorage.setItem('tcg_game_name', game.name)
+    setAuthScreen(null)
+  }
+
+  const fetchRewards = useCallback(async () => {
+    if (!selectedGame || selectedGame === 'general') return
+    setRewardsLoading(true)
+    try {
+      const month = new Date().toISOString().slice(0, 7)
+      const res = await fetch(`/api/tcg/game-rewards?game_id=${selectedGame}&month=${month}`)
+      const data: TcgReward[] = await res.json()
+      setRewards(data)
+    } catch { /* silent */ }
+    finally { setRewardsLoading(false) }
+  }, [selectedGame])
+
+  useEffect(() => {
+    if (tab === 'rewards') fetchRewards()
+  }, [tab, fetchRewards])
+
+  useEffect(() => {
+    if (authScreen === 'game') fetchGames()
+  }, [authScreen, fetchGames])
 
   const buildTables = (): TableInfo[] => {
     return Array.from({ length: TOTAL_TABLES }, (_, i) => {
@@ -317,7 +403,7 @@ export default function TcgPage() {
       const res = await fetch('/api/tcg', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ branch: BRANCH, table_number: tableNumber, match_type: matchType, player1: nickname }),
+        body: JSON.stringify({ branch: BRANCH, table_number: tableNumber, match_type: matchType, player1: nickname, game: selectedGame }),
       })
       const data = await res.json()
       if (!res.ok) { showError(data.error || 'เกิดข้อผิดพลาด'); return }
@@ -472,7 +558,7 @@ export default function TcgPage() {
   const searchMyRank = async () => {
     if (!rankSearch.trim()) return
     try {
-      const res = await fetch(`/api/tcg/rankings?branch=${BRANCH}&nickname=${encodeURIComponent(rankSearch.trim())}`)
+      const res = await fetch(`/api/tcg/rankings?branch=${BRANCH}&game=${selectedGame}&nickname=${encodeURIComponent(rankSearch.trim())}`)
       const data = await res.json()
       setMyRanking(data)
     } catch {
@@ -644,6 +730,43 @@ export default function TcgPage() {
               </p>
             </div>
           )}
+
+          {/* Game Selection Screen */}
+          {authScreen === 'game' && (
+            <div className="space-y-4">
+              <div className="text-center mb-6">
+                <p className="text-xl font-bold text-[#1E3A5F]">เลือกเกมที่จะเล่น</p>
+                <p className="text-sm text-gray-400 mt-1">สวัสดี {nickname}!</p>
+              </div>
+              {games.length === 0 ? (
+                <p className="text-center text-gray-400 text-sm py-8">กำลังโหลด...</p>
+              ) : (
+                <div className="space-y-3">
+                  {games.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => handleGameSelect(g)}
+                      className="w-full flex items-center gap-4 bg-white border-2 border-[#E2E8F0] rounded-2xl p-4 hover:border-[#1E3A5F] hover:bg-[#1E3A5F]/5 transition-colors text-left"
+                    >
+                      <div className="w-12 h-12 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0">
+                        <span className="text-white text-xs font-bold text-center leading-tight px-1">{g.short_name.slice(0,3)}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#1E3A5F]">{g.name}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{g.short_name}</p>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={handleLogout} className="w-full text-center text-sm text-gray-400 underline pt-2">
+                ออกจากระบบ
+              </button>
+            </div>
+          )}
         </div>
       </main>
     )
@@ -655,7 +778,7 @@ export default function TcgPage() {
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs opacity-60 mb-1">{BRANCH}</p>
+            <p className="text-xs opacity-60 mb-1">{BRANCH} · {selectedGameName || 'TCG'}</p>
             <h1 className="text-xl font-bold">♟ Match Making TCG</h1>
             <p className="text-xs opacity-70 mt-1">จับคู่เกมการ์ด — {TOTAL_TABLES} โต๊ะ</p>
           </div>
@@ -701,15 +824,15 @@ export default function TcgPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 mx-4 mt-4 bg-white rounded-2xl p-1 shadow-sm">
-        {(['tables', 'rankings'] as const).map((t) => (
+        {(['tables', 'rankings', 'rewards'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+            className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
               tab === t ? 'bg-[#1E3A5F] text-white' : 'text-gray-500 hover:text-[#1E3A5F]'
             }`}
           >
-            {t === 'tables' ? '🎮 โต๊ะ' : '🏆 อันดับ'}
+            {t === 'tables' ? '🎮 โต๊ะ' : t === 'rankings' ? '🏆 อันดับ' : '🎁 รางวัล'}
           </button>
         ))}
       </div>
@@ -1000,6 +1123,42 @@ export default function TcgPage() {
             )}
           </div>
           <p className="text-xs text-center text-gray-400">Ranking match เท่านั้นที่นับคะแนน</p>
+        </div>
+      )}
+
+      {/* Rewards Tab */}
+      {tab === 'rewards' && (
+        <div className="px-4 mt-4 space-y-4">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-[#E2E8F0]">
+              <p className="text-sm font-bold text-[#1E3A5F]">🎁 รางวัลประจำเดือน — {selectedGameName}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{new Date().toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })}</p>
+            </div>
+            {rewardsLoading ? (
+              <p className="text-center text-sm text-gray-400 py-8">กำลังโหลด...</p>
+            ) : rewards.length === 0 ? (
+              <p className="text-center text-sm text-gray-400 py-8">ยังไม่มีการตั้งรางวัลเดือนนี้</p>
+            ) : (
+              <div className="divide-y divide-[#E2E8F0]">
+                {TIER_ORDER.map((tier) => {
+                  const reward = rewards.find((r) => r.tier === tier)
+                  if (!reward) return null
+                  return (
+                    <div key={tier} className="flex items-start gap-3 px-4 py-3">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold shrink-0 ${TIER_COLOR[tier] || 'bg-gray-100 text-gray-600'}`}>
+                        {tier}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] text-gray-400">{TIER_RANGES[tier]}</p>
+                        <p className="text-sm text-[#374151] mt-0.5">{reward.reward_text || '—'}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-center text-gray-400">รางวัลอัปเดตทุกเดือน — ติดตามได้ที่นี่</p>
         </div>
       )}
 

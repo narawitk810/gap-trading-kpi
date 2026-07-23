@@ -433,9 +433,15 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards'>('kpi')
   const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
+  const [tcgGames, setTcgGames] = useState<{ id: string; name: string; short_name: string }[]>([])
+  const [tcgRewardGame, setTcgRewardGame] = useState('')
+  const [tcgRewardMonth, setTcgRewardMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [tcgRewardInputs, setTcgRewardInputs] = useState<Record<string, string>>({})
+  const [tcgRewardSaving, setTcgRewardSaving] = useState(false)
+  const [tcgRewardMsg, setTcgRewardMsg] = useState('')
   const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
@@ -1679,6 +1685,21 @@ export default function AdminDashboard() {
             }`}
           >
             📢 ประกาศ (HR)
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('tcg-rewards')
+              if (tcgGames.length === 0) {
+                fetch('/api/tcg/games').then((r) => r.json()).then((data) => { if (Array.isArray(data)) setTcgGames(data) }).catch(() => {})
+              }
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'tcg-rewards'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            🎁 TCG รางวัล
           </button>
         </div>
       </div>
@@ -5937,6 +5958,114 @@ export default function AdminDashboard() {
                     <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by}</p>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'tcg-rewards' && (
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+          <div className="bg-white rounded-2xl shadow-sm p-5">
+            <h2 className="text-base font-bold text-[#1E3A5F] mb-4">🎁 ตั้งค่ารางวัล TCG ประจำเดือน</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เลือกเกม</label>
+                <select
+                  value={tcgRewardGame}
+                  onChange={(e) => {
+                    setTcgRewardGame(e.target.value)
+                    setTcgRewardInputs({})
+                    setTcgRewardMsg('')
+                    if (e.target.value) {
+                      fetch(`/api/tcg/game-rewards?game_id=${e.target.value}&month=${tcgRewardMonth}`)
+                        .then((r) => r.json())
+                        .then((rows) => {
+                          if (Array.isArray(rows)) {
+                            const m: Record<string, string> = {}
+                            rows.forEach((row: { tier: string; reward_text: string }) => { m[row.tier] = row.reward_text })
+                            setTcgRewardInputs(m)
+                          }
+                        }).catch(() => {})
+                    }
+                  }}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                >
+                  <option value="">— เลือกเกม —</option>
+                  {tcgGames.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เดือน</label>
+                <input
+                  type="month"
+                  value={tcgRewardMonth}
+                  onChange={(e) => {
+                    setTcgRewardMonth(e.target.value)
+                    setTcgRewardInputs({})
+                    setTcgRewardMsg('')
+                    if (tcgRewardGame && e.target.value) {
+                      fetch(`/api/tcg/game-rewards?game_id=${tcgRewardGame}&month=${e.target.value}`)
+                        .then((r) => r.json())
+                        .then((rows) => {
+                          if (Array.isArray(rows)) {
+                            const m: Record<string, string> = {}
+                            rows.forEach((row: { tier: string; reward_text: string }) => { m[row.tier] = row.reward_text })
+                            setTcgRewardInputs(m)
+                          }
+                        }).catch(() => {})
+                    }
+                  }}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                />
+              </div>
+            </div>
+            {tcgRewardGame && (
+              <div className="mt-4 space-y-3">
+                <p className="text-xs font-semibold text-[#374151]">กรอกรางวัลแต่ละ Tier</p>
+                {['Special', 'S', 'A', 'B', 'C', 'D', 'E'].map((tier) => (
+                  <div key={tier} className="flex items-center gap-3">
+                    <span className={`w-16 text-center text-xs font-bold py-1 rounded-lg shrink-0 ${
+                      tier === 'Special' ? 'bg-yellow-400 text-white' :
+                      tier === 'S' ? 'bg-[#1E3A5F] text-white' :
+                      tier === 'A' ? 'bg-purple-600 text-white' :
+                      tier === 'B' ? 'bg-[#16A34A] text-white' :
+                      tier === 'C' ? 'bg-blue-500 text-white' :
+                      tier === 'D' ? 'bg-gray-500 text-white' :
+                      'bg-gray-200 text-gray-600'
+                    }`}>{tier}</span>
+                    <input
+                      value={tcgRewardInputs[tier] || ''}
+                      onChange={(e) => setTcgRewardInputs((prev) => ({ ...prev, [tier]: e.target.value }))}
+                      placeholder={tier === 'Special' ? 'รางวัลพิเศษ อันดับ 1...' : `รางวัล Tier ${tier}...`}
+                      className="flex-1 border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                    />
+                  </div>
+                ))}
+                {tcgRewardMsg && (
+                  <p className={`text-sm font-medium ${tcgRewardMsg.includes('สำเร็จ') ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{tcgRewardMsg}</p>
+                )}
+                <button
+                  disabled={tcgRewardSaving}
+                  onClick={async () => {
+                    setTcgRewardSaving(true)
+                    setTcgRewardMsg('')
+                    try {
+                      for (const tier of ['Special', 'S', 'A', 'B', 'C', 'D', 'E']) {
+                        await fetch('/api/tcg/game-rewards', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ game_id: tcgRewardGame, month: tcgRewardMonth, tier, reward_text: tcgRewardInputs[tier] || '' }),
+                        })
+                      }
+                      setTcgRewardMsg('บันทึกรางวัลสำเร็จ!')
+                    } catch { setTcgRewardMsg('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+                    finally { setTcgRewardSaving(false) }
+                  }}
+                  className="w-full py-3 bg-[#1E3A5F] text-white text-sm font-bold rounded-2xl disabled:opacity-50"
+                >
+                  {tcgRewardSaving ? 'กำลังบันทึก...' : 'บันทึกรางวัล'}
+                </button>
               </div>
             )}
           </div>
