@@ -255,10 +255,10 @@ export default function AnnouncementsPage() {
                           <th className="text-left px-3 py-3">ชื่อสินค้า</th>
                           <th className="text-center px-2 py-3">จำนวน</th>
                           <th className="text-center px-2 py-3">ซอง/<br/>กล่อง</th>
-                          <th className="text-right px-2 py-3 text-[#1E3A5F]">ยกกล่อง<br/>(ระบบ)</th>
-                          <th className="text-right px-2 py-3">ยกกล่อง<br/>(นอก)</th>
-                          <th className="text-right px-2 py-3 text-[#16A34A]">แยกซอง<br/>(ระบบ)</th>
-                          <th className="text-right px-2 py-3">แยกซอง<br/>(นอก)</th>
+                          <th className="text-right px-2 py-3 text-[#1E3A5F]">ยกกล่อง<br/>(ในระบบ)</th>
+                          <th className="text-right px-2 py-3">ยกกล่อง<br/>(โยนนอก)</th>
+                          <th className="text-right px-2 py-3 text-[#16A34A]">แยกซอง<br/>(ในระบบ)</th>
+                          <th className="text-right px-2 py-3">แยกซอง<br/>(โยนนอก)</th>
                           <th className="text-center px-2 py-3">Comm.</th>
                           <th className="text-center px-2 py-3">รูป</th>
                           <th className="text-center px-2 py-3">สถานะ</th>
