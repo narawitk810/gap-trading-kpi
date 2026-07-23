@@ -56,6 +56,7 @@ export default function AnnouncementsPage() {
   const [stockItems, setStockItems] = useState<StockItem[]>([])
   const [loadingData, setLoadingData] = useState(false)
   const [imageModal, setImageModal] = useState<string | null>(null)
+  const [stockSearch, setStockSearch] = useState('')
 
   useEffect(() => {
     const ts = localStorage.getItem(STORAGE_KEY)
@@ -220,6 +221,27 @@ export default function AnnouncementsPage() {
             {/* ส่วนที่ 2: สินค้าเข้า */}
             <div>
               <h2 className="text-sm font-bold text-[#1E3A5F] mb-3 px-1">📦 สินค้าเข้า</h2>
+              {stockItems.length > 0 && (
+                <div className="relative mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={stockSearch}
+                    onChange={(e) => setStockSearch(e.target.value)}
+                    placeholder="ค้นหาสินค้า..."
+                    className="w-full bg-white border border-[#E2E8F0] rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                  />
+                  {stockSearch && (
+                    <button onClick={() => setStockSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              )}
               {stockItems.length === 0 ? (
                 <div className="bg-white rounded-2xl p-6 shadow-sm text-center text-gray-400 text-sm">
                   ยังไม่มีสินค้าเข้า
@@ -243,7 +265,9 @@ export default function AnnouncementsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {stockItems.map((item, idx) => {
+                        {stockItems.filter((item) =>
+                          item.product_name.toLowerCase().includes(stockSearch.toLowerCase())
+                        ).map((item, idx) => {
                           let pricing: PricingData | null = null
                           try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
                           const commTier = pricing?.commission_tier ?? ''
@@ -310,6 +334,15 @@ export default function AnnouncementsPage() {
                             </tr>
                           )
                         })}
+                        {stockItems.filter((item) =>
+                          item.product_name.toLowerCase().includes(stockSearch.toLowerCase())
+                        ).length === 0 && stockSearch && (
+                          <tr>
+                            <td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-400">
+                              ไม่พบสินค้า &quot;{stockSearch}&quot;
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
