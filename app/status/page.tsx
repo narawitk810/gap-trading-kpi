@@ -122,6 +122,17 @@ function StatusContent() {
           </div>
         </div>
 
+        {/* กล่องหมายเหตุเงื่อนไขการ request สินค้า */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-amber-800 mb-2">📌 หมายเหตุ</p>
+          <ul className="space-y-1.5 text-xs text-amber-700 list-disc list-inside">
+            <li>สินค้า request ไม่นับรวมสินค้าที่กำลังจะเปิดตัวภายใน 30 วัน</li>
+            <li>สินค้าที่เปิดตัวพร้อมกันทั่วโลก จะจัดสรรตามความสามารถในการขายสินค้าชนิดนั้นๆ</li>
+            <li>หากพนักงานไม่ได้มาในวันเปิดตัวจะเสียสิทธิ์</li>
+            <li>หากมีการอนุมัติ เป็นเพียงการคอนเฟิร์มว่า มีสินค้าเข้าเท่านั้น</li>
+          </ul>
+        </div>
+
         {searched && !loading && (
           <div>
             {requests.length === 0 ? (
