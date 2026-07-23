@@ -794,7 +794,7 @@ export default function TcgPage() {
                 }}
                 className="underline underline-offset-2 hover:opacity-80 transition-opacity"
               >
-                {selectedGameName || 'TCG'} 🔄
+                {selectedGameName || 'TCG'} ย้อนกลับ
               </button>
             </p>
             <h1 className="text-xl font-bold">♟ Match Making TCG</h1>
