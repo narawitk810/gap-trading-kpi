@@ -620,7 +620,7 @@ export default function TcgPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-[#374151] mb-1.5">ฉายา</p>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">ฉายา <span className="font-normal text-gray-400">(ใช้เป็น ID สำหรับเข้าสู่ระบบ)</span></p>
                   <input
                     value={regNick}
                     onChange={(e) => setRegNick(e.target.value)}
