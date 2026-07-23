@@ -9,6 +9,15 @@ export async function GET(req: NextRequest) {
   const phone = searchParams.get('phone')?.trim()
   const branch = searchParams.get('branch') || 'gap7card'
 
+  // ไม่มี params → return list ทั้งหมด (สำหรับ admin)
+  if (!nickname && !phone) {
+    const listResult = await db.execute({
+      sql: 'SELECT id, full_name, nickname, phone, created_at FROM tcg_members WHERE branch=? ORDER BY created_at DESC',
+      args: [branch],
+    })
+    return NextResponse.json(listResult.rows)
+  }
+
   if (!nickname || !phone) {
     return NextResponse.json({ error: 'กรุณากรอกฉายาและเบอร์โทร' }, { status: 400 })
   }

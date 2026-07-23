@@ -310,9 +310,13 @@ export default function TcgPage() {
       })
       const data = await res.json()
       if (!res.ok) { showError(data.error || 'เกิดข้อผิดพลาด'); return }
-      showSuccess('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ')
+      // auto-login หลังสมัครสมาชิกสำเร็จ
+      const nick = regNick.trim()
+      localStorage.setItem('tcg_nickname', nick)
+      setNickname(nick)
+      setNicknameInput(nick)
       setRegName(''); setRegPhone(''); setRegNick('')
-      setAuthScreen('entry')
+      setAuthScreen('game')
     } catch { showError('ไม่สามารถเชื่อมต่อได้') }
     finally { setAuthLoading(false) }
   }

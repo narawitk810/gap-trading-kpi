@@ -433,7 +433,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members'>('kpi')
   const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
   const [tcgGames, setTcgGames] = useState<{ id: string; name: string; short_name: string }[]>([])
@@ -442,6 +442,9 @@ export default function AdminDashboard() {
   const [tcgRewardInputs, setTcgRewardInputs] = useState<Record<string, string>>({})
   const [tcgRewardSaving, setTcgRewardSaving] = useState(false)
   const [tcgRewardMsg, setTcgRewardMsg] = useState('')
+  const [tcgMembers, setTcgMembers] = useState<{id:string,full_name:string,nickname:string,phone:string,created_at:string}[]>([])
+  const [tcgMembersLoading, setTcgMembersLoading] = useState(false)
+  const [tcgMembersSearch, setTcgMembersSearch] = useState('')
   const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
@@ -1700,6 +1703,24 @@ export default function AdminDashboard() {
             }`}
           >
             🎁 TCG รางวัล
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('tcg-members')
+              setTcgMembersLoading(true)
+              fetch('/api/tcg/members?branch=gap7card')
+                .then(r => r.json())
+                .then(data => { if (Array.isArray(data)) setTcgMembers(data) })
+                .catch(() => {})
+                .finally(() => setTcgMembersLoading(false))
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'tcg-members'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            👥 TCG สมาชิก
           </button>
         </div>
       </div>
@@ -6066,6 +6087,76 @@ export default function AdminDashboard() {
                 >
                   {tcgRewardSaving ? 'กำลังบันทึก...' : 'บันทึกรางวัล'}
                 </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TCG Members Tab */}
+      {activeTab === 'tcg-members' && (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] p-6">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-[#1E3A5F]">👥 รายชื่อสมาชิก TCG</h2>
+                <p className="text-sm text-[#374151] mt-1">สมาชิกทั้งหมด {tcgMembers.length} คน</p>
+              </div>
+              <button
+                onClick={() => {
+                  setTcgMembersLoading(true)
+                  fetch('/api/tcg/members?branch=gap7card')
+                    .then(r => r.json())
+                    .then(data => { if (Array.isArray(data)) setTcgMembers(data) })
+                    .catch(() => {})
+                    .finally(() => setTcgMembersLoading(false))
+                }}
+                className="px-4 py-2 bg-[#1E3A5F] text-white text-sm font-semibold rounded-xl"
+              >
+                🔄 รีเฟรช
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="ค้นหาชื่อ ฉายา หรือเบอร์โทร..."
+              value={tcgMembersSearch}
+              onChange={e => setTcgMembersSearch(e.target.value)}
+              className="w-full border border-[#E2E8F0] rounded-xl px-4 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/20"
+            />
+            {tcgMembersLoading ? (
+              <p className="text-center text-sm text-[#374151] py-8">กำลังโหลด...</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#E2E8F0] text-[#374151]">
+                      <th className="text-left py-2 px-3 font-semibold">#</th>
+                      <th className="text-left py-2 px-3 font-semibold">ชื่อ-นามสกุล</th>
+                      <th className="text-left py-2 px-3 font-semibold">ฉายา</th>
+                      <th className="text-left py-2 px-3 font-semibold">เบอร์โทร</th>
+                      <th className="text-left py-2 px-3 font-semibold">วันสมัคร</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tcgMembers
+                      .filter(m => {
+                        const q = tcgMembersSearch.toLowerCase()
+                        return !q || m.full_name.toLowerCase().includes(q) || m.nickname.toLowerCase().includes(q) || m.phone.includes(q)
+                      })
+                      .map((m, i) => (
+                        <tr key={m.id} className="border-b border-[#E2E8F0] hover:bg-[#F5F6F8]">
+                          <td className="py-2 px-3 text-[#374151]">{i + 1}</td>
+                          <td className="py-2 px-3 font-medium text-[#1E3A5F]">{m.full_name}</td>
+                          <td className="py-2 px-3 text-[#374151]">{m.nickname}</td>
+                          <td className="py-2 px-3 text-[#374151]">{m.phone}</td>
+                          <td className="py-2 px-3 text-[#374151]">{new Date(m.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                        </tr>
+                      ))}
+                    {tcgMembers.length === 0 && !tcgMembersLoading && (
+                      <tr><td colSpan={5} className="text-center py-8 text-[#374151]">ยังไม่มีสมาชิก</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
