@@ -443,7 +443,7 @@ export default function AdminDashboard() {
   const [tcgRewardSaving, setTcgRewardSaving] = useState(false)
   const [tcgRewardMsg, setTcgRewardMsg] = useState('')
   const [tcgRewardImages, setTcgRewardImages] = useState<Record<string, string>>({})
-  const [tcgMembers, setTcgMembers] = useState<{id:string,full_name:string,nickname:string,phone:string,created_at:string}[]>([])
+  const [tcgMembers, setTcgMembers] = useState<{id:string,full_name:string,nickname:string,phone:string,date_of_birth:string,created_at:string}[]>([])
   const [tcgMembersLoading, setTcgMembersLoading] = useState(false)
   const [tcgMembersSearch, setTcgMembersSearch] = useState('')
   const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
@@ -6179,6 +6179,7 @@ export default function AdminDashboard() {
                       <th className="text-left py-2 px-3 font-semibold">ชื่อ-นามสกุล</th>
                       <th className="text-left py-2 px-3 font-semibold">ฉายา</th>
                       <th className="text-left py-2 px-3 font-semibold">เบอร์โทร</th>
+                      <th className="text-left py-2 px-3 font-semibold">วันเกิด</th>
                       <th className="text-left py-2 px-3 font-semibold">วันสมัคร</th>
                     </tr>
                   </thead>
@@ -6194,11 +6195,12 @@ export default function AdminDashboard() {
                           <td className="py-2 px-3 font-medium text-[#1E3A5F]">{m.full_name}</td>
                           <td className="py-2 px-3 text-[#374151]">{m.nickname}</td>
                           <td className="py-2 px-3 text-[#374151]">{m.phone}</td>
+                          <td className="py-2 px-3 text-[#374151]">{m.date_of_birth ? new Date(m.date_of_birth).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>
                           <td className="py-2 px-3 text-[#374151]">{new Date(m.created_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                         </tr>
                       ))}
                     {tcgMembers.length === 0 && !tcgMembersLoading && (
-                      <tr><td colSpan={5} className="text-center py-8 text-[#374151]">ยังไม่มีสมาชิก</td></tr>
+                      <tr><td colSpan={6} className="text-center py-8 text-[#374151]">ยังไม่มีสมาชิก</td></tr>
                     )}
                   </tbody>
                 </table>

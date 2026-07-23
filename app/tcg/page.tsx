@@ -114,6 +114,7 @@ export default function TcgPage() {
   const [regName, setRegName] = useState('')
   const [regPhone, setRegPhone] = useState('')
   const [regNick, setRegNick] = useState('')
+  const [regDob, setRegDob] = useState('')
   const [loginNick, setLoginNick] = useState('')
   const [loginPhone, setLoginPhone] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
@@ -319,7 +320,7 @@ export default function TcgPage() {
   }
 
   const handleRegister = async () => {
-    if (!regName.trim() || !regPhone.trim() || !regNick.trim()) {
+    if (!regName.trim() || !regPhone.trim() || !regNick.trim() || !regDob.trim()) {
       showError('กรุณากรอกข้อมูลให้ครบถ้วน')
       return
     }
@@ -328,7 +329,7 @@ export default function TcgPage() {
       const res = await fetch('/api/tcg/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: regName.trim(), phone: regPhone.trim(), nickname: regNick.trim(), branch: BRANCH }),
+        body: JSON.stringify({ full_name: regName.trim(), phone: regPhone.trim(), nickname: regNick.trim(), date_of_birth: regDob.trim(), branch: BRANCH }),
       })
       const data = await res.json()
       if (!res.ok) { showError(data.error || 'เกิดข้อผิดพลาด'); return }
@@ -337,7 +338,7 @@ export default function TcgPage() {
       localStorage.setItem('tcg_nickname', nick)
       setNickname(nick)
       setNicknameInput(nick)
-      setRegName(''); setRegPhone(''); setRegNick('')
+      setRegName(''); setRegPhone(''); setRegNick(''); setRegDob('')
       setAuthScreen('game')
     } catch { showError('ไม่สามารถเชื่อมต่อได้') }
     finally { setAuthLoading(false) }
@@ -737,6 +738,15 @@ export default function TcgPage() {
                     value={regNick}
                     onChange={(e) => setRegNick(e.target.value)}
                     placeholder="ตั้งชื่อเล่น / ฉายา"
+                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-[#374151] mb-1.5">วันเกิด <span className="font-normal text-gray-400">(ค.ศ.)</span></p>
+                  <input
+                    type="date"
+                    value={regDob}
+                    onChange={(e) => setRegDob(e.target.value)}
                     className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
                   />
                 </div>

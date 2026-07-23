@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   // ไม่มี params → return list ทั้งหมด (สำหรับ admin)
   if (!nickname && !phone) {
     const listResult = await db.execute({
-      sql: 'SELECT id, full_name, nickname, phone, created_at FROM tcg_members WHERE branch=? ORDER BY created_at DESC',
+      sql: 'SELECT id, full_name, nickname, phone, date_of_birth, created_at FROM tcg_members WHERE branch=? ORDER BY created_at DESC',
       args: [branch],
     })
     return NextResponse.json(listResult.rows)
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   const full_name = (body.full_name as string)?.trim()
   const phone = (body.phone as string)?.trim()
   const nickname = (body.nickname as string)?.trim()
+  const date_of_birth = (body.date_of_birth as string)?.trim() || ''
   const branch = (body.branch as string) || 'gap7card'
 
   if (!full_name || !phone || !nickname) {
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest) {
 
   try {
     await db.execute({
-      sql: 'INSERT INTO tcg_members (id, branch, full_name, phone, nickname, created_at) VALUES (?,?,?,?,?,?)',
-      args: [generateId(), branch, full_name, phone, nickname, new Date().toISOString()],
+      sql: 'INSERT INTO tcg_members (id, branch, full_name, phone, nickname, date_of_birth, created_at) VALUES (?,?,?,?,?,?,?)',
+      args: [generateId(), branch, full_name, phone, nickname, date_of_birth, new Date().toISOString()],
     })
     return NextResponse.json({ ok: true }, { status: 201 })
   } catch (err: unknown) {
