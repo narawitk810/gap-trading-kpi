@@ -88,6 +88,16 @@ const GAME_LOGOS: Record<string, string> = {
   talingchan: '/logobattleoftalingchan.jpg',
 }
 
+function getTier(rank: number): string {
+  if (rank === 1) return 'Special'
+  if (rank <= 3) return 'S'
+  if (rank <= 6) return 'A'
+  if (rank <= 10) return 'B'
+  if (rank <= 20) return 'C'
+  if (rank <= 30) return 'D'
+  return 'E'
+}
+
 interface TableInfo {
   tableNumber: number
   status: TableStatus
@@ -242,7 +252,7 @@ export default function TcgPage() {
 
   const fetchRankings = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tcg/rankings?branch=${BRANCH}&game=${selectedGame}&limit=20`)
+      const res = await fetch(`/api/tcg/rankings?branch=${BRANCH}&game=${selectedGame}&limit=50`)
       const data: TcgRanking[] = await res.json()
       setRankings(data)
     } catch {
@@ -259,6 +269,10 @@ export default function TcgPage() {
   useEffect(() => {
     if (tab === 'rankings') fetchRankings()
   }, [tab, fetchRankings])
+
+  useEffect(() => {
+    if (authScreen === null && selectedGame && selectedGame !== 'general') fetchRankings()
+  }, [authScreen, selectedGame, fetchRankings])
 
   const showError = (msg: string) => {
     setError(msg)
@@ -873,7 +887,15 @@ export default function TcgPage() {
           <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-400 mb-0.5">ผู้เล่น</p>
-              <p className="text-sm font-bold text-[#1E3A5F]">{nickname}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-[#1E3A5F]">{nickname}</p>
+                {(() => {
+                  const pos = rankings.findIndex(r => r.nickname === nickname)
+                  if (pos === -1) return null
+                  const tier = getTier(pos + 1)
+                  return <span className={`text-xs font-bold px-2 py-0.5 rounded-lg ${TIER_COLOR[tier]}`}>{tier}</span>
+                })()}
+              </div>
             </div>
             <button
               onClick={handleLogout}
