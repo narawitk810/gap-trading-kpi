@@ -782,7 +782,21 @@ export default function TcgPage() {
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs opacity-60 mb-1">{BRANCH} · {selectedGameName || 'TCG'}</p>
+            <p className="text-xs opacity-60 mb-1 flex items-center gap-1.5">
+              {BRANCH} ·
+              <button
+                onClick={() => {
+                  localStorage.removeItem('tcg_game')
+                  localStorage.removeItem('tcg_game_name')
+                  setSelectedGame('general')
+                  setSelectedGameName('')
+                  setAuthScreen('game')
+                }}
+                className="underline underline-offset-2 hover:opacity-80 transition-opacity"
+              >
+                {selectedGameName || 'TCG'} 🔄
+              </button>
+            </p>
             <h1 className="text-xl font-bold">♟ Match Making TCG</h1>
             <p className="text-xs opacity-70 mt-1">จับคู่เกมการ์ด — {TOTAL_TABLES} โต๊ะ</p>
           </div>
