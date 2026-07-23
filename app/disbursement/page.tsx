@@ -1430,14 +1430,21 @@ export default function DisbursementDashboard() {
                           <label className="block text-sm font-semibold text-[#374151] mb-1.5">
                             วิธีจ่ายเงิน <span className="text-[#DC2626]">*</span>
                           </label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr', 'เบิก_บัญชี'] as const).map((m) => (
-                              <button key={m} type="button"
-                                onClick={() => { setPaymentMethod(m); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
-                                className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === m ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
-                                {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย (บช พนักงาน)' : m === 'สำรองจ่าย_บริษัท' ? '💼 สำรองจ่าย (บช บริษัท)' : m === 'qr' ? '📱 ส่ง QR' : '🏦 ขอเบิกเงิน (แผนกบัญชี)'}
-                              </button>
-                            ))}
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              {(['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr'] as const).map((m) => (
+                                <button key={m} type="button"
+                                  onClick={() => { setPaymentMethod(m); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
+                                  className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === m ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                                  {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย (บช พนักงาน)' : m === 'สำรองจ่าย_บริษัท' ? '💼 สำรองจ่าย (บช บริษัท)' : '📱 ส่ง QR'}
+                                </button>
+                              ))}
+                            </div>
+                            <button type="button"
+                              onClick={() => { setPaymentMethod('เบิก_บัญชี'); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
+                              className={`w-full py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === 'เบิก_บัญชี' ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                              🏦 ขอเบิกเงิน (แผนกบัญชี)
+                            </button>
                           </div>
                           {paymentMethod === 'เบิก_บัญชี' && (
                             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-1">
