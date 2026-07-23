@@ -387,10 +387,10 @@ export default function StockPricesPage() {
                         <td className="px-3 py-3 text-right text-xs font-bold text-[#16A34A] whitespace-nowrap">
                           {p.no_pack_sale || p.break_enabled ? <span className="text-gray-300 font-normal">-</span> : fmt(p.pack_price_system)}
                         </td>
-                        <td className="px-3 py-3 text-right text-xs text-[#374151] whitespace-nowrap">
+                        <td className="px-3 py-3 text-right text-xs text-[#374151]">
                           {p.no_pack_sale ? <span className="text-gray-300 font-normal">-</span> : (
                             <>
-                              {fmt(p.pack_price_external)}
+                              <span className="whitespace-nowrap">{fmt(p.pack_price_external)}</span>
                               {p.break_enabled && (
                                 <span className="block text-[9px] text-[#D97706] bg-orange-50 rounded px-1 mt-0.5 leading-tight text-center">เปิด break<br/>เท่านั้น</span>
                               )}
