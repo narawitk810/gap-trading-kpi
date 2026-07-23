@@ -471,6 +471,7 @@ export default function AdminDashboard() {
   const [pmCommission, setPmCommission] = useState('')
   const [pmBoxSystemEnabled, setPmBoxSystemEnabled] = useState(true)
   const [pmBreakEnabled, setPmBreakEnabled] = useState(false)
+  const [pmNoPackSale, setPmNoPackSale] = useState(false)
   const [pmSubmitting, setPmSubmitting] = useState(false)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
@@ -1025,6 +1026,7 @@ export default function AdminDashboard() {
       setPmCommission(p.commission_tier)
       setPmBoxSystemEnabled(p.box_system_enabled !== false)
       setPmBreakEnabled(p.break_enabled === true)
+      setPmNoPackSale(p.no_pack_sale === true)
     } else {
       setPmMultiplier('')
       setPmMsrpPrice('')
@@ -1032,6 +1034,7 @@ export default function AdminDashboard() {
       setPmCommission('')
       setPmBoxSystemEnabled(true)
       setPmBreakEnabled(false)
+      setPmNoPackSale(false)
     }
   }
 
@@ -1083,6 +1086,7 @@ export default function AdminDashboard() {
       commission_tier: pmCommission,
       box_system_enabled: pmBoxSystemEnabled,
       break_enabled: pmBreakEnabled,
+      no_pack_sale: pmNoPackSale,
       box_price_system: boxPriceSystem,
       box_price_external: boxPriceExternal,
       pack_price_system: packPriceSystem,
@@ -2995,13 +2999,17 @@ export default function AdminDashboard() {
                                 <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.pack_price_system} บาท</p>
                               )}
                               <div className="flex gap-1 mt-2">
-                                <button type="button" onClick={() => setPmBreakEnabled(false)}
-                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${!pmBreakEnabled ? 'bg-[#374151] text-white border-[#374151]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                <button type="button" onClick={() => { setPmBreakEnabled(false); setPmNoPackSale(false) }}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${!pmBreakEnabled && !pmNoPackSale ? 'bg-[#374151] text-white border-[#374151]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
                                   break ได้ปกติ
                                 </button>
-                                <button type="button" onClick={() => setPmBreakEnabled(true)}
+                                <button type="button" onClick={() => { setPmBreakEnabled(true); setPmNoPackSale(false) }}
                                   className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBreakEnabled ? 'bg-[#D97706] text-white border-[#D97706]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
                                   เปิด break เท่านั้น
+                                </button>
+                                <button type="button" onClick={() => { setPmNoPackSale(true); setPmBreakEnabled(false) }}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmNoPackSale ? 'bg-[#DC2626] text-white border-[#DC2626]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                  ไม่ขายแยกซอง
                                 </button>
                               </div>
                             </div>

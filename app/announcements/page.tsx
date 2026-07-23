@@ -36,6 +36,7 @@ type PricingData = {
   box_price_external: number
   box_system_enabled?: boolean
   break_enabled?: boolean
+  no_pack_sale?: boolean
   commission_tier?: string
 }
 
@@ -290,19 +291,19 @@ export default function AnnouncementsPage() {
                                 {pricing ? fmt(pricing.box_price_external) : <span className="text-gray-300">-</span>}
                               </td>
                               <td className="px-2 py-3 text-right text-xs font-bold text-[#16A34A] whitespace-nowrap">
-                                {!pricing ? <span className="text-gray-300 font-normal">-</span>
-                                  : pricing.break_enabled ? <span className="text-gray-300 font-normal">-</span>
+                                {!pricing || pricing.no_pack_sale || pricing.break_enabled
+                                  ? <span className="text-gray-300 font-normal">-</span>
                                   : fmt(pricing.pack_price_system)}
                               </td>
                               <td className="px-2 py-3 text-right text-xs text-[#374151] whitespace-nowrap">
-                                {pricing ? (
+                                {!pricing || pricing.no_pack_sale ? <span className="text-gray-300">-</span> : (
                                   <>
                                     {fmt(pricing.pack_price_external)}
                                     {pricing.break_enabled && (
                                       <span className="block text-[10px] text-[#D97706] bg-orange-50 rounded px-1 mt-0.5">เปิด break</span>
                                     )}
                                   </>
-                                ) : <span className="text-gray-300">-</span>}
+                                )}
                               </td>
                               <td className="px-2 py-3 text-center">
                                 {commTier && (
