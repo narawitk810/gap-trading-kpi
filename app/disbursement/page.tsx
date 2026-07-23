@@ -185,7 +185,7 @@ export default function DisbursementDashboard() {
   const [orderedBy, setOrderedBy] = useState('')
   const [actualAmount, setActualAmount] = useState('')
   const [orderNote, setOrderNote] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'สำรองจ่าย_บริษัท' | 'qr'>('เบิก')
+  const [paymentMethod, setPaymentMethod] = useState<'เบิก' | 'สำรองจ่าย' | 'สำรองจ่าย_บริษัท' | 'qr' | 'เบิก_บัญชี'>('เบิก')
   const [orderDisburseSlipData, setOrderDisburseSlipData] = useState<string | null>(null)
   const [orderDisburseSlipName, setOrderDisburseSlipName] = useState('')
   const [orderPaySlipData, setOrderPaySlipData] = useState<string | null>(null)
@@ -592,8 +592,8 @@ export default function DisbursementDashboard() {
         order_channel: orderChannel,
         order_channel_image: orderChannelImageData,
         qr_slip: paymentMethod === 'qr' ? qrSlipData : '',
-        bank_account: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankAccount.trim() : '',
-        bank_name: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankName.trim() : '',
+        bank_account: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankAccount.trim() : paymentMethod === 'เบิก_บัญชี' ? '110-2-417639' : '',
+        bank_name: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankName.trim() : paymentMethod === 'เบิก_บัญชี' ? 'ธนาคารทหารไทยธนชาต' : '',
       }
     } else if (selected.status === 'ordered') {
       body = {
@@ -1431,14 +1431,22 @@ export default function DisbursementDashboard() {
                             วิธีจ่ายเงิน <span className="text-[#DC2626]">*</span>
                           </label>
                           <div className="grid grid-cols-2 gap-2">
-                            {(['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr'] as const).map((m) => (
+                            {(['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr', 'เบิก_บัญชี'] as const).map((m) => (
                               <button key={m} type="button"
                                 onClick={() => { setPaymentMethod(m); setFormErrors((p) => ({ ...p, orderDisburseSlip: '', orderPaySlip: '', advanceSlip: '', qrSlip: '' })) }}
                                 className={`py-2.5 rounded-xl font-semibold text-sm border transition-colors ${paymentMethod === m ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
-                                {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย (บช พนักงาน)' : m === 'สำรองจ่าย_บริษัท' ? '💼 สำรองจ่าย (บช บริษัท)' : '📱 ส่ง QR'}
+                                {m === 'เบิก' ? '📄 ขอเบิก' : m === 'สำรองจ่าย' ? '💵 สำรองจ่าย (บช พนักงาน)' : m === 'สำรองจ่าย_บริษัท' ? '💼 สำรองจ่าย (บช บริษัท)' : m === 'qr' ? '📱 ส่ง QR' : '🏦 ขอเบิกเงิน (แผนกบัญชี)'}
                               </button>
                             ))}
                           </div>
+                          {paymentMethod === 'เบิก_บัญชี' && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-1">
+                              <p className="text-sm font-semibold text-[#1E3A5F]">🏦 บัญชีรับเงิน</p>
+                              <p className="text-sm text-[#374151]">เลขบัญชี: <span className="font-semibold">110-2-417639</span></p>
+                              <p className="text-sm text-[#374151]">ธนาคารทหารไทยธนชาต (TTB)</p>
+                              <p className="text-xs text-gray-400 mt-1">รอบริษัทโอนเงินเข้าบัญชีข้างต้น</p>
+                            </div>
+                          )}
                         </div>
                         {['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) && (
                           <div className="space-y-3 p-3 bg-blue-50 rounded-xl border border-blue-100">

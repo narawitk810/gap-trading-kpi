@@ -50,7 +50,7 @@ export async function PATCH(
       body.actual_amount === '' ||
       isNaN(Number(body.actual_amount)) ||
       Number(body.actual_amount) < 0 ||
-      !['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr', 'มีอยู่แล้ว'].includes(pm) ||
+      !['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr', 'มีอยู่แล้ว', 'เบิก_บัญชี'].includes(pm) ||
       (ch !== 'offline' && ch !== 'online') ||
       !body.order_channel_image
     ) {
