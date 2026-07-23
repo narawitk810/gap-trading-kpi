@@ -81,6 +81,13 @@ const TIER_COLOR: Record<string, string> = {
   E:       'bg-gray-300 text-gray-700',
 }
 
+const GAME_LOGOS: Record<string, string> = {
+  onepiece:   '/logoonepiece.jpg',
+  gundam:     '/logogundam.JPG',
+  vanguard:   '/logovanguardD.PNG',
+  talingchan: '/logobattleoftalingchan.jpg',
+}
+
 interface TableInfo {
   tableNumber: number
   status: TableStatus
@@ -752,8 +759,13 @@ export default function TcgPage() {
                       onClick={() => handleGameSelect(g)}
                       className="w-full flex items-center gap-4 bg-white border-2 border-[#E2E8F0] rounded-2xl p-4 hover:border-[#1E3A5F] hover:bg-[#1E3A5F]/5 transition-colors text-left"
                     >
-                      <div className="w-12 h-12 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0">
-                        <span className="text-white text-xs font-bold text-center leading-tight px-1">{g.short_name.slice(0,3)}</span>
+                      <div className="w-12 h-12 rounded-xl shrink-0 overflow-hidden bg-[#1E3A5F]">
+                        {GAME_LOGOS[g.id]
+                          ? <img src={GAME_LOGOS[g.id]} alt={g.name} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-white text-xs font-bold text-center leading-tight px-1">{g.short_name.slice(0,3)}</span>
+                            </div>
+                        }
                       </div>
                       <div>
                         <p className="text-sm font-bold text-[#1E3A5F]">{g.name}</p>
