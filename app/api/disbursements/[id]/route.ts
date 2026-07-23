@@ -51,8 +51,7 @@ export async function PATCH(
       isNaN(Number(body.actual_amount)) ||
       Number(body.actual_amount) < 0 ||
       !['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท', 'qr', 'มีอยู่แล้ว', 'เบิก_บัญชี'].includes(pm) ||
-      (ch !== 'offline' && ch !== 'online') ||
-      !body.order_channel_image
+      (pm !== 'เบิก_บัญชี' && ((ch !== 'offline' && ch !== 'online') || !body.order_channel_image))
     ) {
       return NextResponse.json({ error: 'กรุณากรอกข้อมูลการสั่งซื้อให้ครบถ้วน' }, { status: 400 })
     }

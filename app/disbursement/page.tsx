@@ -464,7 +464,7 @@ export default function DisbursementDashboard() {
       } else if (paymentMethod === 'qr') {
         if (!qrSlipData) e.qrSlip = 'กรุณาแนบ QR Code'
       }
-      if (orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
+      if (paymentMethod !== 'เบิก_บัญชี' && orderChannel === 'offline' && !orderChannelImageData) e.orderChannelImage = 'กรุณาแนบรูปประกอบ'
     } else if (selected.status === 'ordered') {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
     } else if (selected.status === 'payment_recorded') {
@@ -589,8 +589,8 @@ export default function DisbursementDashboard() {
         order_disburse_slip: paymentMethod === 'เบิก' ? orderDisburseSlipData : '',
         order_pay_slip: paymentMethod === 'เบิก' ? orderPaySlipData : '',
         advance_slip: (paymentMethod === 'สำรองจ่าย' || paymentMethod === 'สำรองจ่าย_บริษัท') ? advanceSlipData : '',
-        order_channel: orderChannel,
-        order_channel_image: orderChannelImageData,
+        order_channel: paymentMethod === 'เบิก_บัญชี' ? 'online' : orderChannel,
+        order_channel_image: paymentMethod === 'เบิก_บัญชี' ? '' : (orderChannelImageData || ''),
         qr_slip: paymentMethod === 'qr' ? qrSlipData : '',
         bank_account: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankAccount.trim() : paymentMethod === 'เบิก_บัญชี' ? '110-2-417639' : '',
         bank_name: ['เบิก', 'สำรองจ่าย', 'สำรองจ่าย_บริษัท'].includes(paymentMethod) ? bankName.trim() : paymentMethod === 'เบิก_บัญชี' ? 'ธนาคารทหารไทยธนชาต' : '',
@@ -1601,42 +1601,46 @@ export default function DisbursementDashboard() {
                             {formErrors.qrSlip && <p className="text-[#DC2626] text-xs mt-1">{formErrors.qrSlip}</p>}
                           </div>
                         ) : null}
-                        <div>
-                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            ช่องทางสั่งซื้อ <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <div className="flex gap-2">
-                            {(['offline', 'online'] as const).map((ch) => (
-                              <button key={ch} type="button"
-                                onClick={() => { setOrderChannel(ch); setOrderChannelImageData(null); setOrderChannelImageName(''); setFormErrors((p) => ({ ...p, orderChannelImage: '' })) }}
-                                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${orderChannel === ch ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
-                                {ch === 'offline' ? '🏪 Offline' : '🌐 Online'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            {orderChannel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'} {orderChannel === 'offline' && <span className="text-[#DC2626]">*</span>}
-                          </label>
-                          <input ref={orderChannelImageRef} type="file" accept="image/*" onChange={handleOrderChannelImageFile} className="hidden" />
-                          {orderChannelImageData ? (
-                            <div className="space-y-1">
-                              <img src={orderChannelImageData} alt="รูปประกอบ" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs text-gray-400 truncate">{orderChannelImageName}</p>
-                                <button type="button" onClick={() => { setOrderChannelImageData(null); setOrderChannelImageName(''); if (orderChannelImageRef.current) orderChannelImageRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
+                        {paymentMethod !== 'เบิก_บัญชี' && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                                ช่องทางสั่งซื้อ <span className="text-[#DC2626]">*</span>
+                              </label>
+                              <div className="flex gap-2">
+                                {(['offline', 'online'] as const).map((ch) => (
+                                  <button key={ch} type="button"
+                                    onClick={() => { setOrderChannel(ch); setOrderChannelImageData(null); setOrderChannelImageName(''); setFormErrors((p) => ({ ...p, orderChannelImage: '' })) }}
+                                    className={`flex-1 py-2.5 rounded-xl font-semibold text-sm border transition-colors ${orderChannel === ch ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-[#374151] border-[#E2E8F0]'}`}>
+                                    {ch === 'offline' ? '🏪 Offline' : '🌐 Online'}
+                                  </button>
+                                ))}
                               </div>
                             </div>
-                          ) : (
-                            <button type="button" onClick={() => orderChannelImageRef.current?.click()}
-                              className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
-                              <span className="text-2xl">{orderChannel === 'offline' ? '📷' : '🖥️'}</span>
-                              <span className="text-xs text-gray-400">{orderChannel === 'offline' ? 'แนบรูปประกอบ' : 'แนบแคปหน้าจอ'}</span>
-                            </button>
-                          )}
-                          {formErrors.orderChannelImage && <p className="text-[#DC2626] text-xs mt-1">{formErrors.orderChannelImage}</p>}
-                        </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                                {orderChannel === 'offline' ? 'รูปประกอบ' : 'แคปหน้าจอคำสั่งซื้อ'} {orderChannel === 'offline' && <span className="text-[#DC2626]">*</span>}
+                              </label>
+                              <input ref={orderChannelImageRef} type="file" accept="image/*" onChange={handleOrderChannelImageFile} className="hidden" />
+                              {orderChannelImageData ? (
+                                <div className="space-y-1">
+                                  <img src={orderChannelImageData} alt="รูปประกอบ" className="w-full max-h-40 object-cover rounded-xl border border-[#E2E8F0]" />
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-xs text-gray-400 truncate">{orderChannelImageName}</p>
+                                    <button type="button" onClick={() => { setOrderChannelImageData(null); setOrderChannelImageName(''); if (orderChannelImageRef.current) orderChannelImageRef.current.value = '' }} className="text-[#DC2626] text-xs font-semibold ml-2">ลบ</button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button type="button" onClick={() => orderChannelImageRef.current?.click()}
+                                  className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-6 flex flex-col items-center gap-1 hover:border-[#1E3A5F] transition-colors">
+                                  <span className="text-2xl">{orderChannel === 'offline' ? '📷' : '🖥️'}</span>
+                                  <span className="text-xs text-gray-400">{orderChannel === 'offline' ? 'แนบรูปประกอบ' : 'แนบแคปหน้าจอ'}</span>
+                                </button>
+                              )}
+                              {formErrors.orderChannelImage && <p className="text-[#DC2626] text-xs mt-1">{formErrors.orderChannelImage}</p>}
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
 
