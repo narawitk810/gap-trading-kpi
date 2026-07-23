@@ -3001,7 +3001,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button type="button" onClick={() => setPmBreakEnabled(true)}
                                   className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBreakEnabled ? 'bg-[#D97706] text-white border-[#D97706]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
-                                  เปิด break
+                                  เปิด break เท่านั้น
                                 </button>
                               </div>
                             </div>
