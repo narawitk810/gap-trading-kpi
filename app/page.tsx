@@ -2196,7 +2196,7 @@ export default function Home() {
         {/* ไลฟ์สด — เว็บไซต์ประกาศ */}
         {formData.department === 'ไลฟ์สด' && (
           <Link
-            href="/announcements"
+            href={process.env.NEXT_PUBLIC_ANNOUNCEMENTS_URL || '/announcements'}
             className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
           >
             <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
