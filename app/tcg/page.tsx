@@ -1152,6 +1152,43 @@ export default function TcgPage() {
               </div>
             )}
           </div>
+          {/* คำอธิบายระบบคะแนนและ Rank */}
+          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-4">
+            <div>
+              <p className="text-xs font-bold text-[#1E3A5F] mb-2">📊 ระบบคะแนน</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="p-2 bg-[#F5F6F8] rounded-xl">
+                  <p className="text-[10px] text-gray-400 mb-0.5">เริ่มต้น</p>
+                  <p className="text-sm font-bold text-[#1E3A5F]">1,000</p>
+                </div>
+                <div className="p-2 bg-[#16A34A]/10 rounded-xl">
+                  <p className="text-[10px] text-gray-400 mb-0.5">ชนะ</p>
+                  <p className="text-sm font-bold text-[#16A34A]">+30</p>
+                </div>
+                <div className="p-2 bg-[#DC2626]/10 rounded-xl">
+                  <p className="text-[10px] text-gray-400 mb-0.5">แพ้</p>
+                  <p className="text-sm font-bold text-[#DC2626]">-20</p>
+                </div>
+                <div className="p-2 bg-gray-100 rounded-xl">
+                  <p className="text-[10px] text-gray-400 mb-0.5">เสมอ</p>
+                  <p className="text-sm font-bold text-gray-600">+5</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#1E3A5F] mb-2">🏅 ระดับ Rank</p>
+              <div className="space-y-1.5">
+                {TIER_ORDER.map(tier => (
+                  <div key={tier} className="flex items-center gap-3">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-lg shrink-0 w-16 text-center ${TIER_COLOR[tier]}`}>
+                      {tier}
+                    </span>
+                    <span className="text-xs text-gray-500">{TIER_RANGES[tier]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
           <p className="text-xs text-center text-gray-400">Ranking match เท่านั้นที่นับคะแนน</p>
         </div>
       )}
