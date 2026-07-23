@@ -22,6 +22,7 @@ type StockItem = {
   product_name: string
   quantity: string
   packs_per_box: string
+  image_data: string | null
   acknowledged_at: string | null
   pricing_data: string | null
   tiktok_listed_at: string | null
@@ -32,6 +33,7 @@ type PricingData = {
   box_price_system: number
   box_system_enabled?: boolean
   break_enabled?: boolean
+  commission_tier?: string
 }
 
 function formatDate(iso: string) {
@@ -215,43 +217,58 @@ export default function AnnouncementsPage() {
                   ยังไม่มีสินค้าเข้า
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <div className="divide-y divide-[#E2E8F0]">
-                    {stockItems.map((item) => {
-                      let pricing: PricingData | null = null
-                      try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
-                      return (
-                        <div key={item.id} className="px-4 py-3 flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[#374151] truncate">{item.product_name}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง
-                            </p>
-                            {pricing && (
-                              <p className="text-xs text-[#1E3A5F] mt-0.5">
-                                แพ็คละ {fmt(pricing.pack_price_system)} บ.
-                                {pricing.box_system_enabled !== false && ` · กล่องละ ${fmt(pricing.box_price_system)} บ.`}
-                              </p>
-                            )}
-                            <p className="text-[10px] text-gray-300 mt-0.5">
-                              ตั้งราคา {formatDate(item.acknowledged_at || '')}
-                            </p>
-                          </div>
-                          <div className="shrink-0">
+                <div className="space-y-3">
+                  {stockItems.map((item) => {
+                    let pricing: PricingData | null = null
+                    try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
+                    const packPrice = pricing?.pack_price_system ?? 0
+                    const commissions = [
+                      { label: 'P(1)', pct: 0.01 },
+                      { label: 'P(2)', pct: 0.02 },
+                      { label: 'P(3)', pct: 0.03 },
+                    ]
+                    return (
+                      <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                        {item.image_data && (
+                          <img src={item.image_data} alt={item.product_name} className="w-full max-h-52 object-cover" />
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <p className="text-sm font-bold text-[#1E3A5F] leading-snug flex-1">{item.product_name}</p>
                             {item.tiktok_listed_at ? (
-                              <span className="inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                              <span className="shrink-0 inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
                                 ✅ TikTok แล้ว
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
+                              <span className="shrink-0 inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
                                 🔵 ตั้งราคาแล้ว
                               </span>
                             )}
                           </div>
+                          <p className="text-xs text-gray-400">
+                            {item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง
+                            {pricing && !pricing.break_enabled && ` · แพ็คละ ${fmt(packPrice)} บ.`}
+                          </p>
+                          {pricing && packPrice > 0 && (
+                            <div className="mt-3 grid grid-cols-3 gap-2">
+                              {commissions.map(({ label, pct }) => (
+                                <div key={label} className="bg-[#F5F6F8] rounded-xl p-2 text-center">
+                                  <p className="text-[10px] text-gray-400 font-semibold">{label}</p>
+                                  <p className="text-sm font-bold text-[#1E3A5F] mt-0.5">
+                                    {fmt(Math.round(packPrice * pct))}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400">บาท</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {item.acknowledged_at && (
+                            <p className="text-[10px] text-gray-300 mt-2">ตั้งราคา {formatDate(item.acknowledged_at)}</p>
+                          )}
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
