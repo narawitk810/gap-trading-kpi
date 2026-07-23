@@ -230,7 +230,6 @@ export default function AnnouncementsPage() {
                     try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
                     const packPrice = pricing?.pack_price_system ?? 0
                     const commTier = pricing?.commission_tier ?? ''
-                    const commPct = commTier === 'P1' ? 0.01 : commTier === 'P2' ? 0.02 : commTier === 'P3' ? 0.03 : null
                     return (
                       <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
                         {item.image_data ? (
@@ -282,22 +281,10 @@ export default function AnnouncementsPage() {
                               </div>
 
                               {/* COMM. */}
-                              {commTier && commPct !== null && packPrice > 0 && (
-                                <div className="border border-[#E2E8F0] rounded-xl p-3">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold text-white bg-[#1E3A5F] px-2 py-0.5 rounded-full">COMM. {commTier}</span>
-                                    <span className="text-[10px] text-gray-400">{commTier === 'P1' ? '1%' : commTier === 'P2' ? '2%' : '3%'} ต่อซอง</span>
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-1.5">
-                                    {[{ label: 'P(1)', pct: 0.01 }, { label: 'P(2)', pct: 0.02 }, { label: 'P(3)', pct: 0.03 }].map(({ label, pct }) => (
-                                      <div key={label} className={`rounded-lg p-2 text-center ${commTier === label.replace('(', '').replace(')', '') ? 'bg-[#1E3A5F] text-white' : 'bg-[#F5F6F8]'}`}>
-                                        <p className={`text-[10px] font-semibold ${commTier === label.replace('(', '').replace(')', '') ? 'text-white/70' : 'text-gray-400'}`}>{label}</p>
-                                        <p className={`text-sm font-bold mt-0.5 ${commTier === label.replace('(', '').replace(')', '') ? 'text-white' : 'text-[#374151]'}`}>{fmt(Math.round(packPrice * pct))}</p>
-                                        <p className={`text-[10px] ${commTier === label.replace('(', '').replace(')', '') ? 'text-white/60' : 'text-gray-400'}`}>บาท</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
+                              {commTier && (
+                                <span className="inline-block text-xs font-bold text-white bg-[#1E3A5F] px-2.5 py-1 rounded-full">
+                                  COMM. {commTier}
+                                </span>
                               )}
                             </>
                           )}
