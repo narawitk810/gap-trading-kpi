@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DEPARTMENTS } from '@/types/kpi'
 
-const SESSION_KEY = 'announcements_verified'
+const STORAGE_KEY = 'announcements_verified_at'
+const VALID_DAYS = 10
 
 type Announcement = {
   id: string
@@ -56,8 +57,12 @@ export default function AnnouncementsPage() {
   const [loadingData, setLoadingData] = useState(false)
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(SESSION_KEY)
-    if (saved) setVerified(true)
+    const ts = localStorage.getItem(STORAGE_KEY)
+    if (ts && Date.now() - Number(ts) < VALID_DAYS * 24 * 60 * 60 * 1000) {
+      setVerified(true)
+    } else {
+      localStorage.removeItem(STORAGE_KEY)
+    }
   }, [])
 
   useEffect(() => {
@@ -84,7 +89,7 @@ export default function AnnouncementsPage() {
       })
       const data = await res.json()
       if (data.valid) {
-        sessionStorage.setItem(SESSION_KEY, '1')
+        localStorage.setItem(STORAGE_KEY, String(Date.now()))
         setVerified(true)
       } else {
         setVerifyError('รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง')
@@ -167,7 +172,7 @@ export default function AnnouncementsPage() {
             <p className="text-sm mt-0.5 opacity-75">📢 เว็บไซต์ประกาศ</p>
           </div>
           <button
-            onClick={() => { sessionStorage.removeItem(SESSION_KEY); setVerified(false); setCode('') }}
+            onClick={() => { localStorage.removeItem(STORAGE_KEY); setVerified(false); setCode('') }}
             className="ml-auto text-xs text-white/60 hover:text-white"
           >
             ออก
