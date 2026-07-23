@@ -55,6 +55,7 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [stockItems, setStockItems] = useState<StockItem[]>([])
   const [loadingData, setLoadingData] = useState(false)
+  const [imageModal, setImageModal] = useState<string | null>(null)
 
   useEffect(() => {
     const ts = localStorage.getItem(STORAGE_KEY)
@@ -224,87 +225,106 @@ export default function AnnouncementsPage() {
                   ยังไม่มีสินค้าเข้า
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {stockItems.map((item) => {
-                    let pricing: PricingData | null = null
-                    try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
-                    const packPrice = pricing?.pack_price_system ?? 0
-                    const commTier = pricing?.commission_tier ?? ''
-                    return (
-                      <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                        {item.image_data ? (
-                          <img
-                            src={item.image_data}
-                            alt={item.product_name}
-                            className="w-full max-h-56 object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-28 bg-[#F5F6F8] flex items-center justify-center text-3xl">📦</div>
-                        )}
-                        <div className="p-4">
-                          {/* ชื่อสินค้า + สถานะ */}
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <p className="text-base font-bold text-[#1E3A5F] leading-snug flex-1">{item.product_name}</p>
-                            {item.tiktok_listed_at ? (
-                              <span className="shrink-0 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">✅ TikTok</span>
-                            ) : (
-                              <span className="shrink-0 bg-blue-50 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">🔵 ตั้งราคาแล้ว</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-400 mb-3">{item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง</p>
-
-                          {pricing && (
-                            <>
-                              {/* ตารางราคา 4 ช่อง */}
-                              <div className="grid grid-cols-2 gap-2 mb-3">
-                                {pricing.box_system_enabled !== false && (
-                                  <div className="bg-[#F5F6F8] rounded-xl p-2.5">
-                                    <p className="text-[10px] text-gray-400 font-medium">ยกกล่อง (ในระบบ)</p>
-                                    <p className="text-sm font-bold text-[#1E3A5F] mt-0.5">{fmt(pricing.box_price_system)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
-                                  </div>
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
+                      <thead>
+                        <tr className="bg-[#F5F6F8] text-xs text-gray-500 font-semibold">
+                          <th className="text-left px-3 py-3">ชื่อสินค้า</th>
+                          <th className="text-center px-2 py-3">จำนวน</th>
+                          <th className="text-center px-2 py-3">ซอง/<br/>กล่อง</th>
+                          <th className="text-right px-2 py-3 text-[#1E3A5F]">ยกกล่อง<br/>(ระบบ)</th>
+                          <th className="text-right px-2 py-3">ยกกล่อง<br/>(นอก)</th>
+                          <th className="text-right px-2 py-3 text-[#16A34A]">แยกซอง<br/>(ระบบ)</th>
+                          <th className="text-right px-2 py-3">แยกซอง<br/>(นอก)</th>
+                          <th className="text-center px-2 py-3">Comm.</th>
+                          <th className="text-center px-2 py-3">รูป</th>
+                          <th className="text-center px-2 py-3">สถานะ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stockItems.map((item, idx) => {
+                          let pricing: PricingData | null = null
+                          try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
+                          const commTier = pricing?.commission_tier ?? ''
+                          return (
+                            <tr key={item.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                              <td className="px-3 py-3 text-xs max-w-[140px]">
+                                <p className="font-semibold text-[#1E3A5F] leading-snug">{item.product_name}</p>
+                                {item.acknowledged_at && (
+                                  <p className="text-[10px] text-gray-400 mt-0.5">{formatDate(item.acknowledged_at)}</p>
                                 )}
-                                <div className="bg-[#F5F6F8] rounded-xl p-2.5">
-                                  <p className="text-[10px] text-gray-400 font-medium">ยกกล่อง (โยนนอก)</p>
-                                  <p className="text-sm font-bold text-[#374151] mt-0.5">{fmt(pricing.box_price_external)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
-                                </div>
-                                {!pricing.break_enabled && (
-                                  <div className="bg-[#F5F6F8] rounded-xl p-2.5">
-                                    <p className="text-[10px] text-gray-400 font-medium">แยกซอง (ในระบบ)</p>
-                                    <p className="text-sm font-bold text-[#16A34A] mt-0.5">{fmt(pricing.pack_price_system)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
-                                  </div>
+                              </td>
+                              <td className="px-2 py-3 text-center text-xs text-[#374151]">{item.quantity}</td>
+                              <td className="px-2 py-3 text-center text-xs text-[#374151]">{item.packs_per_box}</td>
+                              <td className="px-2 py-3 text-right text-xs font-bold text-[#1E3A5F] whitespace-nowrap">
+                                {!pricing ? <span className="text-gray-300 font-normal">-</span>
+                                  : pricing.box_system_enabled === false ? <span className="text-gray-300 font-normal">-</span>
+                                  : fmt(pricing.box_price_system)}
+                              </td>
+                              <td className="px-2 py-3 text-right text-xs text-[#374151] whitespace-nowrap">
+                                {pricing ? fmt(pricing.box_price_external) : <span className="text-gray-300">-</span>}
+                              </td>
+                              <td className="px-2 py-3 text-right text-xs font-bold text-[#16A34A] whitespace-nowrap">
+                                {!pricing ? <span className="text-gray-300 font-normal">-</span>
+                                  : pricing.break_enabled ? <span className="text-gray-300 font-normal">-</span>
+                                  : fmt(pricing.pack_price_system)}
+                              </td>
+                              <td className="px-2 py-3 text-right text-xs text-[#374151] whitespace-nowrap">
+                                {pricing ? (
+                                  <>
+                                    {fmt(pricing.pack_price_external)}
+                                    {pricing.break_enabled && (
+                                      <span className="block text-[10px] text-[#D97706] bg-orange-50 rounded px-1 mt-0.5">เปิด break</span>
+                                    )}
+                                  </>
+                                ) : <span className="text-gray-300">-</span>}
+                              </td>
+                              <td className="px-2 py-3 text-center">
+                                {commTier && (
+                                  <span className="text-xs font-bold bg-[#1E3A5F]/10 text-[#1E3A5F] px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    {commTier}
+                                  </span>
                                 )}
-                                <div className="bg-[#F5F6F8] rounded-xl p-2.5">
-                                  <p className="text-[10px] text-gray-400 font-medium">แยกซอง (โยนนอก)</p>
-                                  <p className="text-sm font-bold text-[#374151] mt-0.5">{fmt(pricing.pack_price_external)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
-                                  {pricing.break_enabled && (
-                                    <span className="inline-block text-[10px] text-[#D97706] bg-orange-50 rounded px-1 mt-1">เปิด break</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* COMM. */}
-                              {commTier && (
-                                <span className="inline-block text-xs font-bold text-white bg-[#1E3A5F] px-2.5 py-1 rounded-full">
-                                  COMM. {commTier}
-                                </span>
-                              )}
-                            </>
-                          )}
-
-                          {item.acknowledged_at && (
-                            <p className="text-[10px] text-gray-300 mt-2">ตั้งราคา {formatDate(item.acknowledged_at)}</p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                              </td>
+                              <td className="px-2 py-3 text-center">
+                                {item.image_data ? (
+                                  <img
+                                    src={item.image_data}
+                                    alt="สินค้า"
+                                    onClick={() => setImageModal(item.image_data)}
+                                    className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <span className="text-gray-300 text-xs">-</span>
+                                )}
+                              </td>
+                              <td className="px-2 py-3 text-center">
+                                {item.tiktok_listed_at ? (
+                                  <span className="text-xs font-bold bg-[#16A34A]/10 text-[#16A34A] px-2 py-0.5 rounded-full whitespace-nowrap">✅ TikTok</span>
+                                ) : (
+                                  <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full whitespace-nowrap">ตั้งราคาแล้ว</span>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
           </>
         )}
       </div>
+
+      {imageModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setImageModal(null)}>
+          <img src={imageModal} alt="สินค้า" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl" />
+        </div>
+      )}
     </div>
   )
 }
