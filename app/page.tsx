@@ -2125,8 +2125,8 @@ export default function Home() {
             href="/tcg"
             className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
           >
-            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
-              ♟
+            <div className="w-10 h-10 rounded-xl shrink-0 overflow-hidden">
+              <img src="/IMG_3291.JPG" alt="GAP7 Card Shop" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="text-sm font-bold text-[#1E3A5F]">Match Making TCG</p>
