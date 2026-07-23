@@ -300,7 +300,7 @@ export default function AnnouncementsPage() {
                                   <>
                                     {fmt(pricing.pack_price_external)}
                                     {pricing.break_enabled && (
-                                      <span className="block text-[10px] text-[#D97706] bg-orange-50 rounded px-1 mt-0.5">เปิด break เท่านั้น</span>
+                                      <span className="block text-[9px] text-[#D97706] bg-orange-50 rounded px-1 mt-0.5 leading-tight text-center">เปิด break<br/>เท่านั้น</span>
                                     )}
                                   </>
                                 )}
