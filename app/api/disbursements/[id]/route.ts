@@ -95,7 +95,7 @@ export async function PATCH(
     await db.execute({
       sql: `UPDATE disbursements
             SET reimbursed_at=?, reimbursement_slip=?
-            WHERE id=? AND status='ordered' AND (payment_method='สำรองจ่าย' OR payment_method='qr') AND reimbursed_at=''`,
+            WHERE id=? AND status='ordered' AND (payment_method='สำรองจ่าย' OR payment_method='qr' OR payment_method='เบิก_บัญชี') AND reimbursed_at=''`,
       args: [now, body.reimbursement_slip, params.id],
     })
   } else if (action === 'record_payment') {
@@ -108,8 +108,8 @@ export async function PATCH(
       args: [params.id],
     })
     const row = rows.rows[0]
-    if (row && ['สำรองจ่าย', 'qr'].includes(row.payment_method as string) && !row.reimbursed_at) {
-      return NextResponse.json({ error: row.payment_method === 'qr' ? 'กรุณารอบริษัทชำระก่อน' : 'กรุณารอการจ่ายคืนจากบริษัทก่อน' }, { status: 400 })
+    if (row && ['สำรองจ่าย', 'qr', 'เบิก_บัญชี'].includes(row.payment_method as string) && !row.reimbursed_at) {
+      return NextResponse.json({ error: row.payment_method === 'qr' ? 'กรุณารอบริษัทชำระก่อน' : row.payment_method === 'เบิก_บัญชี' ? 'กรุณารอบริษัทโอนเงินคืนก่อน' : 'กรุณารอการจ่ายคืนจากบริษัทก่อน' }, { status: 400 })
     }
     const imagesArr = Array.isArray(body.tax_invoice_images) ? body.tax_invoice_images as string[] : []
     await db.execute({

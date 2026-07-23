@@ -1346,7 +1346,7 @@ export default function DisbursementDashboard() {
                     >
                       {STAGES.find((s) => s.status === selected.status)?.actionLabel} →
                     </button>
-                  ) : selected.status === 'ordered' && ['สำรองจ่าย', 'qr'].includes(selected.payment_method) && !selected.reimbursed_at ? (
+                  ) : selected.status === 'ordered' && ['สำรองจ่าย', 'qr', 'เบิก_บัญชี'].includes(selected.payment_method) && !selected.reimbursed_at ? (
                     <button
                       onClick={() => setModalState('reimburse_form')}
                       className="w-full py-3 rounded-xl font-semibold text-sm bg-orange-500 text-white"
