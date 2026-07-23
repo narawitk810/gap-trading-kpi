@@ -336,6 +336,7 @@ export default function TcgPage() {
       // auto-login หลังสมัครสมาชิกสำเร็จ
       const nick = regNick.trim()
       localStorage.setItem('tcg_nickname', nick)
+      startAudio()
       setNickname(nick)
       setNicknameInput(nick)
       setRegName(''); setRegPhone(''); setRegNick(''); setRegDob('')
@@ -357,6 +358,7 @@ export default function TcgPage() {
       setNickname(data.nickname)
       setNicknameInput(data.nickname)
       localStorage.setItem('tcg_nickname', data.nickname)
+      startAudio()
       setAuthScreen('game')
     } catch { showError('ไม่สามารถเชื่อมต่อได้') }
     finally { setAuthLoading(false) }
@@ -384,6 +386,7 @@ export default function TcgPage() {
   }, [])
 
   const handleGameSelect = (game: TcgGame) => {
+    startAudio()
     setSelectedGame(game.id)
     setSelectedGameName(game.name)
     localStorage.setItem('tcg_game', game.id)
@@ -814,7 +817,7 @@ export default function TcgPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F6F8] pb-8">
+    <main className="min-h-screen bg-[#F5F6F8] pb-8" onClick={startAudio}>
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 pt-10 pb-6">
         <div className="flex items-start justify-between">
@@ -865,16 +868,6 @@ export default function TcgPage() {
         <div className="mx-4 mt-3 bg-[#16A34A] text-white text-sm rounded-xl px-4 py-3 font-medium">
           {successMsg}
         </div>
-      )}
-
-      {/* Audio start banner */}
-      {!audioReady && !muted && (
-        <button
-          onClick={startAudio}
-          className="w-full mx-0 mt-3 py-3 bg-[#1E3A5F] text-white text-sm font-semibold flex items-center justify-center gap-2"
-        >
-          🔊 แตะที่นี่เพื่อเปิดเพลงพื้นหลัง
-        </button>
       )}
 
       {/* Tabs */}
