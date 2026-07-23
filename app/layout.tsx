@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   title: 'KPI รายวัน — GAP TRADING',
   description: 'ระบบบันทึก KPI การทำงานรายวัน',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'GAP KPI' },
+  manifest: '/api/kpi-manifest',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
