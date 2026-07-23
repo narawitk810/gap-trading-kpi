@@ -30,7 +30,9 @@ type StockItem = {
 
 type PricingData = {
   pack_price_system: number
+  pack_price_external: number
   box_price_system: number
+  box_price_external: number
   box_system_enabled?: boolean
   break_enabled?: boolean
   commission_tier?: string
@@ -222,46 +224,79 @@ export default function AnnouncementsPage() {
                     let pricing: PricingData | null = null
                     try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
                     const packPrice = pricing?.pack_price_system ?? 0
-                    const commissions = [
-                      { label: 'P(1)', pct: 0.01 },
-                      { label: 'P(2)', pct: 0.02 },
-                      { label: 'P(3)', pct: 0.03 },
-                    ]
+                    const commTier = pricing?.commission_tier ?? ''
+                    const commPct = commTier === 'P1' ? 0.01 : commTier === 'P2' ? 0.02 : commTier === 'P3' ? 0.03 : null
                     return (
                       <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                        {item.image_data && (
-                          <img src={item.image_data} alt={item.product_name} className="w-full max-h-52 object-cover" />
+                        {item.image_data ? (
+                          <img
+                            src={item.image_data}
+                            alt={item.product_name}
+                            className="w-full max-h-56 object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-28 bg-[#F5F6F8] flex items-center justify-center text-3xl">📦</div>
                         )}
                         <div className="p-4">
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-sm font-bold text-[#1E3A5F] leading-snug flex-1">{item.product_name}</p>
+                          {/* ชื่อสินค้า + สถานะ */}
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <p className="text-base font-bold text-[#1E3A5F] leading-snug flex-1">{item.product_name}</p>
                             {item.tiktok_listed_at ? (
-                              <span className="shrink-0 inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                                ✅ TikTok แล้ว
-                              </span>
+                              <span className="shrink-0 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">✅ TikTok</span>
                             ) : (
-                              <span className="shrink-0 inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                                🔵 ตั้งราคาแล้ว
-                              </span>
+                              <span className="shrink-0 bg-blue-50 text-blue-600 text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">🔵 ตั้งราคาแล้ว</span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-400">
-                            {item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง
-                            {pricing && !pricing.break_enabled && ` · แพ็คละ ${fmt(packPrice)} บ.`}
-                          </p>
-                          {pricing && packPrice > 0 && (
-                            <div className="mt-3 grid grid-cols-3 gap-2">
-                              {commissions.map(({ label, pct }) => (
-                                <div key={label} className="bg-[#F5F6F8] rounded-xl p-2 text-center">
-                                  <p className="text-[10px] text-gray-400 font-semibold">{label}</p>
-                                  <p className="text-sm font-bold text-[#1E3A5F] mt-0.5">
-                                    {fmt(Math.round(packPrice * pct))}
-                                  </p>
-                                  <p className="text-[10px] text-gray-400">บาท</p>
+                          <p className="text-xs text-gray-400 mb-3">{item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง</p>
+
+                          {pricing && (
+                            <>
+                              {/* ตารางราคา 4 ช่อง */}
+                              <div className="grid grid-cols-2 gap-2 mb-3">
+                                {pricing.box_system_enabled !== false && (
+                                  <div className="bg-[#F5F6F8] rounded-xl p-2.5">
+                                    <p className="text-[10px] text-gray-400 font-medium">ยกกล่อง (ในระบบ)</p>
+                                    <p className="text-sm font-bold text-[#1E3A5F] mt-0.5">{fmt(pricing.box_price_system)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
+                                  </div>
+                                )}
+                                <div className="bg-[#F5F6F8] rounded-xl p-2.5">
+                                  <p className="text-[10px] text-gray-400 font-medium">ยกกล่อง (โยนนอก)</p>
+                                  <p className="text-sm font-bold text-[#374151] mt-0.5">{fmt(pricing.box_price_external)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
                                 </div>
-                              ))}
-                            </div>
+                                {!pricing.break_enabled && (
+                                  <div className="bg-[#F5F6F8] rounded-xl p-2.5">
+                                    <p className="text-[10px] text-gray-400 font-medium">แยกซอง (ในระบบ)</p>
+                                    <p className="text-sm font-bold text-[#16A34A] mt-0.5">{fmt(pricing.pack_price_system)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
+                                  </div>
+                                )}
+                                <div className="bg-[#F5F6F8] rounded-xl p-2.5">
+                                  <p className="text-[10px] text-gray-400 font-medium">แยกซอง (โยนนอก)</p>
+                                  <p className="text-sm font-bold text-[#374151] mt-0.5">{fmt(pricing.pack_price_external)} <span className="text-[10px] font-normal text-gray-400">บ.</span></p>
+                                </div>
+                              </div>
+
+                              {/* COMM. */}
+                              {commTier && commPct !== null && packPrice > 0 && (
+                                <div className="border border-[#E2E8F0] rounded-xl p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-xs font-bold text-white bg-[#1E3A5F] px-2 py-0.5 rounded-full">COMM. {commTier}</span>
+                                    <span className="text-[10px] text-gray-400">{commTier === 'P1' ? '1%' : commTier === 'P2' ? '2%' : '3%'} ต่อซอง</span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-1.5">
+                                    {[{ label: 'P(1)', pct: 0.01 }, { label: 'P(2)', pct: 0.02 }, { label: 'P(3)', pct: 0.03 }].map(({ label, pct }) => (
+                                      <div key={label} className={`rounded-lg p-2 text-center ${commTier === label.replace('(', '').replace(')', '') ? 'bg-[#1E3A5F] text-white' : 'bg-[#F5F6F8]'}`}>
+                                        <p className={`text-[10px] font-semibold ${commTier === label.replace('(', '').replace(')', '') ? 'text-white/70' : 'text-gray-400'}`}>{label}</p>
+                                        <p className={`text-sm font-bold mt-0.5 ${commTier === label.replace('(', '').replace(')', '') ? 'text-white' : 'text-[#374151]'}`}>{fmt(Math.round(packPrice * pct))}</p>
+                                        <p className={`text-[10px] ${commTier === label.replace('(', '').replace(')', '') ? 'text-white/60' : 'text-gray-400'}`}>บาท</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
+
                           {item.acknowledged_at && (
                             <p className="text-[10px] text-gray-300 mt-2">ตั้งราคา {formatDate(item.acknowledged_at)}</p>
                           )}
