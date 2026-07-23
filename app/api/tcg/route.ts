@@ -78,6 +78,26 @@ export async function PATCH(request: NextRequest) {
     if (!player2?.trim()) return NextResponse.json({ error: 'กรุณาระบุชื่อผู้เล่น' }, { status: 400 })
     if (session.status !== 'waiting') return NextResponse.json({ error: 'โต๊ะนี้ไม่พร้อมรับผู้เล่น' }, { status: 409 })
     if (session.player1 === player2.trim()) return NextResponse.json({ error: 'ไม่สามารถเล่นกับตัวเองได้' }, { status: 400 })
+
+    // กันปั้ม rank: ranking match เท่านั้น — ห้ามแข่งคู่เดิมซ้ำใน 30 นาที
+    if (session.match_type === 'ranking') {
+      const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+      const recent = await db.execute({
+        sql: `SELECT COUNT(*) as cnt FROM tcg_sessions
+              WHERE branch = ? AND game = ? AND match_type = 'ranking' AND status = 'completed'
+              AND ended_at > ?
+              AND ((player1 = ? AND player2 = ?) OR (player1 = ? AND player2 = ?))`,
+        args: [session.branch, (session.game as string) || 'general', cutoff,
+               session.player1, player2.trim(), player2.trim(), session.player1],
+      })
+      if (Number(recent.rows[0]?.cnt ?? 0) > 0) {
+        return NextResponse.json(
+          { error: 'คู่ผู้เล่นนี้เคยแข่ง Ranking ด้วยกันแล้ว กรุณารอ 30 นาทีก่อนแข่งด้วยกันอีกครั้ง' },
+          { status: 409 }
+        )
+      }
+    }
+
     await db.execute({
       sql: `UPDATE tcg_sessions SET player2 = ?, status = 'playing', started_at = ? WHERE id = ?`,
       args: [player2.trim(), now, id],
