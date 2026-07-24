@@ -252,6 +252,7 @@ const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผ�
 const TCG_DEPTS = ['ผู้จัดการหน้าร้าน', 'ธุรการ']
 const PROMO_THRESHOLD_DEPTS = ['การตลาด']
 const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
+const ANNOUNCE_DEPTS = ['ไลฟ์สด', 'สต๊อค&จัดซื้อ', 'Creative', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'บุคคล']
 
 interface ChannelRow {
   id: string
@@ -2193,8 +2194,8 @@ export default function Home() {
           </Link>
         )}
 
-        {/* ไลฟ์สด — เว็บไซต์ประกาศ */}
-        {formData.department === 'ไลฟ์สด' && (
+        {/* เว็บไซต์ประกาศ */}
+        {ANNOUNCE_DEPTS.includes(formData.department) && (
           <Link
             href={process.env.NEXT_PUBLIC_ANNOUNCEMENTS_URL || '/announcements'}
             className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
