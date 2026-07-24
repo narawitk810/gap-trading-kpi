@@ -31,7 +31,8 @@ type StockPrice = {
   old_pricing_data: string | null
   status: string
   tiktok_listed_at: string | null
-  sku_code: string
+  sku_code_box: string
+  sku_code_pack: string
 }
 
 function formatDate(iso: string) {
@@ -67,7 +68,7 @@ export default function StockPricesPage() {
   const [editForm, setEditForm] = useState({ product_name: '', quantity: '', packs_per_box: '', cost: '', note: '', old_box_system: '', old_box_external: '', old_pack_system: '', old_pack_external: '' })
   const [savingEdit, setSavingEdit] = useState(false)
   const [togglingTiktok, setTogglingTiktok] = useState<string | null>(null)
-  const [skuEdits, setSkuEdits] = useState<Record<string, string>>({})
+  const [skuEdits, setSkuEdits] = useState<Record<string, { box: string; pack: string }>>({})
   const [skuStatus, setSkuStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
 
   const fetchData = useCallback(() => {
@@ -141,16 +142,16 @@ export default function StockPricesPage() {
     finally { setSavingEdit(false) }
   }
 
-  async function saveSku(id: string, value: string) {
+  async function saveSku(id: string, box: string, pack: string) {
     setSkuStatus(prev => ({ ...prev, [id]: 'saving' }))
     try {
       const res = await fetch('/api/stock-prices', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sku', id, sku_code: value }),
+        body: JSON.stringify({ action: 'sku', id, sku_code_box: box, sku_code_pack: pack }),
       })
       if (!res.ok) throw new Error()
-      setItems(prev => prev.map(item => item.id === id ? { ...item, sku_code: value } : item))
+      setItems(prev => prev.map(item => item.id === id ? { ...item, sku_code_box: box, sku_code_pack: pack } : item))
       setSkuStatus(prev => ({ ...prev, [id]: 'saved' }))
       setTimeout(() => setSkuStatus(prev => ({ ...prev, [id]: 'idle' })), 2000)
     } catch {
@@ -362,19 +363,31 @@ export default function StockPricesPage() {
                           </td>
                           <td className="px-3 py-3 text-center">
                             <div className="flex flex-col items-center gap-1">
-                              <input
-                                value={skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || '')}
-                                onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: e.target.value }))}
-                                placeholder="กรอก SKU"
-                                className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
-                              />
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] text-gray-400 w-7 text-right shrink-0">กล่อง</span>
+                                <input
+                                  value={skuEdits[r.id]?.box ?? (r.sku_code_box || '')}
+                                  onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: { ...(prev[r.id] ?? { box: r.sku_code_box || '', pack: r.sku_code_pack || '' }), box: e.target.value } }))}
+                                  placeholder="SKU"
+                                  className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] text-gray-400 w-7 text-right shrink-0">ซอง</span>
+                                <input
+                                  value={skuEdits[r.id]?.pack ?? (r.sku_code_pack || '')}
+                                  onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: { ...(prev[r.id] ?? { box: r.sku_code_box || '', pack: r.sku_code_pack || '' }), pack: e.target.value } }))}
+                                  placeholder="SKU"
+                                  className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
+                                />
+                              </div>
                               {skuStatus[r.id] === 'saved' ? (
                                 <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
                               ) : skuStatus[r.id] === 'error' ? (
                                 <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
                               ) : (
                                 <button
-                                  onClick={() => saveSku(r.id, skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || ''))}
+                                  onClick={() => saveSku(r.id, skuEdits[r.id]?.box ?? (r.sku_code_box || ''), skuEdits[r.id]?.pack ?? (r.sku_code_pack || ''))}
                                   disabled={skuStatus[r.id] === 'saving'}
                                   className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
                                 >
@@ -459,19 +472,31 @@ export default function StockPricesPage() {
                         </td>
                         <td className="px-3 py-3 text-center">
                           <div className="flex flex-col items-center gap-1">
-                            <input
-                              value={skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || '')}
-                              onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: e.target.value }))}
-                              placeholder="กรอก SKU"
-                              className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
-                            />
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-gray-400 w-7 text-right shrink-0">กล่อง</span>
+                              <input
+                                value={skuEdits[r.id]?.box ?? (r.sku_code_box || '')}
+                                onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: { ...(prev[r.id] ?? { box: r.sku_code_box || '', pack: r.sku_code_pack || '' }), box: e.target.value } }))}
+                                placeholder="SKU"
+                                className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-gray-400 w-7 text-right shrink-0">ซอง</span>
+                              <input
+                                value={skuEdits[r.id]?.pack ?? (r.sku_code_pack || '')}
+                                onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: { ...(prev[r.id] ?? { box: r.sku_code_box || '', pack: r.sku_code_pack || '' }), pack: e.target.value } }))}
+                                placeholder="SKU"
+                                className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
+                              />
+                            </div>
                             {skuStatus[r.id] === 'saved' ? (
                               <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
                             ) : skuStatus[r.id] === 'error' ? (
                               <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
                             ) : (
                               <button
-                                onClick={() => saveSku(r.id, skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || ''))}
+                                onClick={() => saveSku(r.id, skuEdits[r.id]?.box ?? (r.sku_code_box || ''), skuEdits[r.id]?.pack ?? (r.sku_code_pack || ''))}
                                 disabled={skuStatus[r.id] === 'saving'}
                                 className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
                               >

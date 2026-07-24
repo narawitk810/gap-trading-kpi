@@ -27,7 +27,8 @@ type StockItem = {
   acknowledged_at: string | null
   pricing_data: string | null
   tiktok_listed_at: string | null
-  sku_code?: string
+  sku_code_box?: string
+  sku_code_pack?: string
 }
 
 type PricingData = {
@@ -327,8 +328,11 @@ export default function AnnouncementsPage() {
                                   <span className="text-gray-300 text-xs">-</span>
                                 )}
                               </td>
-                              <td className="px-2 py-3 text-center text-xs text-gray-500">
-                                {item.sku_code || '—'}
+                              <td className="px-2 py-3 text-center text-xs">
+                                <div className="space-y-0.5">
+                                  <div className="text-gray-500"><span className="text-gray-400">กล่อง </span>{item.sku_code_box || '—'}</div>
+                                  <div className="text-gray-500"><span className="text-gray-400">ซอง </span>{item.sku_code_pack || '—'}</div>
+                                </div>
                               </td>
                               <td className="px-2 py-3 text-center">
                                 {item.tiktok_listed_at ? (
