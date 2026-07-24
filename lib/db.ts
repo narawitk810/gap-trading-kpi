@@ -579,7 +579,6 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE tcg_members ADD COLUMN date_of_birth TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE stock_arrivals ADD COLUMN sku_code_box TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE stock_arrivals ADD COLUMN sku_code_pack TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
-  try { await db.execute(`UPDATE stock_arrivals SET sku_code_box = sku_code WHERE sku_code_box = '' AND sku_code IS NOT NULL AND sku_code != ''`) } catch { /* sku_code col may not exist on fresh db */ }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tcg_members (
