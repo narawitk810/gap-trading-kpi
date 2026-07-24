@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     ? `ORDER BY COALESCE(acknowledged_at, created_at) DESC`
     : `ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, COALESCE(acknowledged_at, created_at) DESC`
   const result = await db.execute(
-    `SELECT id, product_name, quantity, packs_per_box, cost, note, image_data, created_at, acknowledged_at, pricing_data, old_pricing_data, status, tiktok_listed_at
+    `SELECT id, product_name, quantity, packs_per_box, cost, note, image_data, created_at, acknowledged_at, pricing_data, old_pricing_data, status, tiktok_listed_at, sku_code
      FROM stock_arrivals
      ${whereClause}
      ${orderClause}`
@@ -23,9 +23,19 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const body = await request.json()
-  if (!body.id || !body.pricing) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
   await ensureSchema()
   const db = getDb()
+
+  if (body.action === 'sku') {
+    if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    await db.execute({
+      sql: `UPDATE stock_arrivals SET sku_code = ? WHERE id = ?`,
+      args: [body.sku_code || '', body.id],
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (!body.id || !body.pricing) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
   await db.execute({
     sql: `UPDATE stock_arrivals SET pricing_data = ? WHERE id = ? AND status = 'acknowledged'`,
     args: [JSON.stringify(body.pricing), body.id],

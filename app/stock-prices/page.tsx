@@ -31,6 +31,7 @@ type StockPrice = {
   old_pricing_data: string | null
   status: string
   tiktok_listed_at: string | null
+  sku_code: string
 }
 
 function formatDate(iso: string) {
@@ -66,6 +67,8 @@ export default function StockPricesPage() {
   const [editForm, setEditForm] = useState({ product_name: '', quantity: '', packs_per_box: '', cost: '', note: '', old_box_system: '', old_box_external: '', old_pack_system: '', old_pack_external: '' })
   const [savingEdit, setSavingEdit] = useState(false)
   const [togglingTiktok, setTogglingTiktok] = useState<string | null>(null)
+  const [skuEdits, setSkuEdits] = useState<Record<string, string>>({})
+  const [skuStatus, setSkuStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
 
   const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
@@ -136,6 +139,24 @@ export default function StockPricesPage() {
       }
     } catch { alert('เกิดข้อผิดพลาด') }
     finally { setSavingEdit(false) }
+  }
+
+  async function saveSku(id: string, value: string) {
+    setSkuStatus(prev => ({ ...prev, [id]: 'saving' }))
+    try {
+      const res = await fetch('/api/stock-prices', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sku', id, sku_code: value }),
+      })
+      if (!res.ok) throw new Error()
+      setItems(prev => prev.map(item => item.id === id ? { ...item, sku_code: value } : item))
+      setSkuStatus(prev => ({ ...prev, [id]: 'saved' }))
+      setTimeout(() => setSkuStatus(prev => ({ ...prev, [id]: 'idle' })), 2000)
+    } catch {
+      setSkuStatus(prev => ({ ...prev, [id]: 'error' }))
+      setTimeout(() => setSkuStatus(prev => ({ ...prev, [id]: 'idle' })), 3000)
+    }
   }
 
   async function handleDelete(id: string) {
@@ -310,6 +331,7 @@ export default function StockPricesPage() {
                     <th className="text-right px-3 py-3">แยกซอง<br/>(โยนนอก)</th>
                     <th className="text-center px-3 py-3">Comm.</th>
                     <th className="text-center px-3 py-3">รูป</th>
+                    <th className="text-center px-3 py-3">เลข SKU</th>
                     <th className="text-center px-3 py-3">สถานะ</th>
                   </tr>
                 </thead>
@@ -337,6 +359,29 @@ export default function StockPricesPage() {
                                 className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
                               />
                             )}
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <input
+                                value={skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || '')}
+                                onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: e.target.value }))}
+                                placeholder="กรอก SKU"
+                                className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
+                              />
+                              {skuStatus[r.id] === 'saved' ? (
+                                <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                              ) : skuStatus[r.id] === 'error' ? (
+                                <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                              ) : (
+                                <button
+                                  onClick={() => saveSku(r.id, skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || ''))}
+                                  disabled={skuStatus[r.id] === 'saving'}
+                                  className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {skuStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-center">
                             <div className="flex flex-col items-center gap-1.5">
@@ -411,6 +456,29 @@ export default function StockPricesPage() {
                               className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
                             />
                           )}
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <input
+                              value={skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || '')}
+                              onChange={(e) => setSkuEdits(prev => ({ ...prev, [r.id]: e.target.value }))}
+                              placeholder="กรอก SKU"
+                              className="w-20 border border-[#E2E8F0] rounded-lg px-1.5 py-1 text-xs text-center focus:outline-none focus:border-[#1E3A5F]"
+                            />
+                            {skuStatus[r.id] === 'saved' ? (
+                              <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                            ) : skuStatus[r.id] === 'error' ? (
+                              <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                            ) : (
+                              <button
+                                onClick={() => saveSku(r.id, skuEdits[r.id] !== undefined ? skuEdits[r.id] : (r.sku_code || ''))}
+                                disabled={skuStatus[r.id] === 'saving'}
+                                className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {skuStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-center">
                           <div className="flex flex-col items-center gap-1.5">
