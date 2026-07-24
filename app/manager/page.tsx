@@ -75,16 +75,12 @@ export default function ManagerPage() {
   }, [date, fetchData])
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) {
-          fetchData(date)
-          return 60
-        }
-        return c - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
+    const fetchInterval = setInterval(() => fetchData(date), 60_000)
+    const uiInterval = setInterval(() => setCountdown((c) => (c <= 1 ? 60 : c - 1)), 1_000)
+    return () => {
+      clearInterval(fetchInterval)
+      clearInterval(uiInterval)
+    }
   }, [date, fetchData])
 
   const marketingCols = [

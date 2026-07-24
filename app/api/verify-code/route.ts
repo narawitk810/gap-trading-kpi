@@ -33,16 +33,18 @@ export async function POST(request: NextRequest) {
   const row = existing.rows[0] as unknown as { code: string; quarter: string } | undefined
 
   if (!row || row.quarter !== quarter) {
-    // Rotate all departments
-    for (const dept of DEPARTMENTS) {
-      const newCode = randomCode()
-      await db.execute({
-        sql: `INSERT INTO dept_codes (department, code, quarter, created_at)
-              VALUES (?, ?, ?, ?)
-              ON CONFLICT(department) DO UPDATE SET code = excluded.code, quarter = excluded.quarter, created_at = excluded.created_at`,
-        args: [dept, newCode, quarter, now],
+    // Rotate all departments in parallel (one round-trip each, not sequential)
+    await Promise.all(
+      DEPARTMENTS.map((dept) => {
+        const newCode = randomCode()
+        return db.execute({
+          sql: `INSERT INTO dept_codes (department, code, quarter, created_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(department) DO UPDATE SET code = excluded.code, quarter = excluded.quarter, created_at = excluded.created_at`,
+          args: [dept, newCode, quarter, now],
+        })
       })
-    }
+    )
     // After rotation, re-fetch
     const refreshed = await db.execute({
       sql: 'SELECT code FROM dept_codes WHERE department = ?',
