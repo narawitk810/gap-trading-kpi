@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 const STORE_HOURS: Record<number, { open: number; close: number; label: string }> = {
@@ -44,7 +44,35 @@ export default function BookingPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [bookingId, setBookingId] = useState('')
+  const [bookingStatus, setBookingStatus] = useState<'pending' | 'confirmed' | 'cancelled'>('pending')
+  const [lastChecked, setLastChecked] = useState('')
+  const [countdown, setCountdown] = useState(10)
   const [error, setError] = useState('')
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (!bookingId) return
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/tcg/bookings?id=${bookingId}`)
+        const data = await res.json()
+        if (data.booking?.status) {
+          setBookingStatus(data.booking.status)
+          setLastChecked(new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }))
+          if (data.booking.status !== 'pending' && pollRef.current) {
+            clearInterval(pollRef.current)
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    poll()
+    pollRef.current = setInterval(poll, 10_000)
+    const cd = setInterval(() => setCountdown((c) => (c <= 1 ? 10 : c - 1)), 1_000)
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current)
+      clearInterval(cd)
+    }
+  }, [bookingId])
 
   const dayOfWeek = date ? getDayOfWeek(date) : -1
   const storeHours = STORE_HOURS[dayOfWeek]
@@ -112,15 +140,48 @@ export default function BookingPage() {
   }
 
   if (bookingId) {
+    const statusConfig = {
+      pending: {
+        icon: '📋',
+        iconBg: 'bg-yellow-100',
+        title: 'ส่งคำขอจองแล้ว!',
+        badge: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+        dot: 'bg-yellow-400',
+        label: 'รอการยืนยันจากทางร้าน',
+        desc: 'ทางร้านจะยืนยันเร็วๆ นี้',
+      },
+      confirmed: {
+        icon: '✅',
+        iconBg: 'bg-green-100',
+        title: 'อนุมัติแล้ว!',
+        badge: 'bg-green-50 border-green-200 text-[#16A34A]',
+        dot: 'bg-[#16A34A]',
+        label: 'ยืนยันการจองเรียบร้อย',
+        desc: 'ทางร้านพร้อมต้อนรับคุณแล้ว',
+      },
+      cancelled: {
+        icon: '❌',
+        iconBg: 'bg-red-100',
+        title: 'ไม่สามารถรับจองได้',
+        badge: 'bg-red-50 border-red-200 text-[#DC2626]',
+        dot: 'bg-[#DC2626]',
+        label: 'ทางร้านขอปฏิเสธการจองนี้',
+        desc: 'กรุณาติดต่อร้านเพื่อเลือกเวลาใหม่',
+      },
+    }
+    const cfg = statusConfig[bookingStatus]
+
     return (
       <div className="min-h-screen bg-[#F5F6F8] flex flex-col items-center justify-center p-6" style={{ fontFamily: "'Noto Sans Thai', 'Sarabun', sans-serif" }}>
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-sm p-8 text-center space-y-4">
-          <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto text-4xl">📋</div>
-          <p className="text-xl font-bold text-[#1E3A5F]">ส่งคำขอจองแล้ว!</p>
-          <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm font-semibold px-4 py-2 rounded-full">
-            <span className="w-2 h-2 bg-yellow-400 rounded-full inline-block" />
-            รอการยืนยันจากทางร้าน
+          <div className={`w-16 h-16 ${cfg.iconBg} rounded-2xl flex items-center justify-center mx-auto text-4xl`}>{cfg.icon}</div>
+          <p className="text-xl font-bold text-[#1E3A5F]">{cfg.title}</p>
+          <div className={`inline-flex items-center gap-2 border text-sm font-semibold px-4 py-2 rounded-full ${cfg.badge}`}>
+            <span className={`w-2 h-2 rounded-full inline-block ${cfg.dot}`} />
+            {cfg.label}
           </div>
+          <p className="text-xs text-gray-400">{cfg.desc}</p>
+
           <div className="bg-[#F5F6F8] rounded-2xl p-4 space-y-2 text-left text-sm">
             <p className="text-gray-500 text-xs">หมายเลขคำขอ</p>
             <p className="font-bold text-[#1E3A5F] text-xs break-all">{bookingId}</p>
@@ -130,7 +191,15 @@ export default function BookingPage() {
             <p><span className="text-gray-500">เวลา: </span><span className="font-semibold">{padHour(startHour as number)} – {padHour((startHour as number) + duration)} น.</span></p>
             <p><span className="text-gray-500">จำนวน: </span><span className="font-semibold">{people} คน</span></p>
           </div>
-          <p className="text-xs text-gray-400">ทางร้านจะแจ้งยืนยันผ่านช่องทางที่ให้ไว้</p>
+
+          {bookingStatus === 'pending' && (
+            <p className="text-xs text-gray-400">
+              อัปเดตอัตโนมัติ
+              {lastChecked && ` · ตรวจล่าสุด ${lastChecked} น.`}
+              {` · รีเฟรชใน ${countdown} วิ`}
+            </p>
+          )}
+
           <Link href="/tcg" className="block w-full py-3 bg-[#1E3A5F] text-white font-bold rounded-2xl text-sm">
             กลับหน้าหลัก
           </Link>

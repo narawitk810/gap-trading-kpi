@@ -17,8 +17,18 @@ const DAY_NAMES: Record<number, string> = {
 export async function GET(req: NextRequest) {
   await ensureSchema()
   const db = getDb()
+
+  const id = req.nextUrl.searchParams.get('id')
+  if (id) {
+    const row = await db.execute({
+      sql: 'SELECT id, name, phone, date, start_hour, duration, people, note, status, created_at FROM tcg_time_bookings WHERE id = ?',
+      args: [id],
+    })
+    return NextResponse.json({ booking: row.rows[0] || null })
+  }
+
   const date = req.nextUrl.searchParams.get('date')
-  if (!date) return NextResponse.json({ error: 'ต้องระบุวันที่' }, { status: 400 })
+  if (!date) return NextResponse.json({ error: 'ต้องระบุวันที่หรือ id' }, { status: 400 })
 
   const rows = await db.execute({
     sql: 'SELECT id, name, phone, date, start_hour, duration, people, note, status, created_at FROM tcg_time_bookings WHERE date = ? ORDER BY start_hour, created_at',
