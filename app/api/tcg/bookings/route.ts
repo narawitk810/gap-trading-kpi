@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   if (!date) return NextResponse.json({ error: 'ต้องระบุวันที่' }, { status: 400 })
 
   const rows = await db.execute({
-    sql: 'SELECT id, name, phone, start_hour, duration, people, game, note, created_at FROM tcg_time_bookings WHERE date = ? ORDER BY start_hour, created_at',
+    sql: 'SELECT id, name, phone, date, start_hour, duration, people, note, status, created_at FROM tcg_time_bookings WHERE date = ? ORDER BY start_hour, created_at',
     args: [date],
   })
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   await ensureSchema()
   const db = getDb()
   const body = await req.json()
-  const { name, phone, date, start_hour, duration, people, game, note } = body
+  const { name, phone, date, start_hour, duration, people, note } = body
 
   if (!name?.trim()) return NextResponse.json({ error: 'กรุณากรอกชื่อ' }, { status: 400 })
   if (!phone?.trim()) return NextResponse.json({ error: 'กรุณากรอกเบอร์โทร' }, { status: 400 })
@@ -63,9 +63,28 @@ export async function POST(req: NextRequest) {
   const id = generateId()
   const now = new Date().toISOString()
   await db.execute({
-    sql: 'INSERT INTO tcg_time_bookings (id, name, phone, date, start_hour, duration, people, game, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    args: [id, name.trim(), phone.trim(), date, start_hour, duration, people, game?.trim() || '', note?.trim() || '', now],
+    sql: 'INSERT INTO tcg_time_bookings (id, name, phone, date, start_hour, duration, people, note, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [id, name.trim(), phone.trim(), date, start_hour, duration, people, note?.trim() || '', 'pending', now],
   })
 
   return NextResponse.json({ id, message: 'จองเวลาสำเร็จ' })
+}
+
+export async function PATCH(req: NextRequest) {
+  await ensureSchema()
+  const db = getDb()
+  const body = await req.json()
+  const { id, status } = body
+
+  if (!id) return NextResponse.json({ error: 'ต้องระบุ id' }, { status: 400 })
+  if (!['confirmed', 'cancelled'].includes(status)) {
+    return NextResponse.json({ error: 'status ต้องเป็น confirmed หรือ cancelled' }, { status: 400 })
+  }
+
+  await db.execute({
+    sql: 'UPDATE tcg_time_bookings SET status = ? WHERE id = ?',
+    args: [status, id],
+  })
+
+  return NextResponse.json({ message: 'อัปเดตสถานะสำเร็จ' })
 }

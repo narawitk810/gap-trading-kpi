@@ -435,7 +435,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members' | 'tcg-bookings'>('kpi')
   const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
   const [tcgGames, setTcgGames] = useState<{ id: string; name: string; short_name: string }[]>([])
@@ -448,6 +448,9 @@ export default function AdminDashboard() {
   const [tcgMembers, setTcgMembers] = useState<{id:string,full_name:string,nickname:string,phone:string,date_of_birth:string,created_at:string}[]>([])
   const [tcgMembersLoading, setTcgMembersLoading] = useState(false)
   const [tcgMembersSearch, setTcgMembersSearch] = useState('')
+  const [tcgBookings, setTcgBookings] = useState<{id:string,name:string,phone:string,date:string,start_hour:number,duration:number,people:number,note:string,status:string,created_at:string}[]>([])
+  const [tcgBookingsDate, setTcgBookingsDate] = useState(getTodayDate())
+  const [tcgBookingsLoading, setTcgBookingsLoading] = useState(false)
   const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
@@ -1724,6 +1727,24 @@ export default function AdminDashboard() {
             }`}
           >
             👥 TCG สมาชิก
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('tcg-bookings')
+              setTcgBookingsLoading(true)
+              fetch(`/api/tcg/bookings?date=${tcgBookingsDate}`)
+                .then(r => r.json())
+                .then(data => setTcgBookings(data.bookings || []))
+                .catch(() => {})
+                .finally(() => setTcgBookingsLoading(false))
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'tcg-bookings'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            📅 จองเวลา TCG
           </button>
         </div>
       </div>
@@ -6210,6 +6231,110 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* TCG Bookings Tab */}
+      {activeTab === 'tcg-bookings' && (
+        <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-[#1E3A5F]">คำขอจองเวลาเล่น TCG</h2>
+              <p className="text-sm text-gray-400 mt-0.5">{tcgBookings.length} รายการ</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={tcgBookingsDate}
+                onChange={(e) => setTcgBookingsDate(e.target.value)}
+                className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E3A5F]"
+              />
+              <button
+                onClick={() => {
+                  setTcgBookingsLoading(true)
+                  fetch(`/api/tcg/bookings?date=${tcgBookingsDate}`)
+                    .then(r => r.json())
+                    .then(data => setTcgBookings(data.bookings || []))
+                    .catch(() => {})
+                    .finally(() => setTcgBookingsLoading(false))
+                }}
+                className="bg-[#1E3A5F] text-white text-sm font-semibold px-4 py-2 rounded-xl"
+              >
+                โหลด
+              </button>
+            </div>
+          </div>
+
+          {tcgBookingsLoading ? (
+            <div className="bg-white rounded-2xl py-16 text-center text-gray-400 text-sm shadow-sm">กำลังโหลด...</div>
+          ) : tcgBookings.length === 0 ? (
+            <div className="bg-white rounded-2xl py-16 text-center text-gray-400 text-sm shadow-sm">ไม่มีคำขอจองในวันนี้</div>
+          ) : (
+            <div className="space-y-3">
+              {tcgBookings.map((b) => {
+                const statusBadge =
+                  b.status === 'confirmed' ? { label: 'อนุมัติแล้ว', cls: 'bg-green-50 border-green-200 text-[#16A34A]' } :
+                  b.status === 'cancelled' ? { label: 'ปฏิเสธแล้ว', cls: 'bg-red-50 border-red-200 text-[#DC2626]' } :
+                  { label: 'รอยืนยัน', cls: 'bg-yellow-50 border-yellow-200 text-yellow-700' }
+
+                async function updateStatus(status: string) {
+                  await fetch('/api/tcg/bookings', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: b.id, status }),
+                  })
+                  setTcgBookings((prev) => prev.map((x) => x.id === b.id ? { ...x, status } : x))
+                }
+
+                return (
+                  <div key={b.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-[#1E3A5F]">{b.name}</p>
+                        <p className="text-sm text-gray-500">{b.phone}</p>
+                      </div>
+                      <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${statusBadge.cls}`}>
+                        {statusBadge.label}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-400">วันที่</p>
+                        <p className="font-semibold text-[#374151]">{b.date}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">เวลา</p>
+                        <p className="font-semibold text-[#374151]">{String(b.start_hour).padStart(2,'0')}:00 – {String(b.start_hour + b.duration).padStart(2,'0')}:00</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400">จำนวน</p>
+                        <p className="font-semibold text-[#374151]">{b.people} คน</p>
+                      </div>
+                    </div>
+                    {b.note && (
+                      <p className="text-sm text-gray-500 bg-[#F5F6F8] rounded-xl px-3 py-2">💬 {b.note}</p>
+                    )}
+                    {b.status === 'pending' && (
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={() => updateStatus('confirmed')}
+                          className="flex-1 py-2.5 bg-[#16A34A] text-white text-sm font-bold rounded-xl"
+                        >
+                          ✅ อนุมัติ
+                        </button>
+                        <button
+                          onClick={() => updateStatus('cancelled')}
+                          className="flex-1 py-2.5 bg-[#DC2626] text-white text-sm font-bold rounded-xl"
+                        >
+                          ❌ ปฏิเสธ
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

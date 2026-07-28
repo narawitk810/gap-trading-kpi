@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-
-type Game = { id: string; name: string; short_name: string }
 
 const STORE_HOURS: Record<number, { open: number; close: number; label: string }> = {
   3: { open: 15, close: 20, label: 'วันพุธ 15:00–20:00 น.' },
@@ -35,24 +33,18 @@ function formatThaiDate(dateStr: string) {
 }
 
 export default function BookingPage() {
-  const [games, setGames] = useState<Game[]>([])
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [date, setDate] = useState('')
   const [startHour, setStartHour] = useState<number | ''>('')
   const [duration, setDuration] = useState(1)
   const [people, setPeople] = useState(3)
-  const [game, setGame] = useState('')
   const [note, setNote] = useState('')
   const [dateError, setDateError] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [bookingId, setBookingId] = useState('')
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    fetch('/api/tcg/games').then((r) => r.json()).then((d) => setGames(d.games || []))
-  }, [])
 
   const dayOfWeek = date ? getDayOfWeek(date) : -1
   const storeHours = STORE_HOURS[dayOfWeek]
@@ -104,7 +96,7 @@ export default function BookingPage() {
       const res = await fetch('/api/tcg/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), date, start_hour: startHour, duration, people, game, note }),
+        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), date, start_hour: startHour, duration, people, note }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -123,19 +115,22 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-[#F5F6F8] flex flex-col items-center justify-center p-6" style={{ fontFamily: "'Noto Sans Thai', 'Sarabun', sans-serif" }}>
         <div className="w-full max-w-sm bg-white rounded-3xl shadow-sm p-8 text-center space-y-4">
-          <div className="w-16 h-16 bg-[#16A34A]/10 rounded-2xl flex items-center justify-center mx-auto text-4xl">✅</div>
-          <p className="text-xl font-bold text-[#16A34A]">จองเวลาสำเร็จ!</p>
+          <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto text-4xl">📋</div>
+          <p className="text-xl font-bold text-[#1E3A5F]">ส่งคำขอจองแล้ว!</p>
+          <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm font-semibold px-4 py-2 rounded-full">
+            <span className="w-2 h-2 bg-yellow-400 rounded-full inline-block" />
+            รอการยืนยันจากทางร้าน
+          </div>
           <div className="bg-[#F5F6F8] rounded-2xl p-4 space-y-2 text-left text-sm">
-            <p className="text-gray-500">หมายเลขการจอง</p>
+            <p className="text-gray-500 text-xs">หมายเลขคำขอ</p>
             <p className="font-bold text-[#1E3A5F] text-xs break-all">{bookingId}</p>
             <hr className="border-[#E2E8F0]" />
             <p><span className="text-gray-500">ชื่อ: </span><span className="font-semibold">{name}</span></p>
             <p><span className="text-gray-500">วันที่: </span><span className="font-semibold">{formatThaiDate(date)}</span></p>
             <p><span className="text-gray-500">เวลา: </span><span className="font-semibold">{padHour(startHour as number)} – {padHour((startHour as number) + duration)} น.</span></p>
             <p><span className="text-gray-500">จำนวน: </span><span className="font-semibold">{people} คน</span></p>
-            {game && <p><span className="text-gray-500">เกม: </span><span className="font-semibold">{game}</span></p>}
           </div>
-          <p className="text-xs text-gray-400">กรุณาแจ้งหมายเลขการจองเมื่อมาถึงร้าน</p>
+          <p className="text-xs text-gray-400">ทางร้านจะแจ้งยืนยันผ่านช่องทางที่ให้ไว้</p>
           <Link href="/tcg" className="block w-full py-3 bg-[#1E3A5F] text-white font-bold rounded-2xl text-sm">
             กลับหน้าหลัก
           </Link>
@@ -245,7 +240,7 @@ export default function BookingPage() {
 
         {/* Group */}
         <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-          <p className="text-sm font-bold text-[#1E3A5F]">กลุ่มและเกม</p>
+          <p className="text-sm font-bold text-[#1E3A5F]">กลุ่ม</p>
           <div>
             <p className="text-xs font-semibold text-[#374151] mb-1.5">
               จำนวนคนที่จะมา <span className="text-[#DC2626]">*</span>
@@ -267,19 +262,6 @@ export default function BookingPage() {
               </button>
               <span className="text-sm text-gray-400">คน</span>
             </div>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-[#374151] mb-1.5">เกมที่ต้องการเล่น <span className="font-normal text-gray-400">(ไม่บังคับ)</span></p>
-            <select
-              value={game}
-              onChange={(e) => setGame(e.target.value)}
-              className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F] bg-white"
-            >
-              <option value="">-- เลือกเกม --</option>
-              {games.map((g) => (
-                <option key={g.id} value={g.name}>{g.name}</option>
-              ))}
-            </select>
           </div>
           <div>
             <p className="text-xs font-semibold text-[#374151] mb-1.5">หมายเหตุ <span className="font-normal text-gray-400">(ถ้ามี)</span></p>
@@ -305,9 +287,7 @@ export default function BookingPage() {
           ยืนยันการจอง
         </button>
 
-        <div className="text-center text-xs text-gray-400 space-y-1">
-          <p>📍 gap7card · กดยืนยันเพื่อดูสรุปก่อนส่ง</p>
-        </div>
+        <p className="text-center text-xs text-gray-400">📍 gap7card · กดยืนยันเพื่อดูสรุปก่อนส่ง</p>
       </div>
 
       {/* Confirm Modal */}
@@ -337,12 +317,6 @@ export default function BookingPage() {
                 <span className="text-gray-500">จำนวน</span>
                 <span className="font-semibold">{people} คน</span>
               </div>
-              {game && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">เกม</span>
-                  <span className="font-semibold">{game}</span>
-                </div>
-              )}
               {note && (
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-500 shrink-0">หมายเหตุ</span>

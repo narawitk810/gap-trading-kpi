@@ -314,11 +314,12 @@ export async function ensureSchema(): Promise<void> {
       start_hour INTEGER NOT NULL,
       duration   INTEGER NOT NULL,
       people     INTEGER NOT NULL,
-      game       TEXT NOT NULL DEFAULT '',
       note       TEXT NOT NULL DEFAULT '',
+      status     TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL
     )
   `)
+  try { await db.execute(`ALTER TABLE tcg_time_bookings ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`) } catch { /* exists */ }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS vip_customers (
