@@ -5225,6 +5225,7 @@ export default function AdminDashboard() {
                   const best = ex.best_roi as Record<string, unknown> | undefined
                   if (!best?.channel) return null
                   const metricDefs = [
+                    { k: 'live_hours', l: 'ชั่วโมงไลฟ์', u: 'ชม.' },
                     { k: 'ads_cost', l: 'ต้นทุน ads', u: 'บาท' },
                     { k: 'gross_revenue', l: 'รายได้ขั้นต้น', u: 'บาท' },
                     { k: 'roi', l: 'ROI', u: 'บาท' },
