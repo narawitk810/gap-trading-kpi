@@ -8,6 +8,7 @@ type MarketingRow = {
   isLowRoi: boolean
   isBestRoi: boolean
   live_staff_name: string
+  live_hours: string
   ads_cost: string
   gross_revenue: string
   roi: string
@@ -84,6 +85,7 @@ export default function ManagerPage() {
   }, [date, fetchData])
 
   const marketingCols = [
+    { key: 'live_hours', label: 'ชม.', unit: 'ชม.' },
     { key: 'ads_cost', label: 'ต้นทุน ads', unit: 'บาท' },
     { key: 'gross_revenue', label: 'รายได้ขั้นต้น', unit: 'บาท' },
     { key: 'roi', label: 'ROI', unit: 'บาท' },
