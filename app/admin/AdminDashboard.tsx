@@ -187,6 +187,7 @@ function parseExtraForExcel(entry: KPIEntry): Record<string, string | number> | 
       return (ex.channels as Record<string, unknown>[]).map((c) => ({
         'ช่อง': String(c.channel || ''),
         'พนักงานไลฟ์': String(c.live_staff_name || ''),
+        'ชั่วโมงไลฟ์ (ชม.)': c.live_hours ? Number(c.live_hours) : '',
         'ต้นทุน ads (บาท)': c.ads_cost ? Number(c.ads_cost) : '',
         'รายได้ขั้นต้น (บาท)': c.gross_revenue ? Number(c.gross_revenue) : '',
         'ROI (บาท)': c.roi ? Number(c.roi) : '',
@@ -317,6 +318,7 @@ function ExtraDataSection({ entry }: { entry: KPIEntry }) {
 
   if (dept === 'การตลาด') {
     const metricDefs = [
+      { k: 'live_hours', l: 'ชั่วโมงไลฟ์', u: 'ชม.' },
       { k: 'ads_cost', l: 'ต้นทุน ads', u: 'บาท' },
       { k: 'gross_revenue', l: 'รายได้ขั้นต้น', u: 'บาท' },
       { k: 'roi', l: 'ROI', u: 'บาท' },
