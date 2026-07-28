@@ -306,6 +306,21 @@ export async function ensureSchema(): Promise<void> {
   `)
 
   await db.execute(`
+    CREATE TABLE IF NOT EXISTS tcg_time_bookings (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      phone      TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      start_hour INTEGER NOT NULL,
+      duration   INTEGER NOT NULL,
+      people     INTEGER NOT NULL,
+      game       TEXT NOT NULL DEFAULT '',
+      note       TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS vip_customers (
       id          TEXT PRIMARY KEY,
       firstname   TEXT NOT NULL,

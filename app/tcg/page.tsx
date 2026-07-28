@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import QRCode from 'react-qr-code'
 
 const BRANCH = 'gap7card'
@@ -806,6 +807,23 @@ export default function TcgPage() {
                   ))}
                 </div>
               )}
+              <Link
+                href="/tcg/booking"
+                target="_blank"
+                className="w-full flex items-center gap-4 bg-[#16A34A]/5 border-2 border-[#16A34A]/30 rounded-2xl p-4 hover:bg-[#16A34A]/10 transition-colors"
+              >
+                <div className="w-12 h-12 bg-[#16A34A] rounded-xl flex items-center justify-center shrink-0 text-white text-xl">
+                  📅
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#16A34A]">จองเวลามาเล่น</p>
+                  <p className="text-xs text-gray-400 mt-0.5">พุธ–ศุกร์ 15–20 น. / เสาร์ 12–21 น.</p>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+
               <button onClick={handleLogout} className="w-full text-center text-sm text-gray-400 underline pt-2">
                 ออกจากระบบ
               </button>
