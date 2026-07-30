@@ -251,7 +251,7 @@ export default function BookingPage() {
           <Link href="/tcg" className="text-white/70 text-sm">← กลับ</Link>
           <div>
             <h1 className="text-base font-bold">จองเวลามาเล่น gap7card</h1>
-            <p className="text-xs text-blue-200 mt-0.5">พุธ–ศุกร์ 15–20 น. · เสาร์ 12–21 น. · ขั้นต่ำ 3 คน 1 ชม.</p>
+            <p className="text-xs text-blue-200 mt-0.5">พุธ–ศุกร์ 15.00–20.00 น. · เสาร์ 12.00–21.00 น. · ขั้นต่ำ 3 คน 1 ชม.</p>
           </div>
           <button onClick={toggleMusic} className="ml-auto text-white/70 text-2xl leading-none" title={muted ? 'เปิดเสียง' : 'ปิดเสียง'}>
             {muted ? '🔇' : '🔊'}
