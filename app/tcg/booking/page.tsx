@@ -49,6 +49,11 @@ export default function BookingPage() {
   const [countdown, setCountdown] = useState(10)
   const [error, setError] = useState('')
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [statusLookupId, setStatusLookupId] = useState('')
+  const [statusLookupResult, setStatusLookupResult] = useState<null | { status: string; name: string; date: string; start_hour: number; duration: number; people: number }>(null)
+  const [statusLookupLoading, setStatusLookupLoading] = useState(false)
+  const [statusLookupError, setStatusLookupError] = useState('')
 
   useEffect(() => {
     if (!bookingId) return
@@ -356,8 +361,81 @@ export default function BookingPage() {
           ยืนยันการจอง
         </button>
 
+        <button
+          onClick={() => { setShowStatusModal(true); setStatusLookupResult(null); setStatusLookupError(''); setStatusLookupId('') }}
+          className="w-full py-3 border-2 border-[#1E3A5F]/20 text-[#1E3A5F] text-sm font-semibold rounded-2xl hover:bg-[#1E3A5F]/5 transition-colors"
+        >
+          🔍 ดูสถานะการจองของฉัน
+        </button>
+
         <p className="text-center text-xs text-gray-400">📍 gap7card · กดยืนยันเพื่อดูสรุปก่อนส่ง</p>
       </div>
+
+      {/* Status Lookup Modal */}
+      {showStatusModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <p className="text-base font-bold text-[#1E3A5F]">ดูสถานะการจอง</p>
+              <button onClick={() => setShowStatusModal(false)} className="text-gray-400 text-xl leading-none">✕</button>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-[#374151]">หมายเลขการจอง</p>
+              <input
+                value={statusLookupId}
+                onChange={(e) => { setStatusLookupId(e.target.value.trim()); setStatusLookupResult(null); setStatusLookupError('') }}
+                placeholder="เช่น KPI-ABC123DEF"
+                className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+              />
+            </div>
+            <button
+              onClick={async () => {
+                if (!statusLookupId) return
+                setStatusLookupLoading(true)
+                setStatusLookupError('')
+                setStatusLookupResult(null)
+                try {
+                  const res = await fetch(`/api/tcg/bookings?id=${encodeURIComponent(statusLookupId)}`)
+                  const data = await res.json()
+                  if (!data.booking) { setStatusLookupError('ไม่พบหมายเลขการจองนี้ กรุณาตรวจสอบอีกครั้ง'); return }
+                  setStatusLookupResult(data.booking)
+                } catch { setStatusLookupError('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+                finally { setStatusLookupLoading(false) }
+              }}
+              disabled={statusLookupLoading || !statusLookupId}
+              className="w-full py-3 bg-[#1E3A5F] text-white text-sm font-bold rounded-2xl disabled:opacity-50"
+            >
+              {statusLookupLoading ? 'กำลังค้นหา...' : 'ค้นหา'}
+            </button>
+            {statusLookupError && (
+              <p className="text-sm text-[#DC2626] text-center">{statusLookupError}</p>
+            )}
+            {statusLookupResult && (() => {
+              const s = statusLookupResult
+              const badge =
+                s.status === 'confirmed' ? { cls: 'bg-green-50 border-green-200 text-[#16A34A]', dot: 'bg-[#16A34A]', label: 'อนุมัติแล้ว' } :
+                s.status === 'cancelled' ? { cls: 'bg-red-50 border-red-200 text-[#DC2626]', dot: 'bg-[#DC2626]', label: 'ปฏิเสธแล้ว' } :
+                { cls: 'bg-yellow-50 border-yellow-200 text-yellow-700', dot: 'bg-yellow-400', label: 'รอการยืนยัน' }
+              return (
+                <div className="space-y-3">
+                  <div className="flex justify-center">
+                    <span className={`inline-flex items-center gap-2 border text-sm font-semibold px-4 py-2 rounded-full ${badge.cls}`}>
+                      <span className={`w-2 h-2 rounded-full ${badge.dot}`} />
+                      {badge.label}
+                    </span>
+                  </div>
+                  <div className="bg-[#F5F6F8] rounded-2xl p-4 space-y-2 text-sm">
+                    <p><span className="text-gray-500">ชื่อ: </span><span className="font-semibold">{s.name}</span></p>
+                    <p><span className="text-gray-500">วันที่: </span><span className="font-semibold">{formatThaiDate(s.date)}</span></p>
+                    <p><span className="text-gray-500">เวลา: </span><span className="font-semibold">{padHour(s.start_hour)} – {padHour(s.start_hour + s.duration)} น.</span></p>
+                    <p><span className="text-gray-500">จำนวน: </span><span className="font-semibold">{s.people} คน</span></p>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Confirm Modal */}
       {showConfirm && (
