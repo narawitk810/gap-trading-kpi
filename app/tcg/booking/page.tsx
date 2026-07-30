@@ -50,10 +50,38 @@ export default function BookingPage() {
   const [error, setError] = useState('')
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [showStatusModal, setShowStatusModal] = useState(false)
-  const [statusLookupId, setStatusLookupId] = useState('')
-  const [statusLookupResult, setStatusLookupResult] = useState<null | { status: string; name: string; date: string; start_hour: number; duration: number; people: number }>(null)
-  const [statusLookupLoading, setStatusLookupLoading] = useState(false)
-  const [statusLookupError, setStatusLookupError] = useState('')
+  const [allBookings, setAllBookings] = useState<Array<{ id: string; name: string; date: string; start_hour: number; duration: number; people: number; status: string }>>([])
+  const [statusLoading, setStatusLoading] = useState(false)
+  const [muted, setMuted] = useState(true)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => () => { audioRef.current?.pause() }, [])
+
+  function toggleMusic() {
+    if (!audioRef.current) {
+      const audio = new Audio('/music/lobby.mp3')
+      audio.loop = true
+      audio.volume = 0.35
+      audioRef.current = audio
+    }
+    if (muted) {
+      audioRef.current.play().catch(() => {})
+      setMuted(false)
+    } else {
+      audioRef.current.pause()
+      setMuted(true)
+    }
+  }
+
+  async function loadAllBookings() {
+    setStatusLoading(true)
+    try {
+      const res = await fetch('/api/tcg/bookings?upcoming=true')
+      const data = await res.json()
+      setAllBookings(data.bookings || [])
+    } catch { setAllBookings([]) }
+    finally { setStatusLoading(false) }
+  }
 
   useEffect(() => {
     if (!bookingId) return
@@ -225,6 +253,9 @@ export default function BookingPage() {
             <h1 className="text-base font-bold">จองเวลามาเล่น gap7card</h1>
             <p className="text-xs text-blue-200 mt-0.5">พุธ–ศุกร์ 15–20 น. · เสาร์ 12–21 น. · ขั้นต่ำ 3 คน 1 ชม.</p>
           </div>
+          <button onClick={toggleMusic} className="ml-auto text-white/70 text-2xl leading-none" title={muted ? 'เปิดเสียง' : 'ปิดเสียง'}>
+            {muted ? '🔇' : '🔊'}
+          </button>
         </div>
       </div>
 
@@ -362,77 +393,59 @@ export default function BookingPage() {
         </button>
 
         <button
-          onClick={() => { setShowStatusModal(true); setStatusLookupResult(null); setStatusLookupError(''); setStatusLookupId('') }}
+          onClick={() => { setShowStatusModal(true); loadAllBookings() }}
           className="w-full py-3 border-2 border-[#1E3A5F]/20 text-[#1E3A5F] text-sm font-semibold rounded-2xl hover:bg-[#1E3A5F]/5 transition-colors"
         >
-          🔍 ดูสถานะการจองของฉัน
+          📋 ดูสถานะการจอง
         </button>
 
         <p className="text-center text-xs text-gray-400">📍 gap7card · กดยืนยันเพื่อดูสรุปก่อนส่ง</p>
       </div>
 
-      {/* Status Lookup Modal */}
+      {/* Status Modal */}
       {showStatusModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <p className="text-base font-bold text-[#1E3A5F]">ดูสถานะการจอง</p>
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-xl flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between px-6 pt-6 pb-3">
+              <p className="text-base font-bold text-[#1E3A5F]">ตารางการจองทั้งหมด</p>
               <button onClick={() => setShowStatusModal(false)} className="text-gray-400 text-xl leading-none">✕</button>
             </div>
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-[#374151]">หมายเลขการจอง</p>
-              <input
-                value={statusLookupId}
-                onChange={(e) => { setStatusLookupId(e.target.value.trim()); setStatusLookupResult(null); setStatusLookupError('') }}
-                placeholder="เช่น KPI-ABC123DEF"
-                className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
-              />
+            <div className="overflow-y-auto px-6 pb-6 space-y-4">
+              {statusLoading ? (
+                <p className="text-sm text-gray-400 text-center py-6">กำลังโหลด...</p>
+              ) : allBookings.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">ยังไม่มีการจองในขณะนี้</p>
+              ) : (() => {
+                const grouped: Record<string, typeof allBookings> = {}
+                for (const b of allBookings) {
+                  if (!grouped[b.date]) grouped[b.date] = []
+                  grouped[b.date].push(b)
+                }
+                return Object.entries(grouped).map(([d, items]) => (
+                  <div key={d} className="space-y-2">
+                    <p className="text-xs font-bold text-[#374151]">{formatThaiDate(d)}</p>
+                    {items.map((b) => {
+                      const badge =
+                        b.status === 'confirmed' ? { cls: 'bg-green-50 border-green-200 text-[#16A34A]', dot: 'bg-[#16A34A]', label: 'อนุมัติแล้ว' } :
+                        b.status === 'cancelled' ? { cls: 'bg-red-50 border-red-200 text-[#DC2626]', dot: 'bg-[#DC2626]', label: 'ปฏิเสธ' } :
+                        { cls: 'bg-yellow-50 border-yellow-200 text-yellow-700', dot: 'bg-yellow-400', label: 'รอยืนยัน' }
+                      return (
+                        <div key={b.id} className="bg-[#F5F6F8] rounded-2xl p-3 flex items-start gap-3">
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <p className="text-sm font-semibold text-[#1E3A5F] truncate">{b.name}</p>
+                            <p className="text-xs text-gray-500">{padHour(Number(b.start_hour))} – {padHour(Number(b.start_hour) + Number(b.duration))} น. · {b.people} คน</p>
+                          </div>
+                          <span className={`inline-flex items-center gap-1.5 border text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${badge.cls}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                            {badge.label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))
+              })()}
             </div>
-            <button
-              onClick={async () => {
-                if (!statusLookupId) return
-                setStatusLookupLoading(true)
-                setStatusLookupError('')
-                setStatusLookupResult(null)
-                try {
-                  const res = await fetch(`/api/tcg/bookings?id=${encodeURIComponent(statusLookupId)}`)
-                  const data = await res.json()
-                  if (!data.booking) { setStatusLookupError('ไม่พบหมายเลขการจองนี้ กรุณาตรวจสอบอีกครั้ง'); return }
-                  setStatusLookupResult(data.booking)
-                } catch { setStatusLookupError('เกิดข้อผิดพลาด กรุณาลองใหม่') }
-                finally { setStatusLookupLoading(false) }
-              }}
-              disabled={statusLookupLoading || !statusLookupId}
-              className="w-full py-3 bg-[#1E3A5F] text-white text-sm font-bold rounded-2xl disabled:opacity-50"
-            >
-              {statusLookupLoading ? 'กำลังค้นหา...' : 'ค้นหา'}
-            </button>
-            {statusLookupError && (
-              <p className="text-sm text-[#DC2626] text-center">{statusLookupError}</p>
-            )}
-            {statusLookupResult && (() => {
-              const s = statusLookupResult
-              const badge =
-                s.status === 'confirmed' ? { cls: 'bg-green-50 border-green-200 text-[#16A34A]', dot: 'bg-[#16A34A]', label: 'อนุมัติแล้ว' } :
-                s.status === 'cancelled' ? { cls: 'bg-red-50 border-red-200 text-[#DC2626]', dot: 'bg-[#DC2626]', label: 'ปฏิเสธแล้ว' } :
-                { cls: 'bg-yellow-50 border-yellow-200 text-yellow-700', dot: 'bg-yellow-400', label: 'รอการยืนยัน' }
-              return (
-                <div className="space-y-3">
-                  <div className="flex justify-center">
-                    <span className={`inline-flex items-center gap-2 border text-sm font-semibold px-4 py-2 rounded-full ${badge.cls}`}>
-                      <span className={`w-2 h-2 rounded-full ${badge.dot}`} />
-                      {badge.label}
-                    </span>
-                  </div>
-                  <div className="bg-[#F5F6F8] rounded-2xl p-4 space-y-2 text-sm">
-                    <p><span className="text-gray-500">ชื่อ: </span><span className="font-semibold">{s.name}</span></p>
-                    <p><span className="text-gray-500">วันที่: </span><span className="font-semibold">{formatThaiDate(s.date)}</span></p>
-                    <p><span className="text-gray-500">เวลา: </span><span className="font-semibold">{padHour(s.start_hour)} – {padHour(s.start_hour + s.duration)} น.</span></p>
-                    <p><span className="text-gray-500">จำนวน: </span><span className="font-semibold">{s.people} คน</span></p>
-                  </div>
-                </div>
-              )
-            })()}
           </div>
         </div>
       )}

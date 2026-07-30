@@ -27,6 +27,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ booking: row.rows[0] || null })
   }
 
+  const upcoming = req.nextUrl.searchParams.get('upcoming')
+  if (upcoming === 'true') {
+    const todayStr = new Date().toLocaleDateString('sv-SE')
+    const rows = await db.execute({
+      sql: 'SELECT id, name, date, start_hour, duration, people, status FROM tcg_time_bookings WHERE date >= ? ORDER BY date, start_hour, created_at',
+      args: [todayStr],
+    })
+    return NextResponse.json({ bookings: rows.rows })
+  }
+
   const date = req.nextUrl.searchParams.get('date')
   if (!date) return NextResponse.json({ error: 'ต้องระบุวันที่หรือ id' }, { status: 400 })
 
