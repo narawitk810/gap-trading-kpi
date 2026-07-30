@@ -38,7 +38,7 @@ export default function BookingPage() {
   const [date, setDate] = useState('')
   const [startHour, setStartHour] = useState<number | ''>('')
   const [duration, setDuration] = useState(1)
-  const [people, setPeople] = useState(3)
+  const [people, setPeople] = useState(2)
   const [note, setNote] = useState('')
   const [dateError, setDateError] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
@@ -146,7 +146,7 @@ export default function BookingPage() {
     if (dateError) return dateError
     if (startHour === '') return 'กรุณาเลือกเวลาเริ่ม'
     if (duration < 1) return 'จองขั้นต่ำ 1 ชั่วโมง'
-    if (people < 3) return 'ต้องมาอย่างน้อย 3 คน'
+    if (people < 2) return 'ต้องมาอย่างน้อย 2 คน'
     return ''
   }
 
@@ -349,11 +349,11 @@ export default function BookingPage() {
           <div>
             <p className="text-xs font-semibold text-[#374151] mb-1.5">
               จำนวนคนที่จะมา <span className="text-[#DC2626]">*</span>
-              <span className="font-normal text-gray-400"> (ขั้นต่ำ 3 คน)</span>
+              <span className="font-normal text-gray-400"> (ขั้นต่ำ 2 คน)</span>
             </p>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setPeople((p) => Math.max(3, p - 1))}
+                onClick={() => setPeople((p) => Math.max(2, p - 1))}
                 className="w-10 h-10 rounded-xl border border-[#E2E8F0] text-[#374151] text-xl font-bold flex items-center justify-center"
               >
                 −

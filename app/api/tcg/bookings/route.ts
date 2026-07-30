@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   if (!date) return NextResponse.json({ error: 'กรุณาเลือกวันที่' }, { status: 400 })
   if (start_hour === undefined || start_hour === null) return NextResponse.json({ error: 'กรุณาเลือกเวลาเริ่ม' }, { status: 400 })
   if (!duration || duration < 1) return NextResponse.json({ error: 'จองขั้นต่ำ 1 ชั่วโมง' }, { status: 400 })
-  if (!people || people < 3) return NextResponse.json({ error: 'ต้องมาอย่างน้อย 3 คน' }, { status: 400 })
+  if (!people || people < 2) return NextResponse.json({ error: 'ต้องมาอย่างน้อย 2 คน' }, { status: 400 })
 
   const dayOfWeek = new Date(date + 'T12:00:00').getDay()
   const hours = STORE_HOURS[dayOfWeek]
