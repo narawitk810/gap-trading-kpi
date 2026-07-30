@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  await ensureSchema()
   const db = getDb()
 
+  // ตรวจ image_id ก่อน — ไม่ต้องรอ ensureSchema (SELECT ง่ายๆ)
   const imageId = searchParams.get('image_id')
   if (imageId) {
     const row = await db.execute({ sql: 'SELECT image_data FROM stock_arrivals WHERE id = ?', args: [imageId] })
