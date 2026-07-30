@@ -27,6 +27,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ booking: row.rows[0] || null })
   }
 
+  const month = req.nextUrl.searchParams.get('month')
+  if (month) {
+    const rows = await db.execute({
+      sql: 'SELECT id, name, phone, date, start_hour, duration, people, note, status, created_at FROM tcg_time_bookings WHERE date LIKE ? ORDER BY date, start_hour, created_at',
+      args: [`${month}-%`],
+    })
+    return NextResponse.json({ bookings: rows.rows })
+  }
+
   const upcoming = req.nextUrl.searchParams.get('upcoming')
   if (upcoming === 'true') {
     const todayStr = new Date().toLocaleDateString('sv-SE')

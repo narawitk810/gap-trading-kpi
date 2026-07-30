@@ -449,7 +449,10 @@ export default function AdminDashboard() {
   const [tcgMembersLoading, setTcgMembersLoading] = useState(false)
   const [tcgMembersSearch, setTcgMembersSearch] = useState('')
   const [tcgBookings, setTcgBookings] = useState<{id:string,name:string,phone:string,date:string,start_hour:number,duration:number,people:number,note:string,status:string,created_at:string}[]>([])
-  const [tcgBookingsDate, setTcgBookingsDate] = useState(getTodayDate())
+  const [tcgBookingsMonth, setTcgBookingsMonth] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })
   const [tcgBookingsLoading, setTcgBookingsLoading] = useState(false)
   const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
@@ -1438,6 +1441,36 @@ export default function AdminDashboard() {
     }
   }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings, fetchTournamentCreds])
 
+  useEffect(() => {
+    if (!authed || activeTab !== 'tcg-bookings') return
+    setTcgBookingsLoading(true)
+    fetch(`/api/tcg/bookings?month=${tcgBookingsMonth}`)
+      .then(r => r.json())
+      .then(data => setTcgBookings(data.bookings || []))
+      .catch(() => {})
+      .finally(() => setTcgBookingsLoading(false))
+  }, [authed, activeTab, tcgBookingsMonth])
+
+  function shiftTcgMonth(delta: number) {
+    const [y, m] = tcgBookingsMonth.split('-').map(Number)
+    const d = new Date(y, m - 1 + delta, 1)
+    setTcgBookingsMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+
+  function formatTcgMonth(ym: string) {
+    const [y, m] = ym.split('-').map(Number)
+    const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']
+    return `${months[m - 1]} ${y + 543}`
+  }
+
+  function formatThaiDateAdmin(dateStr: string) {
+    if (!dateStr) return ''
+    const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+    const days = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']
+    const d = new Date(dateStr + 'T12:00:00')
+    return `วัน${days[d.getDay()]}ที่ ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`
+  }
+
   if (!authed) {
     return (
       <div className="min-h-screen bg-[#F5F6F8] flex items-center justify-center px-4">
@@ -1729,15 +1762,7 @@ export default function AdminDashboard() {
             👥 TCG สมาชิก
           </button>
           <button
-            onClick={() => {
-              setActiveTab('tcg-bookings')
-              setTcgBookingsLoading(true)
-              fetch(`/api/tcg/bookings?date=${tcgBookingsDate}`)
-                .then(r => r.json())
-                .then(data => setTcgBookings(data.bookings || []))
-                .catch(() => {})
-                .finally(() => setTcgBookingsLoading(false))
-            }}
+            onClick={() => setActiveTab('tcg-bookings')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'tcg-bookings'
                 ? 'bg-white text-[#1E3A5F]'
@@ -6243,98 +6268,90 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-400 mt-0.5">{tcgBookings.length} รายการ</p>
             </div>
             <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={tcgBookingsDate}
-                onChange={(e) => setTcgBookingsDate(e.target.value)}
-                className="border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#1E3A5F]"
-              />
-              <button
-                onClick={() => {
-                  setTcgBookingsLoading(true)
-                  fetch(`/api/tcg/bookings?date=${tcgBookingsDate}`)
-                    .then(r => r.json())
-                    .then(data => setTcgBookings(data.bookings || []))
-                    .catch(() => {})
-                    .finally(() => setTcgBookingsLoading(false))
-                }}
-                className="bg-[#1E3A5F] text-white text-sm font-semibold px-4 py-2 rounded-xl"
-              >
-                โหลด
-              </button>
+              <button onClick={() => shiftTcgMonth(-1)} className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-[#374151] font-bold flex items-center justify-center text-sm">‹</button>
+              <span className="text-sm font-semibold text-[#1E3A5F] min-w-[120px] text-center">{formatTcgMonth(tcgBookingsMonth)}</span>
+              <button onClick={() => shiftTcgMonth(1)} className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-[#374151] font-bold flex items-center justify-center text-sm">›</button>
             </div>
           </div>
 
           {tcgBookingsLoading ? (
             <div className="bg-white rounded-2xl py-16 text-center text-gray-400 text-sm shadow-sm">กำลังโหลด...</div>
           ) : tcgBookings.length === 0 ? (
-            <div className="bg-white rounded-2xl py-16 text-center text-gray-400 text-sm shadow-sm">ไม่มีคำขอจองในวันนี้</div>
-          ) : (
-            <div className="space-y-3">
-              {tcgBookings.map((b) => {
-                const statusBadge =
-                  b.status === 'confirmed' ? { label: 'อนุมัติแล้ว', cls: 'bg-green-50 border-green-200 text-[#16A34A]' } :
-                  b.status === 'cancelled' ? { label: 'ปฏิเสธแล้ว', cls: 'bg-red-50 border-red-200 text-[#DC2626]' } :
-                  { label: 'รอยืนยัน', cls: 'bg-yellow-50 border-yellow-200 text-yellow-700' }
+            <div className="bg-white rounded-2xl py-16 text-center text-gray-400 text-sm shadow-sm">ไม่มีคำขอจองในเดือนนี้</div>
+          ) : (() => {
+            const grouped: Record<string, typeof tcgBookings> = {}
+            for (const b of tcgBookings) {
+              if (!grouped[b.date]) grouped[b.date] = []
+              grouped[b.date].push(b)
+            }
+            return (
+              <div className="space-y-6">
+                {Object.entries(grouped).map(([date, items]) => (
+                  <div key={date} className="space-y-3">
+                    <p className="text-xs font-bold text-[#374151] uppercase tracking-wide">{formatThaiDateAdmin(date)}</p>
+                    {items.map((b) => {
+                      const statusBadge =
+                        b.status === 'confirmed' ? { label: 'อนุมัติแล้ว', cls: 'bg-green-50 border-green-200 text-[#16A34A]' } :
+                        b.status === 'cancelled' ? { label: 'ปฏิเสธแล้ว', cls: 'bg-red-50 border-red-200 text-[#DC2626]' } :
+                        { label: 'รอยืนยัน', cls: 'bg-yellow-50 border-yellow-200 text-yellow-700' }
 
-                async function updateStatus(status: string) {
-                  await fetch('/api/tcg/bookings', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: b.id, status }),
-                  })
-                  setTcgBookings((prev) => prev.map((x) => x.id === b.id ? { ...x, status } : x))
-                }
+                      async function updateStatus(status: string) {
+                        await fetch('/api/tcg/bookings', {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: b.id, status }),
+                        })
+                        setTcgBookings((prev) => prev.map((x) => x.id === b.id ? { ...x, status } : x))
+                      }
 
-                return (
-                  <div key={b.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-[#1E3A5F]">{b.name}</p>
-                        <p className="text-sm text-gray-500">{b.phone}</p>
-                      </div>
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${statusBadge.cls}`}>
-                        {statusBadge.label}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-400">วันที่</p>
-                        <p className="font-semibold text-[#374151]">{b.date}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">เวลา</p>
-                        <p className="font-semibold text-[#374151]">{String(b.start_hour).padStart(2,'0')}:00 – {String(b.start_hour + b.duration).padStart(2,'0')}:00</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400">จำนวน</p>
-                        <p className="font-semibold text-[#374151]">{b.people} คน</p>
-                      </div>
-                    </div>
-                    {b.note && (
-                      <p className="text-sm text-gray-500 bg-[#F5F6F8] rounded-xl px-3 py-2">💬 {b.note}</p>
-                    )}
-                    {b.status === 'pending' && (
-                      <div className="flex gap-2 pt-1">
-                        <button
-                          onClick={() => updateStatus('confirmed')}
-                          className="flex-1 py-2.5 bg-[#16A34A] text-white text-sm font-bold rounded-xl"
-                        >
-                          ✅ อนุมัติ
-                        </button>
-                        <button
-                          onClick={() => updateStatus('cancelled')}
-                          className="flex-1 py-2.5 bg-[#DC2626] text-white text-sm font-bold rounded-xl"
-                        >
-                          ❌ ปฏิเสธ
-                        </button>
-                      </div>
-                    )}
+                      return (
+                        <div key={b.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-bold text-[#1E3A5F]">{b.name}</p>
+                              <p className="text-sm text-gray-500">{b.phone}</p>
+                            </div>
+                            <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${statusBadge.cls}`}>
+                              {statusBadge.label}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="text-xs text-gray-400">เวลา</p>
+                              <p className="font-semibold text-[#374151]">{String(b.start_hour).padStart(2,'0')}:00 – {String(b.start_hour + b.duration).padStart(2,'0')}:00 น.</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-400">จำนวน</p>
+                              <p className="font-semibold text-[#374151]">{b.people} คน</p>
+                            </div>
+                          </div>
+                          {b.note && (
+                            <p className="text-sm text-gray-500 bg-[#F5F6F8] rounded-xl px-3 py-2">💬 {b.note}</p>
+                          )}
+                          {b.status === 'pending' && (
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => updateStatus('confirmed')}
+                                className="flex-1 py-2.5 bg-[#16A34A] text-white text-sm font-bold rounded-xl"
+                              >
+                                ✅ อนุมัติ
+                              </button>
+                              <button
+                                onClick={() => updateStatus('cancelled')}
+                                className="flex-1 py-2.5 bg-[#DC2626] text-white text-sm font-bold rounded-xl"
+                              >
+                                ❌ ปฏิเสธ
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            )
+          })()}
         </div>
       )}
     </div>
