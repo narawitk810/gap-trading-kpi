@@ -24,7 +24,7 @@ type StockPrice = {
   packs_per_box: string
   cost: string
   note: string | null
-  image_data: string
+
   created_at: string
   acknowledged_at: string | null
   pricing_data: string | null
@@ -81,8 +81,13 @@ export default function StockPricesPage() {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 30_000)
-    return () => clearInterval(interval)
+    const interval = setInterval(fetchData, 60_000)
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchData() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [fetchData])
 
   async function handleToggleTiktok(item: StockPrice) {
@@ -352,14 +357,13 @@ export default function StockPricesPage() {
                           <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.packs_per_box}</td>
                           <td className="px-3 py-3 text-center text-xs text-gray-300" colSpan={5}>ยังไม่ได้ตั้งราคา</td>
                           <td className="px-3 py-3 text-center">
-                            {r.image_data && (
-                              <img
-                                src={r.image_data}
-                                alt="สินค้า"
-                                onClick={() => setImageModal(r.image_data)}
-                                className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
-                              />
-                            )}
+                            <img
+                              src={`/api/stock-prices?image_id=${r.id}`}
+                              alt="สินค้า"
+                              loading="lazy"
+                              onClick={() => setImageModal(`/api/stock-prices?image_id=${r.id}`)}
+                              className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                            />
                           </td>
                           <td className="px-3 py-3 text-center">
                             <div className="flex flex-col items-center gap-1">
@@ -461,14 +465,13 @@ export default function StockPricesPage() {
                           </span>
                         </td>
                         <td className="px-3 py-3 text-center">
-                          {r.image_data && (
-                            <img
-                              src={r.image_data}
-                              alt="สินค้า"
-                              onClick={() => setImageModal(r.image_data)}
-                              className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
-                            />
-                          )}
+                          <img
+                            src={`/api/stock-prices?image_id=${r.id}`}
+                            alt="สินค้า"
+                            loading="lazy"
+                            onClick={() => setImageModal(`/api/stock-prices?image_id=${r.id}`)}
+                            className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                          />
                         </td>
                         <td className="px-3 py-3 text-center">
                           <div className="flex flex-col items-center gap-1">
