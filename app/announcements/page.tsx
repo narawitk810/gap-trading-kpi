@@ -23,7 +23,6 @@ type StockItem = {
   product_name: string
   quantity: string
   packs_per_box: string
-  image_data: string | null
   acknowledged_at: string | null
   pricing_data: string | null
   tiktok_listed_at: string | null
@@ -316,17 +315,13 @@ export default function AnnouncementsPage() {
                                 )}
                               </td>
                               <td className="px-2 py-3 text-center">
-                                {item.image_data ? (
-                                  <img
-                                    src={item.image_data}
-                                    alt="สินค้า"
-                                    onClick={() => setImageModal(item.image_data)}
-                                    className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
-                                    loading="lazy"
-                                  />
-                                ) : (
-                                  <span className="text-gray-300 text-xs">-</span>
-                                )}
+                                <img
+                                  src={`/api/stock-prices?image_id=${item.id}`}
+                                  alt="สินค้า"
+                                  loading="lazy"
+                                  onClick={() => setImageModal(`/api/stock-prices?image_id=${item.id}`)}
+                                  className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                                />
                               </td>
                               <td className="px-2 py-3 text-center text-xs">
                                 <div className="space-y-0.5">
