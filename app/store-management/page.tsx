@@ -47,6 +47,12 @@ export default function StoreManagementPage() {
   const [selectedStore, setSelectedStore] = useState('')
   const [links, setLinks] = useState<Record<string, SystemLink>>(DEFAULT_LINKS)
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({})
+  const [checks, setChecks] = useState<Record<string, boolean>>({
+    post_tournament: false,
+    gen_ai_used: false,
+  })
+  const toggleCheck = (key: string) =>
+    setChecks((prev) => ({ ...prev, [key]: !prev[key] }))
   const [games, setGames] = useState<Record<string, string[]>>({})
   const todayDay = new Date().getDay()
 
@@ -121,6 +127,50 @@ export default function StoreManagementPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6 flex flex-col gap-4">
+
+        {/* Checklist ประจำวัน */}
+        <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
+          <p className="text-sm font-bold text-[#374151] mb-3">✅ Checklist ประจำวัน</p>
+          <div className="flex flex-col gap-3">
+            {[
+              { key: 'post_tournament', label: 'โพสจัดงานแข่งอย่างน้อยวันละ 1–2 งาน', sub: '' },
+              { key: 'gen_ai_used', label: 'ยืนยันว่าได้ใช้ Gen AI', sub: 'ห้ามให้ AI จับได้ว่าใช้ AI ในแพลทฟอร์มต่างๆ' },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => toggleCheck(item.key)}
+                className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                  checks[item.key]
+                    ? 'bg-[#16A34A]/10 border-[#16A34A]'
+                    : 'bg-[#F5F6F8] border-[#E2E8F0]'
+                }`}
+              >
+                <span
+                  className={`mt-0.5 w-5 h-5 shrink-0 rounded flex items-center justify-center border-2 ${
+                    checks[item.key]
+                      ? 'bg-[#16A34A] border-[#16A34A] text-white'
+                      : 'border-[#E2E8F0] bg-white'
+                  }`}
+                >
+                  {checks[item.key] && (
+                    <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </span>
+                <span>
+                  <span className={`text-sm font-semibold ${checks[item.key] ? 'text-[#16A34A] line-through decoration-[#16A34A]' : 'text-[#374151]'}`}>
+                    {item.label}
+                  </span>
+                  {item.sub && (
+                    <span className="block text-xs text-gray-400 mt-0.5">{item.sub}</span>
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* ตารางแข่งประจำสัปดาห์ */}
         <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
