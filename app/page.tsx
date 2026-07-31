@@ -364,7 +364,7 @@ export default function Home() {
   const [marketingPickerOpen, setMarketingPickerOpen] = useState(true)
   const [loadingMarketing, setLoadingMarketing] = useState(false)
   const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false })
-  const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false })
+  const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -587,7 +587,7 @@ export default function Home() {
     if (CHANNEL_DEPTS.includes(formData.department) && (formData.department === 'การตลาด' ? channelRows.length === 0 : formData.channelName.length === 0)) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
-    if (formData.department === 'ผู้จัดการหน้าร้าน' && !storeManagerChecklist.postNewProduct) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -721,7 +721,7 @@ export default function Home() {
     setBestRoiEntry({ ...emptyBestRoiEntry })
     setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
     setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false })
-    setStoreManagerChecklist({ postNewProduct: false })
+    setStoreManagerChecklist({ postNewProduct: false, postTournament: false, genAiUsed: false })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -1856,6 +1856,27 @@ export default function Home() {
                   className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
                 />
                 <span className="text-sm text-[#374151]">โพสสินค้าเข้าร้านในเพจหน้าร้าน ทั้ง 3 เพจ วันละ 1 โพส</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeManagerChecklist.postTournament}
+                  onChange={(e) => setStoreManagerChecklist(prev => ({ ...prev, postTournament: e.target.checked }))}
+                  className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                />
+                <span className="text-sm text-[#374151]">โพสจัดงานแข่งอย่างน้อยวันละ 1-2 งาน</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeManagerChecklist.genAiUsed}
+                  onChange={(e) => setStoreManagerChecklist(prev => ({ ...prev, genAiUsed: e.target.checked }))}
+                  className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                />
+                <span className="text-sm text-[#374151]">
+                  ยืนยันว่าได้ใช้ Gen AI
+                  <span className="block text-xs text-gray-400 mt-0.5">ห้ามให้ AI จับได้ว่าใช้ AI ในแพลทฟอร์มต่างๆ</span>
+                </span>
               </label>
             </div>
             {errors.storeManagerChecklist && (
