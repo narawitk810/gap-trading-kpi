@@ -480,7 +480,7 @@ export default function AdminDashboard() {
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
   const [deletingArrivalId, setDeletingArrivalId] = useState<string | null>(null)
-  const [arrivalFilters, setArrivalFilters] = useState({ dateFrom: '', dateTo: '' })
+  const [arrivalFilters, setArrivalFilters] = useState({ dateFrom: '', dateTo: '', search: '' })
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
   const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState<string>('')
@@ -2795,6 +2795,11 @@ export default function AdminDashboard() {
           const d = r.created_at.slice(0, 10)
           if (arrivalFilters.dateFrom && d < arrivalFilters.dateFrom) return false
           if (arrivalFilters.dateTo && d > arrivalFilters.dateTo) return false
+          if (arrivalFilters.search) {
+            const q = arrivalFilters.search.toLowerCase()
+            const haystack = `${r.product_name} ${r.note ?? ''}`.toLowerCase()
+            if (!haystack.includes(q)) return false
+          }
           return true
         })
         const totalCost = filteredArrivals.reduce((sum, r) => sum + (Number(r.cost) || 0), 0)
@@ -2817,15 +2822,22 @@ export default function AdminDashboard() {
                   onChange={(e) => setArrivalFilters((p) => ({ ...p, dateTo: e.target.value }))}
                   className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
                 />
-                {(arrivalFilters.dateFrom || arrivalFilters.dateTo) && (
+                {(arrivalFilters.dateFrom || arrivalFilters.dateTo || arrivalFilters.search) && (
                   <button
-                    onClick={() => setArrivalFilters({ dateFrom: '', dateTo: '' })}
+                    onClick={() => setArrivalFilters({ dateFrom: '', dateTo: '', search: '' })}
                     className="text-xs text-gray-400 hover:text-gray-600 underline"
                   >
                     ล้าง
                   </button>
                 )}
               </div>
+              <input
+                type="text"
+                placeholder="ค้นหาชื่อสินค้า..."
+                value={arrivalFilters.search}
+                onChange={(e) => setArrivalFilters((p) => ({ ...p, search: e.target.value }))}
+                className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
+              />
               <div className="ml-auto flex items-center gap-4 text-sm">
                 <span className="text-gray-500">{filteredArrivals.length} รายการ</span>
                 <span className="font-bold text-[#16A34A]">ต้นทุนรวม {totalCost.toLocaleString()} บาท</span>
