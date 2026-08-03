@@ -469,6 +469,12 @@ export default function AdminDashboard() {
   const [deletingGameId, setDeletingGameId] = useState<string | null>(null)
   const [tournamentCreds, setTournamentCreds] = useState<Record<string, { system_id: string; system_password: string }>>({})
   const [tournamentCredsEdit, setTournamentCredsEdit] = useState<Record<string, string>>({})
+  const [tournamentSystems, setTournamentSystems] = useState<{ id: string; label: string; url: string; emoji: string }[]>([])
+  const [newSysLabel, setNewSysLabel] = useState('')
+  const [newSysUrl, setNewSysUrl] = useState('')
+  const [newSysEmoji, setNewSysEmoji] = useState('🎮')
+  const [addingSystem, setAddingSystem] = useState(false)
+  const [deletingSystemId, setDeletingSystemId] = useState<string | null>(null)
   const [restockRequests, setRestockRequests] = useState<RestockRequest[]>([])
   const [loadingRestock, setLoadingRestock] = useState(false)
   const [notingId, setNotingId] = useState<string | null>(null)
@@ -995,6 +1001,13 @@ export default function AdminDashboard() {
     try {
       const res = await fetch('/api/tournament-games')
       if (res.ok) { const data = await res.json(); setTournamentGames(data.games || []) }
+    } catch { /* silent */ }
+  }, [])
+
+  const fetchTournamentSystems = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tournament-systems')
+      if (res.ok) { const data = await res.json(); setTournamentSystems(data.systems || []) }
     } catch { /* silent */ }
   }, [])
 
@@ -1693,7 +1706,7 @@ export default function AdminDashboard() {
             Pre-Order
           </button>
           <button
-            onClick={() => { setActiveTab('tournament-creds'); fetchTournamentCreds(); fetchTournamentGames() }}
+            onClick={() => { setActiveTab('tournament-creds'); fetchTournamentCreds(); fetchTournamentGames(); fetchTournamentSystems() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'tournament-creds'
                 ? 'bg-white text-[#1E3A5F]'
@@ -5688,11 +5701,40 @@ export default function AdminDashboard() {
           finally { setDeletingGameId(null) }
         }
 
-        const SYSTEMS = [
-          { id: 'bandai', label: 'Bandai TCG+' },
-          { id: 'pokemon', label: 'Pokemon' },
-          { id: 'liftbound', label: 'Liftbound & Lorcana' },
-        ]
+        const BUILTIN_SYSTEMS = ['bandai', 'pokemon', 'liftbound']
+
+        const addSystem = async () => {
+          const label = newSysLabel.trim()
+          if (!label) return
+          setAddingSystem(true)
+          try {
+            const res = await fetch(`/api/tournament-systems?key=${ADMIN_KEY}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ label, url: newSysUrl.trim(), emoji: newSysEmoji.trim() || '🎮' }),
+            })
+            const data = await res.json()
+            if (res.ok) {
+              setNewSysLabel(''); setNewSysUrl(''); setNewSysEmoji('🎮')
+              await fetchTournamentSystems()
+              await fetchTournamentCreds()
+            } else { alert(data.error || 'เพิ่มไม่สำเร็จ') }
+          } catch { alert('เกิดข้อผิดพลาด') }
+          finally { setAddingSystem(false) }
+        }
+
+        const deleteSystem = async (id: string) => {
+          if (!confirm(`ยืนยันลบระบบ "${id}"? จะลบรหัส ID/Password ของทุกร้านด้วย`)) return
+          setDeletingSystemId(id)
+          try {
+            const res = await fetch(`/api/tournament-systems?key=${ADMIN_KEY}&id=${id}`, { method: 'DELETE' })
+            const data = await res.json()
+            if (res.ok) { await fetchTournamentSystems(); await fetchTournamentCreds() }
+            else { alert(data.error || 'ลบไม่สำเร็จ') }
+          } catch { alert('เกิดข้อผิดพลาด') }
+          finally { setDeletingSystemId(null) }
+        }
+
         const saveCred = (store: string, system: string, field: 'system_id' | 'system_password', value: string) =>
           fetch(`/api/tournament-creds?key=${ADMIN_KEY}`, {
             method: 'PATCH',
@@ -5719,6 +5761,67 @@ export default function AdminDashboard() {
             .catch((e: unknown) => alert(`เกิดข้อผิดพลาด: ${e}`))
         return (
           <div className="max-w-2xl mx-auto px-4 pb-10 flex flex-col gap-6">
+            {/* ระบบจัดแข่ง (dynamic) */}
+            <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-[#E2E8F0]">
+                <h2 className="font-bold text-[#1E3A5F] text-base">🖥️ ระบบจัดแข่ง</h2>
+                <p className="text-xs text-gray-400 mt-0.5">เพิ่ม/ลบระบบที่ใช้จัดแข่ง — แต่ละระบบจะมีช่อง ID/Password แยกตามร้าน</p>
+              </div>
+              <div className="px-5 py-4 flex flex-col gap-4">
+                {/* รายการ systems ปัจจุบัน */}
+                <div className="flex flex-wrap gap-2">
+                  {tournamentSystems.length === 0 && <span className="text-xs text-gray-300">กำลังโหลด...</span>}
+                  {tournamentSystems.map((sys) => (
+                    <span key={sys.id} className="flex items-center gap-1.5 text-xs font-semibold bg-[#1E3A5F]/10 text-[#1E3A5F] px-3 py-1.5 rounded-full">
+                      {sys.emoji} {sys.label}
+                      {!BUILTIN_SYSTEMS.includes(sys.id) && (
+                        <button
+                          disabled={deletingSystemId === sys.id}
+                          onClick={() => deleteSystem(sys.id)}
+                          className="ml-1 text-[#DC2626] opacity-60 hover:opacity-100 disabled:opacity-20 text-xs leading-none"
+                        >✕</button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                {/* form เพิ่มระบบใหม่ */}
+                <div className="border border-dashed border-[#E2E8F0] rounded-xl p-3 flex flex-col gap-2">
+                  <p className="text-xs font-semibold text-gray-500">+ เพิ่มระบบใหม่</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="emoji (เช่น 🎯)"
+                      value={newSysEmoji}
+                      onChange={(e) => setNewSysEmoji(e.target.value)}
+                      className="w-16 border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-[#1E3A5F]"
+                    />
+                    <input
+                      type="text"
+                      placeholder="ชื่อระบบ (เช่น One Piece TCG) *"
+                      value={newSysLabel}
+                      onChange={(e) => setNewSysLabel(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addSystem()}
+                      className="flex-1 border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="URL เว็บไซต์ (ไม่บังคับ)"
+                    value={newSysUrl}
+                    onChange={(e) => setNewSysUrl(e.target.value)}
+                    className="w-full border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#1E3A5F]"
+                  />
+                  <button
+                    disabled={addingSystem || !newSysLabel.trim()}
+                    onClick={addSystem}
+                    className="self-end px-4 py-1.5 bg-[#1E3A5F] text-white text-sm font-semibold rounded-lg disabled:opacity-50"
+                  >
+                    {addingSystem ? 'กำลังเพิ่ม...' : '+ เพิ่ม'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* การ์ดเกมที่ต้องจัดแข่ง */}
             <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-[#E2E8F0]">
@@ -5782,11 +5885,11 @@ export default function AdminDashboard() {
                       <p className="text-sm font-bold text-[#1E3A5F]">🏪 {store.label}</p>
                     </div>
                     <div className="divide-y divide-[#E2E8F0]">
-                      {SYSTEMS.map((sys) => {
+                      {tournamentSystems.map((sys) => {
                         const k = `${store.id}_${sys.id}`
                         return (
                           <div key={sys.id} className="px-4 py-3">
-                            <p className="text-xs font-semibold text-[#374151] mb-2">{sys.label}</p>
+                            <p className="text-xs font-semibold text-[#374151] mb-2">{sys.emoji} {sys.label}</p>
                             {(['system_id', 'system_password'] as const).map((field) => (
                               <div key={field} className="flex items-center gap-2 mb-1.5">
                                 <span className="text-[11px] text-gray-400 w-16 shrink-0">{field === 'system_id' ? 'ID' : 'Password'}</span>

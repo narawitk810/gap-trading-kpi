@@ -54,6 +54,7 @@ export default function StoreManagementPage() {
   const toggleCheck = (key: string) =>
     setChecks((prev) => ({ ...prev, [key]: !prev[key] }))
   const [games, setGames] = useState<Record<string, string[]>>({})
+  const [dynamicSystems, setDynamicSystems] = useState<{ id: string; label: string; url: string; emoji: string }[]>([])
   const todayDay = new Date().getDay()
 
   useEffect(() => {
@@ -73,6 +74,26 @@ export default function StoreManagementPage() {
   useEffect(() => {
     const updated: Record<string, SystemLink> = { ...DEFAULT_LINKS }
     const applyUpdates = () => setLinks({ ...updated })
+
+    fetch('/api/tournament-systems')
+      .then((r) => r.json())
+      .then((data) => {
+        const systems: { id: string; label: string; url: string; emoji: string }[] = data.systems || []
+        setDynamicSystems(systems)
+        systems.forEach((sys) => {
+          if (!updated[`store_${sys.id}`]) {
+            updated[`store_${sys.id}`] = { url: sys.url, system_id: '', system_password: '' }
+          } else {
+            updated[`store_${sys.id}`].url = sys.url || updated[`store_${sys.id}`].url
+          }
+          for (const store of ['gap7card', 'catramen', 'ninjabear']) {
+            const key = `${store}_${sys.id}`
+            if (!updated[key]) updated[key] = { url: '', system_id: '', system_password: '' }
+          }
+        })
+        applyUpdates()
+      })
+      .catch(() => {})
 
     fetch('/api/system-links')
       .then((r) => r.json())
@@ -98,12 +119,11 @@ export default function StoreManagementPage() {
         if (data.creds) {
           ;(data.creds as { store: string; system: string; system_id: string; system_password: string }[]).forEach((c) => {
             const key = `${c.store}_${c.system}`
-            if (updated[key] !== undefined) {
-              updated[key] = {
-                url: updated[key].url,
-                system_id: c.system_id || '',
-                system_password: c.system_password || '',
-              }
+            if (!updated[key]) updated[key] = { url: '', system_id: '', system_password: '' }
+            updated[key] = {
+              url: updated[key].url,
+              system_id: c.system_id || '',
+              system_password: c.system_password || '',
             }
           })
           applyUpdates()
@@ -242,12 +262,12 @@ export default function StoreManagementPage() {
           <div className="bg-white rounded-2xl p-4 border border-[#E2E8F0]">
             <p className="text-sm font-bold text-[#374151] mb-3">จัดแข่งในระบบ</p>
             <div className="flex flex-col gap-3">
-              {SYSTEMS.map((sys) => {
-                const urlInfo = links[sys.key] ?? EMPTY_LINK
-                const credKey = `${selectedStore}_${sys.credBase}`
+              {dynamicSystems.map((sys) => {
+                const urlInfo = links[`store_${sys.id}`] ?? EMPTY_LINK
+                const credKey = `${selectedStore}_${sys.id}`
                 const credInfo = links[credKey] ?? EMPTY_LINK
                 return (
-                  <div key={sys.key}>
+                  <div key={sys.id}>
                     <a
                       href={urlInfo.url || '#'}
                       target="_blank"

@@ -521,6 +521,24 @@ export async function ensureSchema(): Promise<void> {
   }
 
   await db.execute(`
+    CREATE TABLE IF NOT EXISTS tournament_systems (
+      id         TEXT PRIMARY KEY,
+      label      TEXT NOT NULL,
+      url        TEXT NOT NULL DEFAULT '',
+      emoji      TEXT NOT NULL DEFAULT '🎮',
+      created_at TEXT NOT NULL DEFAULT ''
+    )
+  `)
+  const builtinSystems = [
+    { id: 'bandai',    label: 'Bandai TCG+',          url: 'https://distributor.bandai-tcg-plus.com/#/event_series_detail/home', emoji: '🎮' },
+    { id: 'pokemon',   label: 'Pokemon',               url: 'https://event.asia.pokemon-card.com/login/th',                       emoji: '🎴' },
+    { id: 'liftbound', label: 'Liftbound & Lorcana',   url: 'https://www.carde.io/',                                              emoji: '⚡' },
+  ]
+  for (const s of builtinSystems) {
+    await db.execute(`INSERT OR IGNORE INTO tournament_systems (id, label, url, emoji, created_at) VALUES ('${s.id}', '${s.label}', '${s.url}', '${s.emoji}', '')`)
+  }
+
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS tournament_creds (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       store        TEXT NOT NULL,

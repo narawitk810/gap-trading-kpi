@@ -3,7 +3,6 @@ import { getDb, ensureSchema } from '@/lib/db'
 
 const ADMIN_KEY = 'GAPtrading2024admin'
 const VALID_STORES = ['gap7card', 'catramen', 'ninjabear']
-const VALID_SYSTEMS = ['bandai', 'pokemon', 'liftbound']
 
 export async function GET() {
   try {
@@ -32,8 +31,8 @@ export async function PATCH(request: NextRequest) {
   if (!store || !VALID_STORES.includes(store)) {
     return NextResponse.json({ error: 'ร้านค้าไม่ถูกต้อง' }, { status: 400 })
   }
-  if (!system || !VALID_SYSTEMS.includes(system)) {
-    return NextResponse.json({ error: 'ระบบไม่ถูกต้อง' }, { status: 400 })
+  if (!system) {
+    return NextResponse.json({ error: 'กรุณาระบุระบบ' }, { status: 400 })
   }
   const sets: string[] = []
   const args: (string | null)[] = []
