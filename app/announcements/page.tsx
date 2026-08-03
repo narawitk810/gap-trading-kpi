@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { DEPARTMENTS } from '@/types/kpi'
 
@@ -69,8 +69,7 @@ export default function AnnouncementsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (!verified) return
+  const fetchData = useCallback(() => {
     setLoadingData(true)
     Promise.all([
       fetch('/api/announcements').then((r) => r.json()).catch(() => []),
@@ -79,7 +78,12 @@ export default function AnnouncementsPage() {
       if (Array.isArray(ann)) setAnnouncements(ann)
       if (Array.isArray(stock)) setStockItems(stock)
     }).finally(() => setLoadingData(false))
-  }, [verified])
+  }, [])
+
+  useEffect(() => {
+    if (!verified) return
+    fetchData()
+  }, [verified, fetchData])
 
   async function handleVerify() {
     if (!code.trim()) return
@@ -175,12 +179,24 @@ export default function AnnouncementsPage() {
             <h1 className="text-xl font-bold tracking-wide">GAP TRADING</h1>
             <p className="text-sm mt-0.5 opacity-75">📢 เว็บไซต์ประกาศ</p>
           </div>
-          <button
-            onClick={() => { localStorage.removeItem(STORAGE_KEY); setVerified(false); setCode('') }}
-            className="ml-auto text-xs text-white/60 hover:text-white"
-          >
-            ออก
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={fetchData}
+              disabled={loadingData}
+              className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-3.5 h-3.5 ${loadingData ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M4.582 9A8 8 0 0 1 19.419 9M19.419 15A8 8 0 0 1 4.581 15" />
+              </svg>
+              {loadingData ? 'กำลังโหลด...' : 'รีเฟรช'}
+            </button>
+            <button
+              onClick={() => { localStorage.removeItem(STORAGE_KEY); setVerified(false); setCode('') }}
+              className="text-xs text-white/60 hover:text-white"
+            >
+              ออก
+            </button>
+          </div>
         </div>
       </div>
 
