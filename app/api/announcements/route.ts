@@ -3,11 +3,25 @@ import { getDb, generateId, ensureSchema } from '@/lib/db'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
-export async function GET() {
-  await ensureSchema()
+export async function GET(request: NextRequest) {
   const db = getDb()
+  const { searchParams } = new URL(request.url)
+  const imageId = searchParams.get('image_id')
+  if (imageId) {
+    const row = await db.execute({ sql: 'SELECT image_data FROM announcements WHERE id = ?', args: [imageId] })
+    const dataUri = row.rows[0]?.image_data as string
+    if (!dataUri) return new Response(null, { status: 404 })
+    const [header, base64] = dataUri.split(',')
+    const contentType = header.replace('data:', '').replace(';base64', '')
+    const buffer = Buffer.from(base64, 'base64')
+    return new Response(buffer, {
+      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' },
+    })
+  }
   const result = await db.execute(
-    `SELECT * FROM announcements WHERE is_active = 1
+    `SELECT id, title, content, is_pinned, is_active, created_by, created_at,
+            CASE WHEN image_data != '' AND image_data IS NOT NULL THEN 1 ELSE 0 END as has_image
+     FROM announcements WHERE is_active = 1
      ORDER BY is_pinned DESC, created_at DESC`
   )
   return NextResponse.json(result.rows)

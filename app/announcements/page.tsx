@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { DEPARTMENTS } from '@/types/kpi'
 
 const STORAGE_KEY = 'announcements_verified_at'
+const DATA_CACHE_KEY = 'announcements_data_v2'
 const VALID_DAYS = 10
 
 type Announcement = {
   id: string
   title: string
   content: string
-  image_data: string
+  has_image: number
   is_pinned: number
   is_active: number
   created_by: string
@@ -69,19 +70,33 @@ export default function AnnouncementsPage() {
     }
   }, [])
 
-  const fetchData = useCallback(() => {
-    setLoadingData(true)
+  const fetchData = useCallback((silent = false) => {
+    if (!silent) setLoadingData(true)
     Promise.all([
       fetch('/api/announcements').then((r) => r.json()).catch(() => []),
       fetch('/api/stock-prices?acknowledged_only=true').then((r) => r.json()).catch(() => []),
     ]).then(([ann, stock]) => {
       if (Array.isArray(ann)) setAnnouncements(ann)
       if (Array.isArray(stock)) setStockItems(stock)
+      try {
+        localStorage.setItem(DATA_CACHE_KEY, JSON.stringify({ ann, stock, ts: Date.now() }))
+      } catch { /* ignore */ }
     }).finally(() => setLoadingData(false))
   }, [])
 
   useEffect(() => {
     if (!verified) return
+    try {
+      const raw = localStorage.getItem(DATA_CACHE_KEY)
+      if (raw) {
+        const { ann, stock } = JSON.parse(raw)
+        if (Array.isArray(ann)) setAnnouncements(ann)
+        if (Array.isArray(stock)) setStockItems(stock)
+        setLoadingData(false)
+        fetchData(true)
+        return
+      }
+    } catch { /* ignore */ }
     fetchData()
   }, [verified, fetchData])
 
@@ -181,7 +196,7 @@ export default function AnnouncementsPage() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <button
-              onClick={fetchData}
+              onClick={() => fetchData()}
               disabled={loadingData}
               className="flex items-center gap-1.5 text-xs text-white/80 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
             >
@@ -219,9 +234,9 @@ export default function AnnouncementsPage() {
                       key={ann.id}
                       className={`bg-white rounded-2xl shadow-sm overflow-hidden ${ann.is_pinned ? 'border-l-4 border-[#1E3A5F]' : ''}`}
                     >
-                      {ann.image_data && (
-                        <img src={ann.image_data} alt="ประกาศ" className="w-full max-h-48 object-cover" />
-                      )}
+                      {ann.has_image ? (
+                        <img src={`/api/announcements?image_id=${ann.id}`} alt="ประกาศ" loading="lazy" className="w-full max-h-48 object-cover" />
+                      ) : null}
                       <div className="p-4">
                         <div className="flex items-start gap-2 mb-1.5">
                           {ann.is_pinned ? <span className="text-xs font-bold text-[#1E3A5F] bg-[#1E3A5F]/10 px-2 py-0.5 rounded-full shrink-0">📌 ปักหมุด</span> : null}
