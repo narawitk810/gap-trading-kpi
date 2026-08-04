@@ -436,7 +436,7 @@ export default function AdminDashboard() {
   }
 
   const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members' | 'tcg-bookings'>('kpi')
-  const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; file_name: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
   const [tcgGames, setTcgGames] = useState<{ id: string; name: string; short_name: string }[]>([])
   const [tcgRewardGame, setTcgRewardGame] = useState('')
@@ -454,7 +454,7 @@ export default function AdminDashboard() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
   })
   const [tcgBookingsLoading, setTcgBookingsLoading] = useState(false)
-  const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
+  const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
   const [togglingAnnId, setTogglingAnnId] = useState<string | null>(null)
@@ -6062,24 +6062,31 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#374151] mb-1">รูปประกอบ (ไม่บังคับ)</label>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ (รูป / PDF / เอกสาร ไม่บังคับ)</label>
                       <input
                         type="file"
-                        accept="image/*"
                         onChange={(e) => {
                           const file = e.target.files?.[0]
                           if (!file) return
                           const reader = new FileReader()
-                          reader.onload = (ev) => setAnnForm((f) => ({ ...f, image_data: ev.target?.result as string || '' }))
+                          reader.onload = (ev) => setAnnForm((f) => ({ ...f, image_data: ev.target?.result as string || '', file_name: file.name }))
                           reader.readAsDataURL(file)
                         }}
                         className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
                       />
                       {annForm.image_data && (
-                        <div className="mt-2 relative inline-block">
-                          <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
-                          <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
-                        </div>
+                        annForm.file_name && !/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(annForm.file_name)
+                          ? (
+                            <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                              <span>📎 {annForm.file_name}</span>
+                              <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '', file_name: '' }))} className="ml-auto bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                            </div>
+                          ) : (
+                            <div className="mt-2 relative inline-block">
+                              <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                              <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '', file_name: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                            </div>
+                          )
                       )}
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -6106,10 +6113,10 @@ export default function AdminDashboard() {
                             const now = new Date().toISOString()
                             setAnnouncements((prev) => [{
                               id: newItem.id, title: annForm.title, content: annForm.content,
-                              image_data: annForm.image_data, is_pinned: annForm.is_pinned ? 1 : 0,
+                              image_data: annForm.image_data, file_name: annForm.file_name, is_pinned: annForm.is_pinned ? 1 : 0,
                               is_active: 1, created_by: annForm.created_by, created_at: now,
                             }, ...prev])
-                            setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
+                            setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '' })
                           }
                         } catch { /* silent */ } finally {
                           setSubmittingAnn(false)

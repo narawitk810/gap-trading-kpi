@@ -8,18 +8,25 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const imageId = searchParams.get('image_id')
   if (imageId) {
-    const row = await db.execute({ sql: 'SELECT image_data FROM announcements WHERE id = ?', args: [imageId] })
+    const row = await db.execute({ sql: 'SELECT image_data, file_name FROM announcements WHERE id = ?', args: [imageId] })
     const dataUri = row.rows[0]?.image_data as string
     if (!dataUri) return new Response(null, { status: 404 })
     const [header, base64] = dataUri.split(',')
     const contentType = header.replace('data:', '').replace(';base64', '')
     const buffer = Buffer.from(base64, 'base64')
-    return new Response(buffer, {
-      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' },
-    })
+    const fileName = (row.rows[0]?.file_name as string) || ''
+    const isImage = contentType.startsWith('image/')
+    const headers: Record<string, string> = {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=86400',
+    }
+    if (!isImage && fileName) {
+      headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(fileName)}"`
+    }
+    return new Response(buffer, { headers })
   }
   const result = await db.execute(
-    `SELECT id, title, content, is_pinned, is_active, created_by, created_at,
+    `SELECT id, title, content, is_pinned, is_active, created_by, created_at, file_name,
             CASE WHEN image_data != '' AND image_data IS NOT NULL THEN 1 ELSE 0 END as has_image
      FROM announcements WHERE is_active = 1
      ORDER BY is_pinned DESC, created_at DESC`
@@ -38,9 +45,9 @@ export async function POST(request: NextRequest) {
   const id = generateId()
   const now = new Date().toISOString()
   await db.execute({
-    sql: `INSERT INTO announcements (id, title, content, image_data, is_pinned, is_active, created_by, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)`,
-    args: [id, body.title.trim(), body.content.trim(), body.image_data || '', body.is_pinned ? 1 : 0, body.created_by.trim(), now, now],
+    sql: `INSERT INTO announcements (id, title, content, image_data, is_pinned, file_name, is_active, created_by, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+    args: [id, body.title.trim(), body.content.trim(), body.image_data || '', body.is_pinned ? 1 : 0, body.file_name || '', body.created_by.trim(), now, now],
   })
   return NextResponse.json({ id }, { status: 201 })
 }
@@ -63,8 +70,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 })
     }
     await db.execute({
-      sql: `UPDATE announcements SET title = ?, content = ?, image_data = ?, is_pinned = ?, updated_at = ? WHERE id = ?`,
-      args: [body.title.trim(), body.content.trim(), body.image_data || '', body.is_pinned ? 1 : 0, now, body.id],
+      sql: `UPDATE announcements SET title = ?, content = ?, image_data = ?, is_pinned = ?, file_name = ?, updated_at = ? WHERE id = ?`,
+      args: [body.title.trim(), body.content.trim(), body.image_data || '', body.is_pinned ? 1 : 0, body.file_name || '', now, body.id],
     })
   }
   return NextResponse.json({ ok: true })

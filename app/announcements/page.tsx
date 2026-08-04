@@ -14,6 +14,7 @@ type Announcement = {
   title: string
   content: string
   has_image: number
+  file_name: string
   is_pinned: number
   is_active: number
   created_by: string
@@ -58,6 +59,10 @@ type PricingData = {
   break_enabled?: boolean
   no_pack_sale?: boolean
   commission_tier?: string
+}
+
+function isImageFileName(name: string) {
+  return !name || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name)
 }
 
 function formatDate(iso: string) {
@@ -321,13 +326,28 @@ export default function AnnouncementsPage() {
                     className={`bg-white rounded-2xl shadow-sm overflow-hidden ${ann.is_pinned ? 'border-l-4 border-[#1E3A5F]' : ''}`}
                   >
                     {ann.has_image ? (
-                      <img
-                        src={`/api/announcements?image_id=${ann.id}`}
-                        alt="ประกาศ"
-                        loading="lazy"
-                        onClick={() => setImageModal(`/api/announcements?image_id=${ann.id}`)}
-                        className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                      />
+                      isImageFileName(ann.file_name) ? (
+                        <img
+                          src={`/api/announcements?image_id=${ann.id}`}
+                          alt="ประกาศ"
+                          loading="lazy"
+                          onClick={() => setImageModal(`/api/announcements?image_id=${ann.id}`)}
+                          className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      ) : (
+                        <div className="px-4 pt-4">
+                          <a
+                            href={`/api/announcements?image_id=${ann.id}`}
+                            download={ann.file_name}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-2 px-4 py-3 bg-[#1E3A5F]/5 border border-[#E2E8F0] rounded-xl text-sm text-[#1E3A5F] font-semibold hover:bg-[#1E3A5F]/10 transition-colors"
+                          >
+                            <span className="text-base">📎</span>
+                            <span className="truncate flex-1">{ann.file_name}</span>
+                            <span className="text-xs text-gray-400 shrink-0">กดดาวน์โหลด</span>
+                          </a>
+                        </div>
+                      )
                     ) : null}
                     <div className="p-4">
                       <div className="flex items-start gap-2 mb-1.5">

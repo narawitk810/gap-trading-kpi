@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 35
+const SCHEMA_VERSION = 36
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -665,6 +665,8 @@ export async function ensureSchema(): Promise<void> {
   `)
 
   // Indexes for frequent query patterns — added SCHEMA_VERSION 33
+  try { await db.execute(`ALTER TABLE announcements ADD COLUMN file_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_stock_status ON stock_arrivals(status)`) } catch { /* exists */ }
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_stock_created ON stock_arrivals(created_at)`) } catch { /* exists */ }
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_promo_status ON promo_thresholds(status)`) } catch { /* exists */ }
