@@ -499,6 +499,7 @@ export default function AdminDashboard() {
   const [loadingPromo, setLoadingPromo] = useState(false)
   const [ackingPromoId, setAckingPromoId] = useState<string | null>(null)
   const [deletingPromoId, setDeletingPromoId] = useState<string | null>(null)
+  const [extendingPromoId, setExtendingPromoId] = useState<string | null>(null)
   const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
@@ -2756,6 +2757,11 @@ export default function AdminDashboard() {
 
       {activeTab === 'promo' && (() => {
         const promoMonthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+        const nextMonth = (ym: string) => {
+          const [y, mo] = ym.split('-').map(Number)
+          const d = new Date(y, mo)
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        }
         const formatPromoMonth = (m: string) => {
           if (!m) return ''
           const [y, mo] = m.split('-')
@@ -2802,6 +2808,47 @@ export default function AdminDashboard() {
                             {ackingPromoId === r.id ? 'กำลังบันทึก...' : 'รับทราบแล้ว'}
                           </button>
                         )}
+                        <button
+                          onClick={async () => {
+                            setExtendingPromoId(r.id)
+                            try {
+                              const res = await fetch('/api/promo-threshold', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  nickname: r.nickname,
+                                  product_name: r.product_name,
+                                  threshold_amount: r.threshold_amount,
+                                  start_month: nextMonth(r.start_month),
+                                  end_month: nextMonth(r.end_month),
+                                  note: r.note || '',
+                                  image_data: r.image_data,
+                                }),
+                              })
+                              if (res.ok) {
+                                const data = await res.json()
+                                const now = new Date().toISOString()
+                                setPromoThresholds((prev) => [{
+                                  id: data.id,
+                                  nickname: r.nickname,
+                                  product_name: r.product_name,
+                                  threshold_amount: r.threshold_amount,
+                                  start_month: nextMonth(r.start_month),
+                                  end_month: nextMonth(r.end_month),
+                                  note: r.note,
+                                  image_data: r.image_data,
+                                  status: 'pending',
+                                  created_at: now,
+                                  acknowledged_at: null,
+                                }, ...prev])
+                              }
+                            } catch { /* silent */ } finally { setExtendingPromoId(null) }
+                          }}
+                          disabled={extendingPromoId === r.id}
+                          className="flex-1 bg-[#1E3A5F]/10 text-[#1E3A5F] py-2 rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-[#1E3A5F]/20"
+                        >
+                          {extendingPromoId === r.id ? '...' : '📅 ต่อโปร'}
+                        </button>
                         <button
                           onClick={() => handleDeletePromo(r.id)}
                           disabled={deletingPromoId === r.id}
