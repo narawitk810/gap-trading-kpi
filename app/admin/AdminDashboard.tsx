@@ -97,7 +97,7 @@ type PromoThreshold = {
   start_month: string
   end_month: string
   note: string | null
-  image_data: string
+  has_image: number
   status: string
   created_at: string
   acknowledged_at: string | null
@@ -649,6 +649,7 @@ export default function AdminDashboard() {
   const [preorderSaveError, setPreorderSaveError] = useState('')
   const [preorderFormErrors, setPreorderFormErrors] = useState<Partial<PreorderFormData>>({})
   const [loadingPreorder, setLoadingPreorder] = useState(false)
+  const promoFetched = useRef(false)
   const preorderImageRef = useRef<HTMLInputElement>(null)
   type PreorderImgPair = { t: string; f: string }
   const [preorderImages, setPreorderImages] = useState<PreorderImgPair[]>([])
@@ -1466,12 +1467,11 @@ export default function AdminDashboard() {
       fetchRestock()
       fetchStockArrivals()
       fetchCodes()
-      fetchPromoThresholds()
       fetchEquipment()
       fetchMeetings()
       fetchTournamentCreds()
     }
-  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchPromoThresholds, fetchEquipment, fetchMeetings, fetchTournamentCreds])
+  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchEquipment, fetchMeetings, fetchTournamentCreds])
 
   useEffect(() => {
     if (!authed || activeTab !== 'tcg-bookings') return
@@ -1655,7 +1655,7 @@ export default function AdminDashboard() {
             )}
           </button>
           <button
-            onClick={() => setActiveTab('promo')}
+            onClick={() => { setActiveTab('promo'); if (!promoFetched.current) { fetchPromoThresholds(); promoFetched.current = true } }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'promo'
                 ? 'bg-white text-[#16A34A]'
@@ -2778,8 +2778,8 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {promoThresholds.map((r) => (
                   <div key={r.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    {r.image_data && (
-                      <img src={r.image_data} alt="สินค้า" className="w-full h-48 object-cover" />
+                    {r.has_image === 1 && (
+                      <img src={`/api/promo-threshold?image_id=${r.id}`} alt="สินค้า" className="w-full h-48 object-cover" />
                     )}
                     <div className="p-4 space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -6983,7 +6983,7 @@ export default function AdminDashboard() {
                         start_month: startMonth,
                         end_month: endMonth,
                         note: promo.note || '',
-                        image_data: promo.image_data,
+                        copy_from: promo.id,
                       }),
                     })
                     if (res.ok) {
@@ -6992,7 +6992,7 @@ export default function AdminDashboard() {
                       setPromoThresholds((prev) => [{
                         id: data.id, nickname: promo.nickname, product_name: promo.product_name,
                         threshold_amount: promo.threshold_amount, start_month: startMonth,
-                        end_month: endMonth, note: promo.note, image_data: promo.image_data,
+                        end_month: endMonth, note: promo.note, has_image: promo.has_image,
                         status: 'pending', created_at: now, acknowledged_at: null,
                       }, ...prev])
                       setExtendModal(null)

@@ -10,9 +10,11 @@ type PromoItem = {
   start_month: string
   end_month: string
   note: string | null
-  image_data: string
+  has_image: number
   acknowledged_at: string
 }
+
+const CACHE_KEY = 'promo_list_v1'
 
 function formatMonthThai(m: string) {
   if (!m) return ''
@@ -38,14 +40,22 @@ export default function PromoListPage() {
   const fetchData = useCallback(() => {
     fetch('/api/promo-list')
       .then((r) => r.json())
-      .then((data) => { setItems(data); setLastUpdated(new Date()) })
+      .then((data) => {
+        setItems(data)
+        setLastUpdated(new Date())
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)) } catch { /* quota */ }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) { setItems(JSON.parse(cached)); setLoading(false) }
+    } catch { /* ignore */ }
     fetchData()
-    const interval = setInterval(fetchData, 30_000)
+    const interval = setInterval(fetchData, 60_000)
     return () => clearInterval(interval)
   }, [fetchData])
 
@@ -67,7 +77,7 @@ export default function PromoListPage() {
               รีเฟรช
             </button>
             <span className="text-[10px] text-white/50">
-              {lastUpdated ? `ล่าสุด ${lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : 'อัพเดททุก 30 วิ'}
+              {lastUpdated ? `ล่าสุด ${lastUpdated.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}` : 'อัพเดทอัตโนมัติ'}
             </span>
           </div>
         </div>
@@ -82,13 +92,14 @@ export default function PromoListPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((item) => {
               const state = promoState(item.start_month, item.end_month)
+              const imgUrl = `/api/promo-threshold?image_id=${item.id}`
               return (
                 <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  {item.image_data && (
+                  {item.has_image === 1 && (
                     <img
-                      src={item.image_data}
+                      src={imgUrl}
                       alt="สินค้า"
-                      onClick={() => setImageModal(item.image_data)}
+                      onClick={() => setImageModal(imgUrl)}
                       className="w-full h-48 object-cover cursor-pointer hover:opacity-90"
                     />
                   )}
