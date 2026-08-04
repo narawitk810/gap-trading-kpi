@@ -6,7 +6,7 @@ import { DEPARTMENTS } from '@/types/kpi'
 
 const STORAGE_KEY = 'announcements_verified_at'
 const DEPT_STORAGE_KEY = 'announcements_dept'
-const DATA_CACHE_KEY = 'announcements_data_v2'
+const DATA_CACHE_KEY = 'announcements_data_v3'
 const VALID_DAYS = 10
 
 type Announcement = {
@@ -84,13 +84,16 @@ export default function AnnouncementsPage() {
   const [imageModal, setImageModal] = useState<string | null>(null)
   const [stockSearch, setStockSearch] = useState('')
 
-  const [annTab, setAnnTab] = useState<'important' | 'dept' | 'rules'>('important')
+  const [annTab, setAnnTab] = useState<'important' | 'company' | 'dept' | 'rules'>('important')
   const [deptAnnouncements, setDeptAnnouncements] = useState<DeptAnn[]>([])
   const [deptRules, setDeptRules] = useState<DeptRule[]>([])
   const [loadingDeptAnn, setLoadingDeptAnn] = useState(false)
   const [loadingDeptRules, setLoadingDeptRules] = useState(false)
   const [deptAnnLoaded, setDeptAnnLoaded] = useState(false)
   const [deptRulesLoaded, setDeptRulesLoaded] = useState(false)
+  const [companyRules, setCompanyRules] = useState<DeptRule[]>([])
+  const [loadingCompanyRules, setLoadingCompanyRules] = useState(false)
+  const [companyRulesLoaded, setCompanyRulesLoaded] = useState(false)
 
   useEffect(() => {
     const ts = localStorage.getItem(STORAGE_KEY)
@@ -151,8 +154,18 @@ export default function AnnouncementsPage() {
       .finally(() => { setLoadingDeptRules(false); setDeptRulesLoaded(true) })
   }, [])
 
-  function handleTabChange(tab: 'important' | 'dept' | 'rules') {
+  const fetchCompanyRules = useCallback(() => {
+    setLoadingCompanyRules(true)
+    fetch(`/api/dept-rules?dept=${encodeURIComponent('ทั้งบริษัท')}`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data.rules)) setCompanyRules(data.rules) })
+      .catch(() => {})
+      .finally(() => { setLoadingCompanyRules(false); setCompanyRulesLoaded(true) })
+  }, [])
+
+  function handleTabChange(tab: 'important' | 'company' | 'dept' | 'rules') {
     setAnnTab(tab)
+    if (tab === 'company' && !companyRulesLoaded) fetchCompanyRules()
     if (tab === 'dept' && !deptAnnLoaded) fetchDeptAnn(department)
     if (tab === 'rules' && !deptRulesLoaded) fetchDeptRules(department)
   }
@@ -256,6 +269,7 @@ export default function AnnouncementsPage() {
             <button
               onClick={() => {
                 fetchData()
+                if (annTab === 'company') { setCompanyRulesLoaded(false); fetchCompanyRules() }
                 if (annTab === 'dept') { setDeptAnnLoaded(false); fetchDeptAnn(department) }
                 if (annTab === 'rules') { setDeptRulesLoaded(false); fetchDeptRules(department) }
               }}
@@ -287,8 +301,9 @@ export default function AnnouncementsPage() {
         <div className="max-w-lg mx-auto flex">
           {([
             { key: 'important', label: '📌 ประกาศสำคัญ' },
-            { key: 'dept', label: '📣 ประกาศแผนก' },
-            { key: 'rules', label: '📋 กฎแผนก' },
+            { key: 'company',   label: '📜 กฎบริษัท' },
+            { key: 'dept',      label: '📣 ประกาศแผนก' },
+            { key: 'rules',     label: '📋 กฎแผนก' },
           ] as const).map((tab) => (
             <button
               key={tab.key}
@@ -363,6 +378,39 @@ export default function AnnouncementsPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab: กฎบริษัท */}
+        {annTab === 'company' && (
+          <div>
+            {loadingCompanyRules ? (
+              <div className="py-12 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+            ) : companyRules.length === 0 ? (
+              <div className="bg-white rounded-2xl p-6 shadow-sm text-center space-y-1">
+                <p className="text-2xl">📜</p>
+                <p className="text-sm text-gray-400">ยังไม่มีกฎบริษัท</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#E2E8F0] bg-[#F5F6F8]">
+                  <p className="text-xs font-bold text-[#1E3A5F]">กฎระเบียบบริษัท</p>
+                </div>
+                <div className="divide-y divide-[#E2E8F0]">
+                  {companyRules.map((rule, idx) => (
+                    <div key={rule.id} className="p-4 flex gap-3">
+                      <div className="shrink-0 w-6 h-6 rounded-full bg-[#1E3A5F] text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#1E3A5F] leading-snug mb-1">{rule.title}</p>
+                        <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">{rule.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

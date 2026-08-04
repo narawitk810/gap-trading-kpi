@@ -130,6 +130,7 @@ export async function ensureSchema(): Promise<void> {
       title       TEXT NOT NULL,
       content     TEXT NOT NULL,
       image_data  TEXT DEFAULT '',
+      file_name   TEXT NOT NULL DEFAULT '',
       is_pinned   INTEGER DEFAULT 0,
       is_active   INTEGER DEFAULT 1,
       created_by  TEXT NOT NULL,

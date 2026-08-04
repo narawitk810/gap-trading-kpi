@@ -458,7 +458,7 @@ export default function AdminDashboard() {
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
   const [togglingAnnId, setTogglingAnnId] = useState<string | null>(null)
-  const [annSubTab, setAnnSubTab] = useState<'general' | 'dept' | 'rules'>('general')
+  const [annSubTab, setAnnSubTab] = useState<'general' | 'company' | 'dept' | 'rules'>('general')
   const [deptAnns, setDeptAnns] = useState<{ id: string; department: string; title: string; content: string; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingDeptAnns, setLoadingDeptAnns] = useState(false)
   const [deptAnnForm, setDeptAnnForm] = useState({ department: '', title: '', content: '', created_by: 'HR' })
@@ -470,6 +470,11 @@ export default function AdminDashboard() {
   const [deptRuleForm, setDeptRuleForm] = useState({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR' })
   const [submittingDeptRule, setSubmittingDeptRule] = useState(false)
   const [deletingDeptRuleId, setDeletingDeptRuleId] = useState<string | null>(null)
+  const [companyRules, setCompanyRules] = useState<{ id: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [loadingCompanyRules, setLoadingCompanyRules] = useState(false)
+  const [companyRuleForm, setCompanyRuleForm] = useState({ title: '', content: '', sort_order: 0, created_by: 'HR' })
+  const [submittingCompanyRule, setSubmittingCompanyRule] = useState(false)
+  const [deletingCompanyRuleId, setDeletingCompanyRuleId] = useState<string | null>(null)
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -6000,14 +6005,19 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="flex border-b border-[#E2E8F0]">
               {([
-                { key: 'general', label: '📢 ประกาศสำคัญ' },
-                { key: 'dept', label: '📣 ประกาศแผนก' },
-                { key: 'rules', label: '📋 กฎแผนก' },
+                { key: 'general',  label: '📢 ประกาศสำคัญ' },
+                { key: 'company',  label: '📜 กฎบริษัท' },
+                { key: 'dept',     label: '📣 ประกาศแผนก' },
+                { key: 'rules',    label: '📋 กฎแผนก' },
               ] as const).map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => {
                     setAnnSubTab(tab.key)
+                    if (tab.key === 'company' && companyRules.length === 0) {
+                      setLoadingCompanyRules(true)
+                      fetch(`/api/dept-rules?dept=${encodeURIComponent('ทั้งบริษัท')}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.rules)) setCompanyRules(d.rules) }).catch(() => {}).finally(() => setLoadingCompanyRules(false))
+                    }
                     if (tab.key === 'dept' && deptAnns.length === 0) {
                       setLoadingDeptAnns(true)
                       fetch(`/api/dept-announcements?key=${ADMIN_KEY}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.announcements)) setDeptAnns(d.announcements) }).catch(() => {}).finally(() => setLoadingDeptAnns(false))
@@ -6190,6 +6200,121 @@ export default function AdminDashboard() {
                           </div>
                           <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
                           <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by} · {new Date(ann.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab: กฎบริษัท */}
+            {annSubTab === 'company' && (
+              <div className="p-5 space-y-5">
+                <div>
+                  <h2 className="text-base font-bold text-[#1E3A5F] mb-4">📜 เพิ่มกฎบริษัท</h2>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2">
+                        <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อกฎ *</label>
+                        <input
+                          type="text"
+                          value={companyRuleForm.title}
+                          onChange={(e) => setCompanyRuleForm((f) => ({ ...f, title: e.target.value }))}
+                          placeholder="หัวข้อกฎ..."
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#374151] mb-1">ลำดับที่</label>
+                        <input
+                          type="number"
+                          value={companyRuleForm.sort_order}
+                          onChange={(e) => setCompanyRuleForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
+                          min={0}
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ *</label>
+                      <textarea
+                        value={companyRuleForm.content}
+                        onChange={(e) => setCompanyRuleForm((f) => ({ ...f, content: e.target.value }))}
+                        placeholder="รายละเอียดกฎ..."
+                        rows={3}
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">ผู้บันทึก</label>
+                      <input
+                        type="text"
+                        value={companyRuleForm.created_by}
+                        onChange={(e) => setCompanyRuleForm((f) => ({ ...f, created_by: e.target.value }))}
+                        placeholder="HR..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!companyRuleForm.title.trim() || !companyRuleForm.content.trim()) return
+                        setSubmittingCompanyRule(true)
+                        try {
+                          const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ...companyRuleForm, department: 'ทั้งบริษัท' }),
+                          })
+                          if (res.ok) {
+                            const data = await res.json()
+                            const now = new Date().toISOString()
+                            setCompanyRules((prev) => [...prev, { id: data.id, ...companyRuleForm, is_active: 1, created_at: now }].sort((a, b) => a.sort_order - b.sort_order))
+                            setCompanyRuleForm({ title: '', content: '', sort_order: 0, created_by: 'HR' })
+                          }
+                        } catch { /* silent */ } finally { setSubmittingCompanyRule(false) }
+                      }}
+                      disabled={submittingCompanyRule || !companyRuleForm.title.trim() || !companyRuleForm.content.trim()}
+                      className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+                    >
+                      {submittingCompanyRule ? 'กำลังบันทึก...' : 'เพิ่มกฎบริษัท'}
+                    </button>
+                  </div>
+                </div>
+                <div className="border-t border-[#E2E8F0] pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-[#1E3A5F]">กฎบริษัททั้งหมด</h2>
+                    <span className="text-xs text-gray-400">{companyRules.length} ข้อ</span>
+                  </div>
+                  {loadingCompanyRules ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+                  ) : companyRules.length === 0 ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">ยังไม่มีกฎ</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {companyRules.map((rule, idx) => (
+                        <div key={rule.id} className="rounded-xl border border-[#E2E8F0] p-3 flex items-start gap-3">
+                          <div className="shrink-0 w-5 h-5 rounded-full bg-[#1E3A5F] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-[#374151]">{rule.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.content}</p>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (!confirm('ลบกฎนี้?')) return
+                              setDeletingCompanyRuleId(rule.id)
+                              try {
+                                const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}&id=${rule.id}`, { method: 'DELETE' })
+                                if (res.ok) setCompanyRules((prev) => prev.filter((r) => r.id !== rule.id))
+                              } catch { /* silent */ } finally { setDeletingCompanyRuleId(null) }
+                            }}
+                            disabled={deletingCompanyRuleId === rule.id}
+                            className="shrink-0 text-xs px-2 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50"
+                          >
+                            {deletingCompanyRuleId === rule.id ? '...' : 'ลบ'}
+                          </button>
                         </div>
                       ))}
                     </div>

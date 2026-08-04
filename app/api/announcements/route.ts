@@ -4,6 +4,7 @@ import { getDb, generateId, ensureSchema } from '@/lib/db'
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
 export async function GET(request: NextRequest) {
+  await ensureSchema()
   const db = getDb()
   const { searchParams } = new URL(request.url)
   const imageId = searchParams.get('image_id')
