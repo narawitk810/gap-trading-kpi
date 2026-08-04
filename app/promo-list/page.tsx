@@ -24,7 +24,7 @@ function formatMonthThai(m: string) {
 function promoState(startMonth: string, endMonth: string) {
   const current = new Date().toISOString().slice(0, 7)
   if (current < startMonth) return { label: 'ยังไม่เริ่ม', className: 'bg-gray-100 text-gray-500' }
-  if (current > endMonth) return { label: 'หมดโปรแล้ว', className: 'bg-gray-100 text-gray-400' }
+  if (current > endMonth) return { label: 'กำลังดำเนินการ', className: 'bg-[#1E3A5F]/10 text-[#1E3A5F]' }
   return { label: 'กำลังจัดโปร', className: 'bg-[#0369A1]/10 text-[#0369A1]' }
 }
 

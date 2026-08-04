@@ -500,6 +500,7 @@ export default function AdminDashboard() {
   const [ackingPromoId, setAckingPromoId] = useState<string | null>(null)
   const [deletingPromoId, setDeletingPromoId] = useState<string | null>(null)
   const [extendingPromoId, setExtendingPromoId] = useState<string | null>(null)
+  const [extendModal, setExtendModal] = useState<{ promo: PromoThreshold; startMonth: string; endMonth: string } | null>(null)
   const [stockArrivals, setStockArrivals] = useState<StockArrival[]>([])
   const [loadingArrivals, setLoadingArrivals] = useState(false)
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null)
@@ -2809,45 +2810,10 @@ export default function AdminDashboard() {
                           </button>
                         )}
                         <button
-                          onClick={async () => {
-                            setExtendingPromoId(r.id)
-                            try {
-                              const res = await fetch('/api/promo-threshold', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  nickname: r.nickname,
-                                  product_name: r.product_name,
-                                  threshold_amount: r.threshold_amount,
-                                  start_month: nextMonth(r.start_month),
-                                  end_month: nextMonth(r.end_month),
-                                  note: r.note || '',
-                                  image_data: r.image_data,
-                                }),
-                              })
-                              if (res.ok) {
-                                const data = await res.json()
-                                const now = new Date().toISOString()
-                                setPromoThresholds((prev) => [{
-                                  id: data.id,
-                                  nickname: r.nickname,
-                                  product_name: r.product_name,
-                                  threshold_amount: r.threshold_amount,
-                                  start_month: nextMonth(r.start_month),
-                                  end_month: nextMonth(r.end_month),
-                                  note: r.note,
-                                  image_data: r.image_data,
-                                  status: 'pending',
-                                  created_at: now,
-                                  acknowledged_at: null,
-                                }, ...prev])
-                              }
-                            } catch { /* silent */ } finally { setExtendingPromoId(null) }
-                          }}
-                          disabled={extendingPromoId === r.id}
-                          className="flex-1 bg-[#1E3A5F]/10 text-[#1E3A5F] py-2 rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-[#1E3A5F]/20"
+                          onClick={() => setExtendModal({ promo: r, startMonth: nextMonth(r.start_month), endMonth: nextMonth(r.end_month) })}
+                          className="flex-1 bg-[#1E3A5F]/10 text-[#1E3A5F] py-2 rounded-xl text-sm font-semibold hover:bg-[#1E3A5F]/20"
                         >
-                          {extendingPromoId === r.id ? '...' : '📅 ต่อโปร'}
+                          📅 ต่อโปร
                         </button>
                         <button
                           onClick={() => handleDeletePromo(r.id)}
@@ -6969,6 +6935,76 @@ export default function AdminDashboard() {
               </div>
             )
           })()}
+        </div>
+      )}
+      {extendModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4">
+            <h3 className="font-bold text-[#1E3A5F] text-lg">ต่อโปรโมชัน</h3>
+            <p className="text-sm text-gray-500">{extendModal.promo.product_name}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-semibold text-[#374151]">เดือนเริ่มต้น</label>
+                <input
+                  type="month"
+                  value={extendModal.startMonth}
+                  onChange={(e) => setExtendModal((prev) => prev ? { ...prev, startMonth: e.target.value } : null)}
+                  className="mt-1 w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-[#374151]">เดือนสิ้นสุด</label>
+                <input
+                  type="month"
+                  value={extendModal.endMonth}
+                  onChange={(e) => setExtendModal((prev) => prev ? { ...prev, endMonth: e.target.value } : null)}
+                  className="mt-1 w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setExtendModal(null)}
+                className="flex-1 py-2 rounded-xl border border-[#E2E8F0] text-sm text-gray-500"
+              >ยกเลิก</button>
+              <button
+                disabled={extendingPromoId === extendModal.promo.id}
+                onClick={async () => {
+                  const { promo, startMonth, endMonth } = extendModal
+                  setExtendingPromoId(promo.id)
+                  try {
+                    const res = await fetch('/api/promo-threshold', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        nickname: promo.nickname,
+                        product_name: promo.product_name,
+                        threshold_amount: promo.threshold_amount,
+                        start_month: startMonth,
+                        end_month: endMonth,
+                        note: promo.note || '',
+                        image_data: promo.image_data,
+                      }),
+                    })
+                    if (res.ok) {
+                      const data = await res.json()
+                      const now = new Date().toISOString()
+                      setPromoThresholds((prev) => [{
+                        id: data.id, nickname: promo.nickname, product_name: promo.product_name,
+                        threshold_amount: promo.threshold_amount, start_month: startMonth,
+                        end_month: endMonth, note: promo.note, image_data: promo.image_data,
+                        status: 'pending', created_at: now, acknowledged_at: null,
+                      }, ...prev])
+                      setExtendModal(null)
+                    }
+                  } catch { /* silent */ } finally { setExtendingPromoId(null) }
+                }}
+                className="flex-1 py-2 rounded-xl bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-60"
+              >
+                {extendingPromoId === extendModal.promo.id ? 'กำลังบันทึก...' : 'ยืนยัน'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
