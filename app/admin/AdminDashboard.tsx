@@ -6331,13 +6331,14 @@ export default function AdminDashboard() {
                   <div className="space-y-3">
                     <div>
                       <label className="block text-xs font-semibold text-[#374151] mb-1">แผนก *</label>
-                      <input
-                        type="text"
+                      <select
                         value={deptAnnForm.department}
                         onChange={(e) => setDeptAnnForm((f) => ({ ...f, department: e.target.value }))}
-                        placeholder="เช่น ไลฟ์สด, Creative, การตลาด..."
-                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-                      />
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      >
+                        <option value="">-- เลือกแผนก --</option>
+                        {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อ *</label>
@@ -6468,13 +6469,14 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-[#374151] mb-1">แผนก *</label>
-                        <input
-                          type="text"
+                        <select
                           value={deptRuleForm.department}
                           onChange={(e) => setDeptRuleForm((f) => ({ ...f, department: e.target.value }))}
-                          placeholder="เช่น ไลฟ์สด..."
-                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-                        />
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                        >
+                          <option value="">-- เลือกแผนก --</option>
+                          {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-[#374151] mb-1">ลำดับที่</label>
