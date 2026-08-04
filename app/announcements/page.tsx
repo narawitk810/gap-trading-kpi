@@ -321,7 +321,13 @@ export default function AnnouncementsPage() {
                     className={`bg-white rounded-2xl shadow-sm overflow-hidden ${ann.is_pinned ? 'border-l-4 border-[#1E3A5F]' : ''}`}
                   >
                     {ann.has_image ? (
-                      <img src={`/api/announcements?image_id=${ann.id}`} alt="ประกาศ" loading="lazy" className="w-full max-h-48 object-cover" />
+                      <img
+                        src={`/api/announcements?image_id=${ann.id}`}
+                        alt="ประกาศ"
+                        loading="lazy"
+                        onClick={() => setImageModal(`/api/announcements?image_id=${ann.id}`)}
+                        className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      />
                     ) : null}
                     <div className="p-4">
                       <div className="flex items-start gap-2 mb-1.5">
