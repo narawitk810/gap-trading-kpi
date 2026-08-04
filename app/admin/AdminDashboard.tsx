@@ -458,6 +458,18 @@ export default function AdminDashboard() {
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
   const [togglingAnnId, setTogglingAnnId] = useState<string | null>(null)
+  const [annSubTab, setAnnSubTab] = useState<'general' | 'dept' | 'rules'>('general')
+  const [deptAnns, setDeptAnns] = useState<{ id: string; department: string; title: string; content: string; is_active: number; created_by: string; created_at: string }[]>([])
+  const [loadingDeptAnns, setLoadingDeptAnns] = useState(false)
+  const [deptAnnForm, setDeptAnnForm] = useState({ department: '', title: '', content: '', created_by: 'HR' })
+  const [submittingDeptAnn, setSubmittingDeptAnn] = useState(false)
+  const [deletingDeptAnnId, setDeletingDeptAnnId] = useState<string | null>(null)
+  const [togglingDeptAnnId, setTogglingDeptAnnId] = useState<string | null>(null)
+  const [deptRules, setDeptRules] = useState<{ id: string; department: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [loadingDeptRules, setLoadingDeptRules] = useState(false)
+  const [deptRuleForm, setDeptRuleForm] = useState({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR' })
+  const [submittingDeptRule, setSubmittingDeptRule] = useState(false)
+  const [deletingDeptRuleId, setDeletingDeptRuleId] = useState<string | null>(null)
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -5983,167 +5995,476 @@ export default function AdminDashboard() {
 
       {/* Announcements Tab */}
       {activeTab === 'announcements' && (
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          {/* Form สร้างประกาศใหม่ */}
-          <div className="bg-white rounded-2xl shadow-sm p-5">
-            <h2 className="text-base font-bold text-[#1E3A5F] mb-4">📢 สร้างประกาศใหม่</h2>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อประกาศ *</label>
-                <input
-                  type="text"
-                  value={annForm.title}
-                  onChange={(e) => setAnnForm((f) => ({ ...f, title: e.target.value }))}
-                  placeholder="หัวข้อ..."
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา *</label>
-                <textarea
-                  value={annForm.content}
-                  onChange={(e) => setAnnForm((f) => ({ ...f, content: e.target.value }))}
-                  placeholder="รายละเอียดประกาศ..."
-                  rows={4}
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1">ผู้โพสต์ *</label>
-                <input
-                  type="text"
-                  value={annForm.created_by}
-                  onChange={(e) => setAnnForm((f) => ({ ...f, created_by: e.target.value }))}
-                  placeholder="ชื่อ/แผนก HR..."
-                  className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-1">รูปประกอบ (ไม่บังคับ)</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    const reader = new FileReader()
-                    reader.onload = (ev) => setAnnForm((f) => ({ ...f, image_data: ev.target?.result as string || '' }))
-                    reader.readAsDataURL(file)
-                  }}
-                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
-                />
-                {annForm.image_data && (
-                  <div className="mt-2 relative inline-block">
-                    <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
-                    <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
-                  </div>
-                )}
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={annForm.is_pinned}
-                  onChange={(e) => setAnnForm((f) => ({ ...f, is_pinned: e.target.checked }))}
-                  className="w-4 h-4 accent-[#1E3A5F]"
-                />
-                <span className="text-sm text-[#374151]">📌 ปักหมุด (แสดงด้านบนสุด)</span>
-              </label>
-              <button
-                onClick={async () => {
-                  if (!annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()) return
-                  setSubmittingAnn(true)
-                  try {
-                    const res = await fetch('/api/announcements', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ ...annForm, key: ADMIN_KEY }),
-                    })
-                    if (res.ok) {
-                      const newItem = await res.json()
-                      const now = new Date().toISOString()
-                      setAnnouncements((prev) => [{
-                        id: newItem.id, title: annForm.title, content: annForm.content,
-                        image_data: annForm.image_data, is_pinned: annForm.is_pinned ? 1 : 0,
-                        is_active: 1, created_by: annForm.created_by, created_at: now,
-                      }, ...prev])
-                      setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
-                    }
-                  } catch { /* silent */ } finally {
-                    setSubmittingAnn(false)
-                  }
-                }}
-                disabled={submittingAnn || !annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()}
-                className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
-              >
-                {submittingAnn ? 'กำลังสร้าง...' : 'สร้างประกาศ'}
-              </button>
-            </div>
-          </div>
-
-          {/* รายการประกาศ */}
+        <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+          {/* Sub-tab bar */}
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[#1E3A5F]">รายการประกาศทั้งหมด</h2>
-              <span className="text-xs text-gray-400">{announcements.length} รายการ</span>
+            <div className="flex border-b border-[#E2E8F0]">
+              {([
+                { key: 'general', label: '📢 ประกาศสำคัญ' },
+                { key: 'dept', label: '📣 ประกาศแผนก' },
+                { key: 'rules', label: '📋 กฎแผนก' },
+              ] as const).map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => {
+                    setAnnSubTab(tab.key)
+                    if (tab.key === 'dept' && deptAnns.length === 0) {
+                      setLoadingDeptAnns(true)
+                      fetch(`/api/dept-announcements?key=${ADMIN_KEY}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.announcements)) setDeptAnns(d.announcements) }).catch(() => {}).finally(() => setLoadingDeptAnns(false))
+                    }
+                    if (tab.key === 'rules' && deptRules.length === 0) {
+                      setLoadingDeptRules(true)
+                      fetch(`/api/dept-rules?key=${ADMIN_KEY}`).then((r) => r.json()).then((d) => { if (Array.isArray(d.rules)) setDeptRules(d.rules) }).catch(() => {}).finally(() => setLoadingDeptRules(false))
+                    }
+                  }}
+                  className={`flex-1 py-3 text-xs font-semibold transition-colors relative ${annSubTab === tab.key ? 'text-[#1E3A5F]' : 'text-gray-400 hover:text-[#374151]'}`}
+                >
+                  {tab.label}
+                  {annSubTab === tab.key && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E3A5F]" />}
+                </button>
+              ))}
             </div>
-            {loadingAnnouncements ? (
-              <div className="py-12 text-center text-gray-400 text-sm">กำลังโหลด...</div>
-            ) : announcements.length === 0 ? (
-              <div className="py-12 text-center text-gray-400 text-sm">ยังไม่มีประกาศ</div>
-            ) : (
-              <div className="divide-y divide-[#E2E8F0]">
-                {announcements.map((ann) => (
-                  <div key={ann.id} className="p-4">
-                    <div className="flex items-start justify-between gap-3 mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {ann.is_pinned ? <span className="text-xs text-[#1E3A5F] shrink-0">📌</span> : null}
-                        <p className="text-sm font-semibold text-[#374151] truncate">{ann.title}</p>
-                        <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${ann.is_active ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-gray-100 text-gray-400'}`}>
-                          {ann.is_active ? 'แสดงอยู่' : 'ซ่อน'}
-                        </span>
+
+            {/* Sub-tab: ประกาศสำคัญ */}
+            {annSubTab === 'general' && (
+              <div className="p-5 space-y-5">
+                <div>
+                  <h2 className="text-base font-bold text-[#1E3A5F] mb-4">📢 สร้างประกาศใหม่</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อประกาศ *</label>
+                      <input
+                        type="text"
+                        value={annForm.title}
+                        onChange={(e) => setAnnForm((f) => ({ ...f, title: e.target.value }))}
+                        placeholder="หัวข้อ..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา *</label>
+                      <textarea
+                        value={annForm.content}
+                        onChange={(e) => setAnnForm((f) => ({ ...f, content: e.target.value }))}
+                        placeholder="รายละเอียดประกาศ..."
+                        rows={4}
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">ผู้โพสต์ *</label>
+                      <input
+                        type="text"
+                        value={annForm.created_by}
+                        onChange={(e) => setAnnForm((f) => ({ ...f, created_by: e.target.value }))}
+                        placeholder="ชื่อ/แผนก HR..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">รูปประกอบ (ไม่บังคับ)</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          const reader = new FileReader()
+                          reader.onload = (ev) => setAnnForm((f) => ({ ...f, image_data: ev.target?.result as string || '' }))
+                          reader.readAsDataURL(file)
+                        }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
+                      />
+                      {annForm.image_data && (
+                        <div className="mt-2 relative inline-block">
+                          <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                          <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                        </div>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={annForm.is_pinned}
+                        onChange={(e) => setAnnForm((f) => ({ ...f, is_pinned: e.target.checked }))}
+                        className="w-4 h-4 accent-[#1E3A5F]"
+                      />
+                      <span className="text-sm text-[#374151]">📌 ปักหมุด (แสดงด้านบนสุด)</span>
+                    </label>
+                    <button
+                      onClick={async () => {
+                        if (!annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()) return
+                        setSubmittingAnn(true)
+                        try {
+                          const res = await fetch('/api/announcements', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ...annForm, key: ADMIN_KEY }),
+                          })
+                          if (res.ok) {
+                            const newItem = await res.json()
+                            const now = new Date().toISOString()
+                            setAnnouncements((prev) => [{
+                              id: newItem.id, title: annForm.title, content: annForm.content,
+                              image_data: annForm.image_data, is_pinned: annForm.is_pinned ? 1 : 0,
+                              is_active: 1, created_by: annForm.created_by, created_at: now,
+                            }, ...prev])
+                            setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '' })
+                          }
+                        } catch { /* silent */ } finally {
+                          setSubmittingAnn(false)
+                        }
+                      }}
+                      disabled={submittingAnn || !annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()}
+                      className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+                    >
+                      {submittingAnn ? 'กำลังสร้าง...' : 'สร้างประกาศ'}
+                    </button>
+                  </div>
+                </div>
+                <div className="border-t border-[#E2E8F0] pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-[#1E3A5F]">รายการประกาศทั้งหมด</h2>
+                    <span className="text-xs text-gray-400">{announcements.length} รายการ</span>
+                  </div>
+                  {loadingAnnouncements ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+                  ) : announcements.length === 0 ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">ยังไม่มีประกาศ</div>
+                  ) : (
+                    <div className="divide-y divide-[#E2E8F0]">
+                      {announcements.map((ann) => (
+                        <div key={ann.id} className="py-3">
+                          <div className="flex items-start justify-between gap-3 mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {ann.is_pinned ? <span className="text-xs text-[#1E3A5F] shrink-0">📌</span> : null}
+                              <p className="text-sm font-semibold text-[#374151] truncate">{ann.title}</p>
+                              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${ann.is_active ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-gray-100 text-gray-400'}`}>
+                                {ann.is_active ? 'แสดงอยู่' : 'ซ่อน'}
+                              </span>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0">
+                              <button
+                                onClick={async () => {
+                                  setTogglingAnnId(ann.id)
+                                  try {
+                                    const res = await fetch('/api/announcements', {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ id: ann.id, action: 'toggle_active', key: ADMIN_KEY }),
+                                    })
+                                    if (res.ok) setAnnouncements((prev) => prev.map((a) => a.id === ann.id ? { ...a, is_active: a.is_active ? 0 : 1 } : a))
+                                  } catch { /* silent */ } finally { setTogglingAnnId(null) }
+                                }}
+                                disabled={togglingAnnId === ann.id}
+                                className="text-xs px-2.5 py-1 rounded-lg border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {togglingAnnId === ann.id ? '...' : ann.is_active ? 'ซ่อน' : 'แสดง'}
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm('ลบประกาศนี้?')) return
+                                  setDeletingAnnId(ann.id)
+                                  try {
+                                    const res = await fetch('/api/announcements', {
+                                      method: 'DELETE',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ id: ann.id, key: ADMIN_KEY }),
+                                    })
+                                    if (res.ok) setAnnouncements((prev) => prev.filter((a) => a.id !== ann.id))
+                                  } catch { /* silent */ } finally { setDeletingAnnId(null) }
+                                }}
+                                disabled={deletingAnnId === ann.id}
+                                className="text-xs px-2.5 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {deletingAnnId === ann.id ? '...' : 'ลบ'}
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+                          <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by} · {new Date(ann.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab: ประกาศแผนก */}
+            {annSubTab === 'dept' && (
+              <div className="p-5 space-y-5">
+                <div>
+                  <h2 className="text-base font-bold text-[#1E3A5F] mb-4">📣 เพิ่มประกาศแผนก</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แผนก *</label>
+                      <input
+                        type="text"
+                        value={deptAnnForm.department}
+                        onChange={(e) => setDeptAnnForm((f) => ({ ...f, department: e.target.value }))}
+                        placeholder="เช่น ไลฟ์สด, Creative, การตลาด..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อ *</label>
+                      <input
+                        type="text"
+                        value={deptAnnForm.title}
+                        onChange={(e) => setDeptAnnForm((f) => ({ ...f, title: e.target.value }))}
+                        placeholder="หัวข้อประกาศ..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา *</label>
+                      <textarea
+                        value={deptAnnForm.content}
+                        onChange={(e) => setDeptAnnForm((f) => ({ ...f, content: e.target.value }))}
+                        placeholder="รายละเอียดประกาศ..."
+                        rows={4}
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">ผู้โพสต์</label>
+                      <input
+                        type="text"
+                        value={deptAnnForm.created_by}
+                        onChange={(e) => setDeptAnnForm((f) => ({ ...f, created_by: e.target.value }))}
+                        placeholder="HR..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!deptAnnForm.department.trim() || !deptAnnForm.title.trim() || !deptAnnForm.content.trim()) return
+                        setSubmittingDeptAnn(true)
+                        try {
+                          const res = await fetch(`/api/dept-announcements?key=${ADMIN_KEY}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(deptAnnForm),
+                          })
+                          if (res.ok) {
+                            const data = await res.json()
+                            const now = new Date().toISOString()
+                            setDeptAnns((prev) => [{ id: data.id, ...deptAnnForm, is_active: 1, created_at: now }, ...prev])
+                            setDeptAnnForm({ department: '', title: '', content: '', created_by: 'HR' })
+                          }
+                        } catch { /* silent */ } finally { setSubmittingDeptAnn(false) }
+                      }}
+                      disabled={submittingDeptAnn || !deptAnnForm.department.trim() || !deptAnnForm.title.trim() || !deptAnnForm.content.trim()}
+                      className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+                    >
+                      {submittingDeptAnn ? 'กำลังสร้าง...' : 'เพิ่มประกาศแผนก'}
+                    </button>
+                  </div>
+                </div>
+                <div className="border-t border-[#E2E8F0] pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-[#1E3A5F]">ประกาศแผนกทั้งหมด</h2>
+                    <span className="text-xs text-gray-400">{deptAnns.length} รายการ</span>
+                  </div>
+                  {loadingDeptAnns ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+                  ) : deptAnns.length === 0 ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">ยังไม่มีประกาศแผนก</div>
+                  ) : (
+                    <div className="divide-y divide-[#E2E8F0]">
+                      {deptAnns.map((ann) => (
+                        <div key={ann.id} className="py-3">
+                          <div className="flex items-start justify-between gap-3 mb-1">
+                            <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F] shrink-0">{ann.department}</span>
+                              <p className="text-sm font-semibold text-[#374151] truncate">{ann.title}</p>
+                              <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${ann.is_active ? 'bg-[#16A34A]/10 text-[#16A34A]' : 'bg-gray-100 text-gray-400'}`}>
+                                {ann.is_active ? 'แสดงอยู่' : 'ซ่อน'}
+                              </span>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0">
+                              <button
+                                onClick={async () => {
+                                  setTogglingDeptAnnId(ann.id)
+                                  try {
+                                    const res = await fetch(`/api/dept-announcements?key=${ADMIN_KEY}`, {
+                                      method: 'PATCH',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ id: ann.id, action: 'toggle_active' }),
+                                    })
+                                    if (res.ok) setDeptAnns((prev) => prev.map((a) => a.id === ann.id ? { ...a, is_active: a.is_active ? 0 : 1 } : a))
+                                  } catch { /* silent */ } finally { setTogglingDeptAnnId(null) }
+                                }}
+                                disabled={togglingDeptAnnId === ann.id}
+                                className="text-xs px-2.5 py-1 rounded-lg border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {togglingDeptAnnId === ann.id ? '...' : ann.is_active ? 'ซ่อน' : 'แสดง'}
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm('ลบประกาศนี้?')) return
+                                  setDeletingDeptAnnId(ann.id)
+                                  try {
+                                    const res = await fetch(`/api/dept-announcements?key=${ADMIN_KEY}&id=${ann.id}`, { method: 'DELETE' })
+                                    if (res.ok) setDeptAnns((prev) => prev.filter((a) => a.id !== ann.id))
+                                  } catch { /* silent */ } finally { setDeletingDeptAnnId(null) }
+                                }}
+                                disabled={deletingDeptAnnId === ann.id}
+                                className="text-xs px-2.5 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {deletingDeptAnnId === ann.id ? '...' : 'ลบ'}
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+                          <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by} · {new Date(ann.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-tab: กฎแผนก */}
+            {annSubTab === 'rules' && (
+              <div className="p-5 space-y-5">
+                <div>
+                  <h2 className="text-base font-bold text-[#1E3A5F] mb-4">📋 เพิ่มกฎแผนก</h2>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#374151] mb-1">แผนก *</label>
+                        <input
+                          type="text"
+                          value={deptRuleForm.department}
+                          onChange={(e) => setDeptRuleForm((f) => ({ ...f, department: e.target.value }))}
+                          placeholder="เช่น ไลฟ์สด..."
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                        />
                       </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        <button
-                          onClick={async () => {
-                            setTogglingAnnId(ann.id)
-                            try {
-                              const res = await fetch('/api/announcements', {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: ann.id, action: 'toggle_active', key: ADMIN_KEY }),
-                              })
-                              if (res.ok) setAnnouncements((prev) => prev.map((a) => a.id === ann.id ? { ...a, is_active: a.is_active ? 0 : 1 } : a))
-                            } catch { /* silent */ } finally { setTogglingAnnId(null) }
-                          }}
-                          disabled={togglingAnnId === ann.id}
-                          className="text-xs px-2.5 py-1 rounded-lg border border-[#E2E8F0] text-[#374151] hover:bg-[#F5F6F8] disabled:opacity-50 whitespace-nowrap"
-                        >
-                          {togglingAnnId === ann.id ? '...' : ann.is_active ? 'ซ่อน' : 'แสดง'}
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!confirm('ลบประกาศนี้?')) return
-                            setDeletingAnnId(ann.id)
-                            try {
-                              const res = await fetch('/api/announcements', {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: ann.id, key: ADMIN_KEY }),
-                              })
-                              if (res.ok) setAnnouncements((prev) => prev.filter((a) => a.id !== ann.id))
-                            } catch { /* silent */ } finally { setDeletingAnnId(null) }
-                          }}
-                          disabled={deletingAnnId === ann.id}
-                          className="text-xs px-2.5 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50 whitespace-nowrap"
-                        >
-                          {deletingAnnId === ann.id ? '...' : 'ลบ'}
-                        </button>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#374151] mb-1">ลำดับที่</label>
+                        <input
+                          type="number"
+                          value={deptRuleForm.sort_order}
+                          onChange={(e) => setDeptRuleForm((f) => ({ ...f, sort_order: Number(e.target.value) }))}
+                          min={0}
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                        />
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
-                    <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by}</p>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อกฎ *</label>
+                      <input
+                        type="text"
+                        value={deptRuleForm.title}
+                        onChange={(e) => setDeptRuleForm((f) => ({ ...f, title: e.target.value }))}
+                        placeholder="หัวข้อกฎ..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ *</label>
+                      <textarea
+                        value={deptRuleForm.content}
+                        onChange={(e) => setDeptRuleForm((f) => ({ ...f, content: e.target.value }))}
+                        placeholder="รายละเอียดกฎ..."
+                        rows={3}
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">ผู้บันทึก</label>
+                      <input
+                        type="text"
+                        value={deptRuleForm.created_by}
+                        onChange={(e) => setDeptRuleForm((f) => ({ ...f, created_by: e.target.value }))}
+                        placeholder="HR..."
+                        className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!deptRuleForm.department.trim() || !deptRuleForm.title.trim() || !deptRuleForm.content.trim()) return
+                        setSubmittingDeptRule(true)
+                        try {
+                          const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(deptRuleForm),
+                          })
+                          if (res.ok) {
+                            const data = await res.json()
+                            const now = new Date().toISOString()
+                            setDeptRules((prev) => [...prev, { id: data.id, ...deptRuleForm, is_active: 1, created_at: now }].sort((a, b) => a.department.localeCompare(b.department, 'th') || a.sort_order - b.sort_order))
+                            setDeptRuleForm({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR' })
+                          }
+                        } catch { /* silent */ } finally { setSubmittingDeptRule(false) }
+                      }}
+                      disabled={submittingDeptRule || !deptRuleForm.department.trim() || !deptRuleForm.title.trim() || !deptRuleForm.content.trim()}
+                      className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+                    >
+                      {submittingDeptRule ? 'กำลังบันทึก...' : 'เพิ่มกฎ'}
+                    </button>
                   </div>
-                ))}
+                </div>
+                <div className="border-t border-[#E2E8F0] pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-[#1E3A5F]">กฎทั้งหมด</h2>
+                    <span className="text-xs text-gray-400">{deptRules.length} ข้อ</span>
+                  </div>
+                  {loadingDeptRules ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+                  ) : deptRules.length === 0 ? (
+                    <div className="py-8 text-center text-gray-400 text-sm">ยังไม่มีกฎ</div>
+                  ) : (
+                    <div className="space-y-1">
+                      {Object.entries(
+                        deptRules.reduce<Record<string, typeof deptRules>>((acc, r) => {
+                          if (!acc[r.department]) acc[r.department] = []
+                          acc[r.department].push(r)
+                          return acc
+                        }, {})
+                      ).map(([dept, rules]) => (
+                        <div key={dept} className="rounded-xl border border-[#E2E8F0] overflow-hidden">
+                          <div className="px-3 py-2 bg-[#F5F6F8] flex items-center justify-between">
+                            <p className="text-xs font-bold text-[#1E3A5F]">{dept}</p>
+                            <span className="text-[10px] text-gray-400">{rules.length} ข้อ</span>
+                          </div>
+                          <div className="divide-y divide-[#E2E8F0]">
+                            {rules.map((rule, idx) => (
+                              <div key={rule.id} className="p-3 flex items-start gap-3">
+                                <div className="shrink-0 w-5 h-5 rounded-full bg-[#1E3A5F] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">
+                                  {idx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-[#374151]">{rule.title}</p>
+                                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.content}</p>
+                                </div>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm('ลบกฎนี้?')) return
+                                    setDeletingDeptRuleId(rule.id)
+                                    try {
+                                      const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}&id=${rule.id}`, { method: 'DELETE' })
+                                      if (res.ok) setDeptRules((prev) => prev.filter((r) => r.id !== rule.id))
+                                    } catch { /* silent */ } finally { setDeletingDeptRuleId(null) }
+                                  }}
+                                  disabled={deletingDeptRuleId === rule.id}
+                                  className="shrink-0 text-xs px-2 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50"
+                                >
+                                  {deletingDeptRuleId === rule.id ? '...' : 'ลบ'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
