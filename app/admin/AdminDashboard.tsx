@@ -457,25 +457,25 @@ export default function AdminDashboard() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
   })
   const [tcgBookingsLoading, setTcgBookingsLoading] = useState(false)
-  const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '' })
+  const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '', file_data: '', attached_file_name: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
   const [togglingAnnId, setTogglingAnnId] = useState<string | null>(null)
   const [annSubTab, setAnnSubTab] = useState<'general' | 'company' | 'dept' | 'rules'>('general')
   const [deptAnns, setDeptAnns] = useState<{ id: string; department: string; title: string; content: string; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingDeptAnns, setLoadingDeptAnns] = useState(false)
-  const [deptAnnForm, setDeptAnnForm] = useState({ department: '', title: '', content: '', created_by: 'HR' })
+  const [deptAnnForm, setDeptAnnForm] = useState({ department: '', title: '', content: '', created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingDeptAnn, setSubmittingDeptAnn] = useState(false)
   const [deletingDeptAnnId, setDeletingDeptAnnId] = useState<string | null>(null)
   const [togglingDeptAnnId, setTogglingDeptAnnId] = useState<string | null>(null)
   const [deptRules, setDeptRules] = useState<{ id: string; department: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingDeptRules, setLoadingDeptRules] = useState(false)
-  const [deptRuleForm, setDeptRuleForm] = useState({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR' })
+  const [deptRuleForm, setDeptRuleForm] = useState({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingDeptRule, setSubmittingDeptRule] = useState(false)
   const [deletingDeptRuleId, setDeletingDeptRuleId] = useState<string | null>(null)
   const [companyRules, setCompanyRules] = useState<{ id: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string }[]>([])
   const [loadingCompanyRules, setLoadingCompanyRules] = useState(false)
-  const [companyRuleForm, setCompanyRuleForm] = useState({ title: '', content: '', sort_order: 0, created_by: 'HR' })
+  const [companyRuleForm, setCompanyRuleForm] = useState({ title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingCompanyRule, setSubmittingCompanyRule] = useState(false)
   const [deletingCompanyRuleId, setDeletingCompanyRuleId] = useState<string | null>(null)
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
@@ -6228,9 +6228,9 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ (รูป / PDF / เอกสาร ไม่บังคับ)</label>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (PNG/JPG ไม่บังคับ)</label>
                       <input
-                        type="file"
+                        type="file" accept="image/*"
                         onChange={(e) => {
                           const file = e.target.files?.[0]
                           if (!file) return
@@ -6241,18 +6241,30 @@ export default function AdminDashboard() {
                         className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
                       />
                       {annForm.image_data && (
-                        annForm.file_name && !/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(annForm.file_name)
-                          ? (
-                            <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
-                              <span>📎 {annForm.file_name}</span>
-                              <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '', file_name: '' }))} className="ml-auto bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
-                            </div>
-                          ) : (
-                            <div className="mt-2 relative inline-block">
-                              <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
-                              <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '', file_name: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
-                            </div>
-                          )
+                        <div className="mt-2 relative inline-block">
+                          <img src={annForm.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                          <button onClick={() => setAnnForm((f) => ({ ...f, image_data: '', file_name: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                      <input
+                        type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          const reader = new FileReader()
+                          reader.onload = (ev) => setAnnForm((f) => ({ ...f, file_data: ev.target?.result as string || '', attached_file_name: file.name }))
+                          reader.readAsDataURL(file)
+                        }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]"
+                      />
+                      {annForm.file_data && (
+                        <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                          <span className="truncate flex-1">📎 {annForm.attached_file_name}</span>
+                          <button onClick={() => setAnnForm((f) => ({ ...f, file_data: '', attached_file_name: '' }))} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                        </div>
                       )}
                     </div>
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -6282,7 +6294,7 @@ export default function AdminDashboard() {
                               image_data: annForm.image_data, file_name: annForm.file_name, is_pinned: annForm.is_pinned ? 1 : 0,
                               is_active: 1, created_by: annForm.created_by, created_at: now,
                             }, ...prev])
-                            setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '' })
+                            setAnnForm({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '', file_data: '', attached_file_name: '' })
                           }
                         } catch { /* silent */ } finally {
                           setSubmittingAnn(false)
@@ -6412,6 +6424,32 @@ export default function AdminDashboard() {
                         className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
+                      <input type="file" accept="image/*"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setCompanyRuleForm((s) => ({ ...s, image_data: ev.target?.result as string || '', image_name: f.name })); r.readAsDataURL(f) }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
+                      />
+                      {companyRuleForm.image_data && (
+                        <div className="mt-2 relative inline-block">
+                          <img src={companyRuleForm.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                          <button onClick={() => setCompanyRuleForm((f) => ({ ...f, image_data: '', image_name: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                      <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setCompanyRuleForm((s) => ({ ...s, file_data: ev.target?.result as string || '', file_name: f.name })); r.readAsDataURL(f) }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]"
+                      />
+                      {companyRuleForm.file_data && (
+                        <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                          <span className="truncate flex-1">📎 {companyRuleForm.file_name}</span>
+                          <button onClick={() => setCompanyRuleForm((f) => ({ ...f, file_data: '', file_name: '' }))} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                        </div>
+                      )}
+                    </div>
                     <button
                       onClick={async () => {
                         if (!companyRuleForm.title.trim() || !companyRuleForm.content.trim()) return
@@ -6426,7 +6464,7 @@ export default function AdminDashboard() {
                             const data = await res.json()
                             const now = new Date().toISOString()
                             setCompanyRules((prev) => [...prev, { id: data.id, ...companyRuleForm, is_active: 1, created_at: now }].sort((a, b) => a.sort_order - b.sort_order))
-                            setCompanyRuleForm({ title: '', content: '', sort_order: 0, created_by: 'HR' })
+                            setCompanyRuleForm({ title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
                           }
                         } catch { /* silent */ } finally { setSubmittingCompanyRule(false) }
                       }}
@@ -6526,6 +6564,32 @@ export default function AdminDashboard() {
                         className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
+                      <input type="file" accept="image/*"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setDeptAnnForm((s) => ({ ...s, image_data: ev.target?.result as string || '', image_name: f.name })); r.readAsDataURL(f) }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
+                      />
+                      {deptAnnForm.image_data && (
+                        <div className="mt-2 relative inline-block">
+                          <img src={deptAnnForm.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                          <button onClick={() => setDeptAnnForm((f) => ({ ...f, image_data: '', image_name: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                      <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setDeptAnnForm((s) => ({ ...s, file_data: ev.target?.result as string || '', file_name: f.name })); r.readAsDataURL(f) }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]"
+                      />
+                      {deptAnnForm.file_data && (
+                        <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                          <span className="truncate flex-1">📎 {deptAnnForm.file_name}</span>
+                          <button onClick={() => setDeptAnnForm((f) => ({ ...f, file_data: '', file_name: '' }))} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                        </div>
+                      )}
+                    </div>
                     <button
                       onClick={async () => {
                         if (!deptAnnForm.department.trim() || !deptAnnForm.title.trim() || !deptAnnForm.content.trim()) return
@@ -6540,7 +6604,7 @@ export default function AdminDashboard() {
                             const data = await res.json()
                             const now = new Date().toISOString()
                             setDeptAnns((prev) => [{ id: data.id, ...deptAnnForm, is_active: 1, created_at: now }, ...prev])
-                            setDeptAnnForm({ department: '', title: '', content: '', created_by: 'HR' })
+                            setDeptAnnForm({ department: '', title: '', content: '', created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
                           }
                         } catch { /* silent */ } finally { setSubmittingDeptAnn(false) }
                       }}
@@ -6675,6 +6739,32 @@ export default function AdminDashboard() {
                         className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
+                      <input type="file" accept="image/*"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setDeptRuleForm((s) => ({ ...s, image_data: ev.target?.result as string || '', image_name: f.name })); r.readAsDataURL(f) }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
+                      />
+                      {deptRuleForm.image_data && (
+                        <div className="mt-2 relative inline-block">
+                          <img src={deptRuleForm.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                          <button onClick={() => setDeptRuleForm((f) => ({ ...f, image_data: '', image_name: '' }))} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                      <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setDeptRuleForm((s) => ({ ...s, file_data: ev.target?.result as string || '', file_name: f.name })); r.readAsDataURL(f) }}
+                        className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]"
+                      />
+                      {deptRuleForm.file_data && (
+                        <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                          <span className="truncate flex-1">📎 {deptRuleForm.file_name}</span>
+                          <button onClick={() => setDeptRuleForm((f) => ({ ...f, file_data: '', file_name: '' }))} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                        </div>
+                      )}
+                    </div>
                     <button
                       onClick={async () => {
                         if (!deptRuleForm.department.trim() || !deptRuleForm.title.trim() || !deptRuleForm.content.trim()) return
@@ -6689,7 +6779,7 @@ export default function AdminDashboard() {
                             const data = await res.json()
                             const now = new Date().toISOString()
                             setDeptRules((prev) => [...prev, { id: data.id, ...deptRuleForm, is_active: 1, created_at: now }].sort((a, b) => a.department.localeCompare(b.department, 'th') || a.sort_order - b.sort_order))
-                            setDeptRuleForm({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR' })
+                            setDeptRuleForm({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
                           }
                         } catch { /* silent */ } finally { setSubmittingDeptRule(false) }
                       }}

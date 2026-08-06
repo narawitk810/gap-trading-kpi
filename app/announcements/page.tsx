@@ -15,6 +15,8 @@ type Announcement = {
   content: string
   has_image: number
   file_name: string
+  has_file: number
+  attached_file_name: string
   is_pinned: number
   is_active: number
   created_by: string
@@ -26,6 +28,10 @@ type DeptAnn = {
   department: string
   title: string
   content: string
+  has_image: number
+  image_name: string
+  has_file: number
+  file_name: string
   created_by: string
   created_at: string
 }
@@ -36,6 +42,10 @@ type DeptRule = {
   title: string
   content: string
   sort_order: number
+  has_image: number
+  image_name: string
+  has_file: number
+  file_name: string
 }
 
 type StockItem = {
@@ -59,10 +69,6 @@ type PricingData = {
   break_enabled?: boolean
   no_pack_sale?: boolean
   commission_tier?: string
-}
-
-function isImageFileName(name: string) {
-  return !name || /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(name)
 }
 
 function formatDate(iso: string) {
@@ -341,28 +347,13 @@ export default function AnnouncementsPage() {
                     className={`bg-white rounded-2xl shadow-sm overflow-hidden ${ann.is_pinned ? 'border-l-4 border-[#1E3A5F]' : ''}`}
                   >
                     {ann.has_image ? (
-                      isImageFileName(ann.file_name) ? (
-                        <img
-                          src={`/api/announcements?image_id=${ann.id}`}
-                          alt="ประกาศ"
-                          loading="lazy"
-                          onClick={() => setImageModal(`/api/announcements?image_id=${ann.id}`)}
-                          className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                        />
-                      ) : (
-                        <div className="px-4 pt-4">
-                          <a
-                            href={`/api/announcements?image_id=${ann.id}`}
-                            download={ann.file_name}
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-2 px-4 py-3 bg-[#1E3A5F]/5 border border-[#E2E8F0] rounded-xl text-sm text-[#1E3A5F] font-semibold hover:bg-[#1E3A5F]/10 transition-colors"
-                          >
-                            <span className="text-base">📎</span>
-                            <span className="truncate flex-1">{ann.file_name}</span>
-                            <span className="text-xs text-gray-400 shrink-0">กดดาวน์โหลด</span>
-                          </a>
-                        </div>
-                      )
+                      <img
+                        src={`/api/announcements?image_id=${ann.id}`}
+                        alt="ประกาศ"
+                        loading="lazy"
+                        onClick={() => setImageModal(`/api/announcements?image_id=${ann.id}`)}
+                        className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      />
                     ) : null}
                     <div className="p-4">
                       <div className="flex items-start gap-2 mb-1.5">
@@ -370,6 +361,17 @@ export default function AnnouncementsPage() {
                         <p className="text-sm font-bold text-[#1E3A5F] leading-snug">{ann.title}</p>
                       </div>
                       <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">{ann.content}</p>
+                      {ann.has_file ? (
+                        <a
+                          href={`/api/announcements?file_id=${ann.id}`}
+                          download={ann.attached_file_name}
+                          className="mt-3 flex items-center gap-2 px-3 py-2.5 bg-[#1E3A5F]/5 border border-[#E2E8F0] rounded-xl text-sm text-[#1E3A5F] font-semibold hover:bg-[#1E3A5F]/10 transition-colors"
+                        >
+                          <span className="text-base">📎</span>
+                          <span className="truncate flex-1">{ann.attached_file_name}</span>
+                          <span className="text-xs text-gray-400 shrink-0">ดาวน์โหลด</span>
+                        </a>
+                      ) : null}
                       <p className="text-[11px] text-gray-400 mt-2.5 flex items-center gap-1">
                         <span>📅 {formatDate(ann.created_at)}</span>
                         <span className="text-gray-300">·</span>
@@ -404,9 +406,29 @@ export default function AnnouncementsPage() {
                       <div className="shrink-0 w-6 h-6 rounded-full bg-[#1E3A5F] text-white text-xs font-bold flex items-center justify-center mt-0.5">
                         {idx + 1}
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-[#1E3A5F] leading-snug mb-1">{rule.title}</p>
                         <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">{rule.content}</p>
+                        {rule.has_image ? (
+                          <img
+                            src={`/api/dept-rules?image_id=${rule.id}`}
+                            alt="ไฟล์แนบรูป"
+                            loading="lazy"
+                            onClick={() => setImageModal(`/api/dept-rules?image_id=${rule.id}`)}
+                            className="mt-2 max-h-40 rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          />
+                        ) : null}
+                        {rule.has_file ? (
+                          <a
+                            href={`/api/dept-rules?file_id=${rule.id}`}
+                            download={rule.file_name}
+                            className="mt-2 flex items-center gap-2 px-3 py-2 bg-[#1E3A5F]/5 border border-[#E2E8F0] rounded-xl text-sm text-[#1E3A5F] font-semibold hover:bg-[#1E3A5F]/10 transition-colors"
+                          >
+                            <span>📎</span>
+                            <span className="truncate flex-1">{rule.file_name}</span>
+                            <span className="text-xs text-gray-400 shrink-0">ดาวน์โหลด</span>
+                          </a>
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -430,9 +452,29 @@ export default function AnnouncementsPage() {
               <div className="space-y-3">
                 {deptAnnouncements.map((ann) => (
                   <div key={ann.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    {ann.has_image ? (
+                      <img
+                        src={`/api/dept-announcements?image_id=${ann.id}`}
+                        alt="ประกาศแผนก"
+                        loading="lazy"
+                        onClick={() => setImageModal(`/api/dept-announcements?image_id=${ann.id}`)}
+                        className="w-full max-h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                    ) : null}
                     <div className="p-4">
                       <p className="text-sm font-bold text-[#1E3A5F] leading-snug mb-1.5">{ann.title}</p>
                       <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">{ann.content}</p>
+                      {ann.has_file ? (
+                        <a
+                          href={`/api/dept-announcements?file_id=${ann.id}`}
+                          download={ann.file_name}
+                          className="mt-3 flex items-center gap-2 px-3 py-2.5 bg-[#1E3A5F]/5 border border-[#E2E8F0] rounded-xl text-sm text-[#1E3A5F] font-semibold hover:bg-[#1E3A5F]/10 transition-colors"
+                        >
+                          <span className="text-base">📎</span>
+                          <span className="truncate flex-1">{ann.file_name}</span>
+                          <span className="text-xs text-gray-400 shrink-0">ดาวน์โหลด</span>
+                        </a>
+                      ) : null}
                       <p className="text-[11px] text-gray-400 mt-2.5 flex items-center gap-1">
                         <span>📅 {formatDate(ann.created_at)}</span>
                         <span className="text-gray-300">·</span>
@@ -467,9 +509,29 @@ export default function AnnouncementsPage() {
                       <div className="shrink-0 w-6 h-6 rounded-full bg-[#1E3A5F] text-white text-xs font-bold flex items-center justify-center mt-0.5">
                         {idx + 1}
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-[#1E3A5F] leading-snug mb-1">{rule.title}</p>
                         <p className="text-sm text-[#374151] leading-relaxed whitespace-pre-wrap">{rule.content}</p>
+                        {rule.has_image ? (
+                          <img
+                            src={`/api/dept-rules?image_id=${rule.id}`}
+                            alt="ไฟล์แนบรูป"
+                            loading="lazy"
+                            onClick={() => setImageModal(`/api/dept-rules?image_id=${rule.id}`)}
+                            className="mt-2 max-h-40 rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          />
+                        ) : null}
+                        {rule.has_file ? (
+                          <a
+                            href={`/api/dept-rules?file_id=${rule.id}`}
+                            download={rule.file_name}
+                            className="mt-2 flex items-center gap-2 px-3 py-2 bg-[#1E3A5F]/5 border border-[#E2E8F0] rounded-xl text-sm text-[#1E3A5F] font-semibold hover:bg-[#1E3A5F]/10 transition-colors"
+                          >
+                            <span>📎</span>
+                            <span className="truncate flex-1">{rule.file_name}</span>
+                            <span className="text-xs text-gray-400 shrink-0">ดาวน์โหลด</span>
+                          </a>
+                        ) : null}
                       </div>
                     </div>
                   ))}

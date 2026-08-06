@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 38
+const SCHEMA_VERSION = 39
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -374,6 +374,19 @@ export async function ensureSchema(): Promise<void> {
   try {
     await db.execute(`ALTER TABLE vip_customers ADD COLUMN promo_deductions TEXT NOT NULL DEFAULT '[]'`)
   } catch { /* column already exists */ }
+  // announcements: separate image vs file slots
+  try { await db.execute(`ALTER TABLE announcements ADD COLUMN file_data TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE announcements ADD COLUMN attached_file_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  // dept_announcements: add image + file attachment support
+  try { await db.execute(`ALTER TABLE dept_announcements ADD COLUMN image_data TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE dept_announcements ADD COLUMN image_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE dept_announcements ADD COLUMN file_data TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE dept_announcements ADD COLUMN file_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  // dept_rules: add image + file attachment support
+  try { await db.execute(`ALTER TABLE dept_rules ADD COLUMN image_data TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE dept_rules ADD COLUMN image_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE dept_rules ADD COLUMN file_data TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE dept_rules ADD COLUMN file_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   {
     const now = new Date().toISOString()
