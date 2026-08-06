@@ -6,7 +6,7 @@ import Link from 'next/link'
 const NAV_ITEMS = [
   { label: 'หน้าหลัก', icon: '🏠', badge: 0, active: true, href: '/hr-system' },
   { label: 'เอกสาร HR', icon: '📁', badge: 0, active: false, href: '#' },
-  { label: 'เอกสารพนักงาน', icon: '👤', badge: 0, active: false, href: '/hr-system/employee-documents' },
+  { label: 'ปรับเงินเดือน', icon: '👤', badge: 0, active: false, href: '/hr-system/employee-documents' },
   { label: 'ศูนย์อบรม (Training)', icon: '🎓', badge: 0, active: false, href: '#' },
   { label: 'นโยบายและระเบียบ', icon: '🛡️', badge: 0, active: false, href: '#' },
   { label: 'แบบฟอร์ม', icon: '📝', badge: 0, active: false, href: '#' },
