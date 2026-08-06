@@ -51,6 +51,9 @@ export default function HrDocumentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'folder' | 'file'; id: string; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Search
+  const [search, setSearch] = useState('')
+
   // Upload progress
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number; skipped: string[] } | null>(null)
 
@@ -73,9 +76,19 @@ export default function HrDocumentsPage() {
 
   useEffect(() => { fetchFolders() }, [fetchFolders])
 
+  const filteredFolders = folders.filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
+  const filteredFiles = files.filter(f => f.name.toLowerCase().includes(search.toLowerCase()))
+
   async function openFolder(folder: Folder) {
     setSelectedFolder(folder)
+    setSearch('')
     fetchFiles(folder.id)
+  }
+
+  function backToFolders() {
+    setSelectedFolder(null)
+    setFiles([])
+    setSearch('')
   }
 
   // --- Create folder ---
@@ -228,7 +241,7 @@ export default function HrDocumentsPage() {
           <div className="flex-1 min-w-0">
             {selectedFolder ? (
               <div>
-                <button onClick={() => setSelectedFolder(null)} className="text-[11px] text-blue-200 hover:text-white">
+                <button onClick={backToFolders} className="text-[11px] text-blue-200 hover:text-white">
                   เอกสาร HR
                 </button>
                 <span className="text-[11px] text-blue-300 mx-1">›</span>
@@ -278,6 +291,26 @@ export default function HrDocumentsPage() {
 
       <div className="p-4 max-w-2xl mx-auto">
 
+        {/* Search bar */}
+        <div className="relative mb-4">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={selectedFolder ? 'ค้นหาชื่อไฟล์...' : 'ค้นหาโฟลเดอร์...'}
+            className="w-full pl-9 pr-9 py-2.5 border border-[#E2E8F0] rounded-xl text-sm bg-white text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#374151] text-sm"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
         {/* FOLDER LIST VIEW */}
         {!selectedFolder && (
           <>
@@ -289,9 +322,14 @@ export default function HrDocumentsPage() {
                 <p className="font-semibold text-[#374151]">ยังไม่มีโฟลเดอร์</p>
                 <p className="text-sm text-gray-400 mt-1">กด "สร้างโฟลเดอร์" หรือ "อัปโหลด" เพื่อเริ่มต้น</p>
               </div>
+            ) : filteredFolders.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-5xl mb-4">🔍</p>
+                <p className="font-semibold text-[#374151]">ไม่พบโฟลเดอร์ที่ตรงกับ "{search}"</p>
+              </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 mt-2">
-                {folders.map((f) => (
+                {filteredFolders.map((f) => (
                   <div
                     key={f.id}
                     className="bg-white rounded-xl border border-[#E2E8F0] p-4 cursor-pointer hover:border-[#1E3A5F] hover:shadow-sm transition-all group"
@@ -320,14 +358,14 @@ export default function HrDocumentsPage() {
           <div className="mt-2 space-y-2">
             {filesLoading ? (
               <div className="text-center py-12 text-[#374151]">กำลังโหลด...</div>
-            ) : files.length === 0 ? (
+            ) : filteredFiles.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-4xl mb-3">📂</p>
-                <p className="text-[#374151]">โฟลเดอร์นี้ยังไม่มีไฟล์</p>
-                <p className="text-sm text-gray-400 mt-1">กด "เพิ่มไฟล์" เพื่ออัปโหลด</p>
+                <p className="text-4xl mb-3">{search ? '🔍' : '📂'}</p>
+                <p className="text-[#374151]">{search ? `ไม่พบไฟล์ที่ตรงกับ "${search}"` : 'โฟลเดอร์นี้ยังไม่มีไฟล์'}</p>
+                {!search && <p className="text-sm text-gray-400 mt-1">กด "เพิ่มไฟล์" เพื่ออัปโหลด</p>}
               </div>
             ) : (
-              files.map((file) => (
+              filteredFiles.map((file) => (
                 <div key={file.id} className="bg-white rounded-xl border border-[#E2E8F0] px-4 py-3 flex items-center gap-3">
                   <span className="text-2xl shrink-0">{fileIcon(file.name)}</span>
                   <div className="flex-1 min-w-0">
