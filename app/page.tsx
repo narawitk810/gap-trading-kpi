@@ -91,6 +91,7 @@ interface LiveStaffMember {
   rank_emoji: string
   rank_order: number
   is_head?: number
+  badge_emoji?: string
 }
 
 function ConfirmRow({ label, value }: { label: string; value: string }) {
@@ -992,7 +993,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1047,7 +1048,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1102,7 +1103,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1157,7 +1158,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1212,7 +1213,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1267,7 +1268,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1322,7 +1323,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1377,7 +1378,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1432,7 +1433,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1487,7 +1488,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1542,7 +1543,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
@@ -1597,7 +1598,7 @@ export default function Home() {
                                   : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
                               }`}
                             >
-                              {formData.nickname === m.name ? `✓ ${m.is_head ? '⚜️ ' : ''}${m.name}` : `${m.is_head ? '⚜️ ' : ''}${m.name}`}
+                              {`${formData.nickname === m.name ? '✓ ' : ''}${m.is_head ? '⚜️ ' : ''}${m.name}${m.badge_emoji ? ' ' + m.badge_emoji : ''}`}
                             </button>
                           ))}
                         </div>
