@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { label: 'เอกสาร HR', icon: '📁', badge: 0, active: false, href: '/hr-system/documents' },
   { label: 'ปรับเงินเดือน', icon: '👤', badge: 0, active: false, href: '/hr-system/employee-documents' },
   { label: 'ศูนย์อบรม (Training)', icon: '🎓', badge: 0, active: false, href: '/hr-system/training' },
-  { label: 'นโยบายและระเบียบ', icon: '🛡️', badge: 0, active: false, href: '#' },
+  { label: 'เติมเบอร์มือถือ', icon: '📱', badge: 0, active: false, href: '/hr-system/phones' },
   { label: 'แบบฟอร์ม', icon: '📝', badge: 0, active: false, href: '#' },
   { label: 'ประกาศข่าวสาร', icon: '📢', badge: 3, active: false, href: '#' },
   { label: 'รายงาน', icon: '📊', badge: 0, active: false, href: '#' },

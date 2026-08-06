@@ -680,6 +680,18 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_disbursements_dept ON disbursements(department, created_at)`) } catch { /* exists */ }
 
   await db.execute(`
+    CREATE TABLE IF NOT EXISTS phone_numbers (
+      id          TEXT PRIMARY KEY,
+      name        TEXT NOT NULL,
+      phone       TEXT NOT NULL,
+      provider    TEXT NOT NULL DEFAULT '',
+      expire_date TEXT NOT NULL,
+      note        TEXT NOT NULL DEFAULT '',
+      created_at  TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS training_videos (
       id          TEXT PRIMARY KEY,
       title       TEXT NOT NULL,
