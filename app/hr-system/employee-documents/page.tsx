@@ -30,7 +30,7 @@ function getCountdownColor(days_until_180: number | null) {
 
 function getCountdownText(days_worked: number | null, days_until_180: number | null) {
   if (days_until_180 === null) return 'ยังไม่ได้ตั้งค่าวันเริ่มงาน'
-  if (days_until_180 <= 0) return '✅ ครบทดลองงานแล้ว'
+  if (days_until_180 <= 0) return '🔔 ถึงเวลาประเมิน & ปรับเงินเดือน'
   if (days_until_180 <= 30) return `⚠️ เหลืออีก ${days_until_180} วัน`
   return `เหลืออีก ${days_until_180} วัน`
 }
@@ -92,7 +92,7 @@ export default function EmployeeDocumentsPage() {
         </Link>
         <div>
           <h1 className="text-base font-bold leading-tight">เอกสารพนักงาน</h1>
-          <p className="text-[11px] text-blue-200">ติดตามวันเริ่มงาน &amp; ทดลองงาน 180 วัน</p>
+          <p className="text-[11px] text-blue-200">ติดตามวันเริ่มงาน &amp; กำหนดปรับเงินเดือน</p>
         </div>
         <div className="ml-auto text-[11px] text-blue-200">{employees.length} คน</div>
       </header>
@@ -120,7 +120,7 @@ export default function EmployeeDocumentsPage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'ทั้งหมด', value: employees.length, color: '#1E3A5F' },
-            { label: 'ครบ 180 วัน', value: employees.filter(e => (e.days_until_180 ?? 1) <= 0).length, color: '#16A34A' },
+            { label: 'ถึงเวลาปรับเงินเดือน', value: employees.filter(e => (e.days_until_180 ?? 1) <= 0).length, color: '#16A34A' },
             { label: 'ใกล้ครบ (≤30 วัน)', value: employees.filter(e => e.days_until_180 !== null && e.days_until_180 > 0 && e.days_until_180 <= 30).length, color: '#DC2626' },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-xl p-3 border border-[#E2E8F0] text-center">
@@ -152,7 +152,7 @@ export default function EmployeeDocumentsPage() {
                     </div>
                     {emp.days_until_180 !== null && emp.days_until_180 <= 0 && (
                       <span className="shrink-0 text-[11px] font-semibold text-[#16A34A] bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-                        ผ่านทดลองงาน
+                        ถึงเวลาประเมิน &amp; ปรับเงินเดือน
                       </span>
                     )}
                   </div>
@@ -176,7 +176,7 @@ export default function EmployeeDocumentsPage() {
                   {/* Row 3: Progress bar */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <p className="text-[11px] text-gray-400">ความคืบหน้าทดลองงาน (180 วัน)</p>
+                      <p className="text-[11px] text-gray-400">นับถอยหลังปรับเงินเดือน (180 วัน)</p>
                       <p className="text-[11px] font-semibold" style={{ color }}>
                         {getCountdownText(emp.days_worked, emp.days_until_180)}
                       </p>
