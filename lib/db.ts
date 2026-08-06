@@ -370,6 +370,7 @@ export async function ensureSchema(): Promise<void> {
   try {
     await db.execute(`ALTER TABLE live_staff ADD COLUMN badge_emoji TEXT NOT NULL DEFAULT ''`)
   } catch { /* column already exists */ }
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_live_staff_dept ON live_staff(department, rank_order)`)
 
   {
     const now = new Date().toISOString()

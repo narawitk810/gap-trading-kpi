@@ -90,6 +90,7 @@ interface LiveStaffMember {
   rank_name: string
   rank_emoji: string
   rank_order: number
+  department?: string
   is_head?: number
   badge_emoji?: string
 }
@@ -398,133 +399,65 @@ export default function Home() {
   const removeSmActivity = (i: number) => setSmActivities(prev => prev.filter((_, idx) => idx !== i))
   const updateSmActivity = (i: number, field: 'activityName' | 'eventDate' | 'startTime' | 'facebookUrl', value: string) => setSmActivities(prev => prev.map((a, idx) => idx === i ? { ...a, [field]: value } : a))
   useEffect(() => {
-    if (formData.department !== 'ไลฟ์สด') return
-    setPickerOpen(!formData.nickname)
-    fetch('/api/live-staff?department=ไลฟ์สด')
-      .then((r) => r.json())
-      .then((d) => setLiveStaff(d.staff || []))
-      .catch(() => {})
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'Creative') return
-    setCreativePickerOpen(!formData.nickname)
     setLoadingCreative(true)
-    fetch('/api/live-staff?department=Creative')
-      .then((r) => r.json())
-      .then((d) => setCreativeStaff(d.staff || []))
-      .catch(() => setCreativeStaff([]))
-      .finally(() => setLoadingCreative(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'การตลาด') return
-    setMarketingPickerOpen(!formData.nickname)
     setLoadingMarketing(true)
-    fetch('/api/live-staff?department=การตลาด')
-      .then((r) => r.json())
-      .then((d) => setMarketingStaff(d.staff || []))
-      .catch(() => setMarketingStaff([]))
-      .finally(() => setLoadingMarketing(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'Sales Admin') return
-    setSaleAdminPickerOpen(!formData.nickname)
     setLoadingSaleAdmin(true)
-    fetch('/api/live-staff?department=Sales Admin')
-      .then((r) => r.json())
-      .then((d) => setSaleAdminStaff(d.staff || []))
-      .catch(() => setSaleAdminStaff([]))
-      .finally(() => setLoadingSaleAdmin(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'Store Retail') return
-    setStoreRetailPickerOpen(!formData.nickname)
     setLoadingStoreRetail(true)
-    fetch('/api/live-staff?department=Store Retail')
-      .then((r) => r.json())
-      .then((d) => setStoreRetailStaff(d.staff || []))
-      .catch(() => setStoreRetailStaff([]))
-      .finally(() => setLoadingStoreRetail(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'สต๊อค&จัดซื้อ') return
-    setStockPurchasingPickerOpen(!formData.nickname)
     setLoadingStockPurchasing(true)
-    fetch('/api/live-staff?department=' + encodeURIComponent('สต๊อค&จัดซื้อ'))
-      .then((r) => r.json())
-      .then((d) => setStockPurchasingStaff(d.staff || []))
-      .catch(() => setStockPurchasingStaff([]))
-      .finally(() => setLoadingStockPurchasing(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'แพค') return
-    setPackPickerOpen(!formData.nickname)
     setLoadingPack(true)
-    fetch('/api/live-staff?department=แพค')
-      .then((r) => r.json())
-      .then((d) => setPackStaff(d.staff || []))
-      .catch(() => setPackStaff([]))
-      .finally(() => setLoadingPack(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'บัญชี&การเงิน') return
-    setAccountingPickerOpen(!formData.nickname)
     setLoadingAccounting(true)
-    fetch('/api/live-staff?department=' + encodeURIComponent('บัญชี&การเงิน'))
-      .then((r) => r.json())
-      .then((d) => setAccountingStaff(d.staff || []))
-      .catch(() => setAccountingStaff([]))
-      .finally(() => setLoadingAccounting(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'ธุรการ') return
-    setAdministrationPickerOpen(!formData.nickname)
     setLoadingAdministration(true)
-    fetch('/api/live-staff?department=ธุรการ')
-      .then((r) => r.json())
-      .then((d) => setAdministrationStaff(d.staff || []))
-      .catch(() => setAdministrationStaff([]))
-      .finally(() => setLoadingAdministration(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'บุคคล') return
-    setHrPickerOpen(!formData.nickname)
     setLoadingHr(true)
-    fetch('/api/live-staff?department=บุคคล')
-      .then((r) => r.json())
-      .then((d) => setHrStaff(d.staff || []))
-      .catch(() => setHrStaff([]))
-      .finally(() => setLoadingHr(false))
-  }, [formData.department])
-
-  useEffect(() => {
-    if (formData.department !== 'ผู้จัดการไลฟ์สด') return
-    setLiveManagerPickerOpen(!formData.nickname)
     setLoadingLiveManager(true)
-    fetch('/api/live-staff?department=' + encodeURIComponent('ผู้จัดการไลฟ์สด'))
+    setLoadingStoreManager(true)
+    fetch('/api/live-staff')
       .then((r) => r.json())
-      .then((d) => setLiveManagerStaff(d.staff || []))
-      .catch(() => setLiveManagerStaff([]))
-      .finally(() => setLoadingLiveManager(false))
-  }, [formData.department])
+      .then((d) => {
+        const all: LiveStaffMember[] = d.staff || []
+        setLiveStaff(all.filter((s) => s.department === 'ไลฟ์สด'))
+        setCreativeStaff(all.filter((s) => s.department === 'Creative'))
+        setMarketingStaff(all.filter((s) => s.department === 'การตลาด'))
+        setSaleAdminStaff(all.filter((s) => s.department === 'Sales Admin'))
+        setStoreRetailStaff(all.filter((s) => s.department === 'Store Retail'))
+        setStockPurchasingStaff(all.filter((s) => s.department === 'สต๊อค&จัดซื้อ'))
+        setPackStaff(all.filter((s) => s.department === 'แพค'))
+        setAccountingStaff(all.filter((s) => s.department === 'บัญชี&การเงิน'))
+        setAdministrationStaff(all.filter((s) => s.department === 'ธุรการ'))
+        setHrStaff(all.filter((s) => s.department === 'บุคคล'))
+        setLiveManagerStaff(all.filter((s) => s.department === 'ผู้จัดการไลฟ์สด'))
+        setStoreManagerStaff(all.filter((s) => s.department === 'ผู้จัดการหน้าร้าน'))
+      })
+      .catch(() => {})
+      .finally(() => {
+        setLoadingCreative(false)
+        setLoadingMarketing(false)
+        setLoadingSaleAdmin(false)
+        setLoadingStoreRetail(false)
+        setLoadingStockPurchasing(false)
+        setLoadingPack(false)
+        setLoadingAccounting(false)
+        setLoadingAdministration(false)
+        setLoadingHr(false)
+        setLoadingLiveManager(false)
+        setLoadingStoreManager(false)
+      })
+  }, [])
 
   useEffect(() => {
-    if (formData.department !== 'ผู้จัดการหน้าร้าน') return
-    setStoreManagerPickerOpen(!formData.nickname)
-    setLoadingStoreManager(true)
-    fetch('/api/live-staff?department=' + encodeURIComponent('ผู้จัดการหน้าร้าน'))
-      .then((r) => r.json())
-      .then((d) => setStoreManagerStaff(d.staff || []))
-      .catch(() => setStoreManagerStaff([]))
-      .finally(() => setLoadingStoreManager(false))
+    if (!formData.department) return
+    const open = !formData.nickname
+    setPickerOpen(open)
+    setCreativePickerOpen(open)
+    setMarketingPickerOpen(open)
+    setSaleAdminPickerOpen(open)
+    setStoreRetailPickerOpen(open)
+    setStockPurchasingPickerOpen(open)
+    setPackPickerOpen(open)
+    setAccountingPickerOpen(open)
+    setAdministrationPickerOpen(open)
+    setHrPickerOpen(open)
+    setLiveManagerPickerOpen(open)
+    setStoreManagerPickerOpen(open)
   }, [formData.department])
 
   useEffect(() => {
