@@ -147,7 +147,10 @@ type LiveStaffMember = {
   rank_emoji: string
   rank_order: number
   is_head?: number
+  badge_emoji?: string
 }
+
+const BADGE_PRESETS = ['🚀', '🌟', '💪', '🏆', '⭐', '🔥', '👑', '🎯', '💯', '✨']
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)
@@ -631,6 +634,7 @@ export default function AdminDashboard() {
   const [addStoreManagerStaffError, setAddStoreManagerStaffError] = useState('')
   const [savingHeadId, setSavingHeadId] = useState<string | null>(null)
   const [deletingStaffId, setDeletingStaffId] = useState<string | null>(null)
+  const [badgePickerId, setBadgePickerId] = useState<string | null>(null)
   const [rankUnlocked, setRankUnlocked] = useState(() => {
     if (typeof window === 'undefined') return false
     const expiry = localStorage.getItem('rankUnlockedExpiry')
@@ -770,6 +774,25 @@ export default function AdminDashboard() {
     } else {
       setRankCodeError('รหัสไม่ถูกต้อง — กรุณาลองอีกครั้ง')
     }
+  }
+
+  async function handleSetBadge(id: string, emoji: string) {
+    await fetch('/api/hr/employee-badge', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, badge_emoji: emoji }),
+    })
+    const setterMap: Record<string, React.Dispatch<React.SetStateAction<LiveStaffMember[]>>> = {
+      'ไลฟ์สด': setLiveStaff, 'Creative': setCreativeStaff, 'การตลาด': setMarketingStaff,
+      'Sales Admin': setSaleAdminStaff, 'Store Retail': setStoreRetailStaff,
+      'สต๊อค&จัดซื้อ': setStockPurchasingStaff, 'แพค': setPackStaff,
+      'บัญชี&การเงิน': setAccountingStaff, 'ธุรการ': setAdministrationStaff,
+      'บุคคล': setHrStaff, 'ผู้จัดการไลฟ์สด': setLiveManagerStaff,
+      'ผู้จัดการหน้าร้าน': setStoreManagerStaff,
+    }
+    const setter = setterMap[adjustRankDept]
+    if (setter) setter((prev) => prev.map((x) => x.id === id ? { ...x, badge_emoji: emoji } : x))
+    setBadgePickerId(null)
   }
 
   function handleLockRank() {
@@ -3422,6 +3445,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -3469,6 +3493,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Live Sales|💎">💎 Legend Live Sales</option>
                             <option value="8|Grandmaster Live Sales|👑">👑 Grandmaster Live Sales</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -3584,6 +3631,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -3631,6 +3679,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Stock & Purchasing|💎">💎 Legend Stock &amp; Purchasing</option>
                             <option value="8|Grandmaster Stock & Purchasing|👑">👑 Grandmaster Stock &amp; Purchasing</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -3746,6 +3817,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -3793,6 +3865,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Fulfillment|💎">💎 Legend Fulfillment</option>
                             <option value="8|Grandmaster Fulfillment|👑">👑 Grandmaster Fulfillment</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -3905,6 +4000,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -3949,6 +4045,29 @@ export default function AdminDashboard() {
                             <option value="4|Finance Manager|🏢">🏢 Finance Manager</option>
                             <option value="5|Finance Director|🌐">🌐 Finance Director</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -4062,6 +4181,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -4107,6 +4227,29 @@ export default function AdminDashboard() {
                             <option value="5|Senior Administration Manager|🌐">🌐 Senior Administration Manager</option>
                             <option value="6|Administration Director|🏛️">🏛️ Administration Director</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -4219,6 +4362,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -4263,6 +4407,29 @@ export default function AdminDashboard() {
                             <option value="4|Senior HR Manager|💼">💼 Senior HR Manager</option>
                             <option value="5|HR Director|👑">👑 HR Director</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -4377,6 +4544,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -4423,6 +4591,29 @@ export default function AdminDashboard() {
                             <option value="6|Head of Live|🌐">🌐 Head of Live</option>
                             <option value="7|Director of Live Commerce|🏛️">🏛️ Director of Live Commerce</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -4537,6 +4728,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -4584,6 +4776,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Store Manager|💎">💎 Legend Store Manager</option>
                             <option value="8|Grandmaster Store Manager|👑">👑 Grandmaster Store Manager</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -4699,6 +4914,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -4746,6 +4962,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Store Retail|💎">💎 Legend Store Retail</option>
                             <option value="8|Grandmaster Store Retail|👑">👑 Grandmaster Store Retail</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -4861,6 +5100,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -4908,6 +5148,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Sales Admin|💎">💎 Legend Sales Admin</option>
                             <option value="8|Grandmaster Sales Admin|👑">👑 Grandmaster Sales Admin</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -5023,6 +5286,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -5070,6 +5334,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Marketing|💎">💎 Legend Marketing</option>
                             <option value="8|Grandmaster Marketing|👑">👑 Grandmaster Marketing</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button
@@ -5185,6 +5472,7 @@ export default function AdminDashboard() {
                       <th className="text-left px-5 py-3 font-semibold">ชื่อ</th>
                       <th className="text-left px-5 py-3 font-semibold">ยศปัจจุบัน</th>
                       <th className="text-left px-5 py-3 font-semibold">เปลี่ยนยศ</th>
+                      <th className="text-left px-5 py-3 font-semibold">Badge</th>
                       <th className="px-5 py-3"></th>
                     </tr>
                   </thead>
@@ -5232,6 +5520,29 @@ export default function AdminDashboard() {
                             <option value="7|Legend Creative|💎">💎 Legend Creative</option>
                             <option value="8|Grandmaster Creative|👑">👑 Grandmaster Creative</option>
                           </select>
+                        </td>
+                        <td className="px-5 py-3 relative">
+                          <button
+                            onClick={() => setBadgePickerId(badgePickerId === s.id ? null : s.id)}
+                            className="w-8 h-8 rounded-lg border border-[#E2E8F0] text-base flex items-center justify-center hover:bg-[#F5F6F8] transition-colors"
+                            title="ตั้ง Badge"
+                          >{s.badge_emoji || '—'}</button>
+                          {badgePickerId === s.id && (
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                {BADGE_PRESETS.map((e) => (
+                                  <button key={e} onClick={() => handleSetBadge(s.id, e)}
+                                    className={`w-8 h-8 rounded-lg text-base flex items-center justify-center hover:bg-blue-50 ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
+                                  >{e}</button>
+                                ))}
+                              </div>
+                              {s.badge_emoji && (
+                                <button onClick={() => handleSetBadge(s.id, '')}
+                                  className="mt-1 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
+                                >ลบ badge</button>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-3 text-right w-32">
                           <button

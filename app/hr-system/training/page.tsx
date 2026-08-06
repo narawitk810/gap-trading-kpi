@@ -40,10 +40,6 @@ export default function TrainingPage() {
   const [staffList, setStaffList] = useState<StaffRow[]>([])
   const [selectedName, setSelectedName] = useState('')
 
-  // Admin: badge management
-  const [badgeDept, setBadgeDept] = useState('')
-  const [badgeStaff, setBadgeStaff] = useState<StaffRow[]>([])
-  const [badgePicker, setBadgePicker] = useState<string | null>(null)
 
   // Player modal
   const [playingVideo, setPlayingVideo] = useState<Video | null>(null)
@@ -121,23 +117,6 @@ export default function TrainingPage() {
     setNameModalOpen(true)
   }
 
-  // ─── Admin: badge management ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!badgeDept) return
-    fetch(`/api/hr/employee-badge?department=${encodeURIComponent(badgeDept)}`)
-      .then((r) => r.json())
-      .then((d) => setBadgeStaff(d as StaffRow[]))
-  }, [badgeDept])
-
-  async function handleSetBadge(id: string, emoji: string) {
-    await fetch('/api/hr/employee-badge', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, badge_emoji: emoji }),
-    })
-    setBadgeStaff((prev) => prev.map((s) => s.id === id ? { ...s, badge_emoji: emoji } : s))
-    setBadgePicker(null)
-  }
 
   // ─── YouTube IFrame API ──────────────────────────────────────────────────
   function loadYTScript(onReady: () => void) {
@@ -444,65 +423,6 @@ export default function TrainingPage() {
               </div>
             )}
 
-            {/* Badge management card */}
-            <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 space-y-3">
-              <p className="font-bold text-[#1E3A5F]">🏅 Badge พนักงาน</p>
-              <p className="text-xs text-gray-500">ตั้ง emoji ให้พนักงานที่ทำผลงานดี — แสดงตอนเลือกชื่อในหน้านี้</p>
-              <select
-                value={badgeDept}
-                onChange={(e) => { setBadgeDept(e.target.value); setBadgePicker(null) }}
-                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
-              >
-                <option value="">-- เลือกแผนก --</option>
-                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-              {badgeDept && badgeStaff.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {badgeStaff.map((s) => (
-                    <div key={s.id} className="relative">
-                      <button
-                        onClick={() => setBadgePicker(badgePicker === s.id ? null : s.id)}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
-                          badgePicker === s.id
-                            ? 'border-[#1E3A5F] bg-blue-50 text-[#1E3A5F]'
-                            : 'border-[#E2E8F0] bg-white text-[#374151] hover:border-[#1E3A5F]'
-                        }`}
-                      >
-                        {s.badge_emoji && <span>{s.badge_emoji}</span>}
-                        <span>{s.name}</span>
-                      </button>
-                      {/* Emoji picker dropdown */}
-                      {badgePicker === s.id && (
-                        <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-[#E2E8F0] rounded-xl shadow-lg p-2 w-max">
-                          <div className="flex flex-wrap gap-1 max-w-[180px]">
-                            {BADGE_PRESETS.map((e) => (
-                              <button
-                                key={e}
-                                onClick={() => handleSetBadge(s.id, e)}
-                                className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center hover:bg-blue-50 transition-colors ${s.badge_emoji === e ? 'bg-blue-100 ring-1 ring-[#1E3A5F]' : ''}`}
-                              >
-                                {e}
-                              </button>
-                            ))}
-                          </div>
-                          {s.badge_emoji && (
-                            <button
-                              onClick={() => handleSetBadge(s.id, '')}
-                              className="mt-1.5 w-full text-[11px] text-[#DC2626] hover:bg-red-50 rounded-lg py-1 font-medium"
-                            >
-                              ลบ badge
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {badgeDept && badgeStaff.length === 0 && (
-                <p className="text-xs text-gray-400">ไม่พบพนักงานในแผนกนี้</p>
-              )}
-            </div>
           </>
         )}
       </div>
