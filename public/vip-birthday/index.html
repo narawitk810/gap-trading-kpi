@@ -246,6 +246,28 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
 .btn-purchase-cancel { background: var(--bg); color: var(--text-muted); }
 .btn-purchase-save { background: var(--purple); color: #fff; }
 .btn-purchase-save:active, .btn-purchase-cancel:active { opacity: 0.8; }
+
+/* ── Promo Deduction ── */
+.promo-deduct-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.promo-deduct-list { display:flex; flex-direction:column; gap:6px; }
+.promo-deduct-row { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 10px; }
+.promo-deduct-date { font-size:12px; color:var(--text-muted); flex:1; }
+.promo-deduct-amount { font-size:14px; font-weight:600; color:var(--red); }
+.promo-deduct-del { width:24px; height:24px; border-radius:50%; background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.promo-deduct-del:active { background:var(--red-light); color:var(--red); }
+.btn-add-deduct { font-size:12px; font-weight:600; color:var(--purple); background:var(--purple-light); border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-family:'Sarabun',sans-serif; }
+.btn-add-deduct:active { opacity:0.7; }
+.year-summary { margin-top:12px; padding:10px 14px; background:var(--purple-light); border-radius:var(--radius-sm); display:flex; flex-direction:column; gap:4px; }
+.year-summary-row { display:flex; justify-content:space-between; align-items:center; }
+.year-summary-label { font-size:13px; color:var(--purple); }
+.year-summary-val { font-size:14px; font-weight:600; color:var(--purple-dark); }
+.year-summary-row.deduct .year-summary-label { color:var(--red); }
+.year-summary-row.deduct .year-summary-val { color:var(--red); }
+.year-summary-divider { border:none; border-top:1px solid rgba(83,74,183,0.2); margin:2px 0; }
+.year-summary-row.net .year-summary-label { font-size:14px; font-weight:700; color:var(--purple-dark); }
+.year-summary-row.net .year-summary-val { font-size:16px; font-weight:700; color:var(--purple-dark); }
+.pd-date-input { width:100%; padding:10px 12px; font-size:15px; font-family:'Sarabun',sans-serif; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); outline:none; margin-top:4px; }
+.pd-date-input:focus { border-color:var(--purple); }
 </style>
 </head>
 <body>
@@ -491,6 +513,24 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
   </div>
 </div>
 
+<div class="purchase-modal-overlay" id="promo-deduct-overlay" onclick="closePromoDeductModal(event)">
+  <div class="purchase-modal">
+    <div class="purchase-modal-title">หักยอดโปรซื้อครบ</div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">เดือน-ปี (พ.ศ.)</div>
+      <input type="month" id="pd-date" class="pd-date-input">
+    </div>
+    <div class="purchase-input-row">
+      <span class="purchase-currency">฿</span>
+      <input type="number" id="pd-amount" class="purchase-input" placeholder="0" min="0" inputmode="decimal">
+    </div>
+    <div class="purchase-modal-btns">
+      <button class="btn-purchase-cancel" onclick="closePromoDeductModal()">ยกเลิก</button>
+      <button class="btn-purchase-save" onclick="savePromoDeduct()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
@@ -551,6 +591,9 @@ function renderPurchaseGrid(id, year) {
   const v = db.find(x => x.id === id); if (!v) return;
   const yearData = (v.purchases || {})[year] || {};
   const total = Object.values(yearData).reduce((s, n) => s + (parseFloat(n) || 0), 0);
+  const deductions = (v.promo_deductions || []).filter(d => d.date && d.date.startsWith(String(year)));
+  const deductTotal = deductions.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+  const net = total - deductTotal;
   const grid = document.getElementById('purchase-month-grid');
   if (!grid) return;
   grid.innerHTML = MONTHS.slice(1).map((m, i) => {
@@ -563,13 +606,31 @@ function renderPurchaseGrid(id, year) {
     </div>`;
   }).join('');
   document.getElementById('purchase-year-label').textContent = year;
-  document.getElementById('purchase-year-total-val').textContent = '฿' + total.toLocaleString();
-  document.getElementById('purchase-year-total-label').textContent = 'รวม ' + year;
+  const summaryEl = document.getElementById('purchase-year-summary');
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="year-summary-row">
+        <span class="year-summary-label">ยอดซื้อรวม ${year}</span>
+        <span class="year-summary-val">฿${total.toLocaleString()}</span>
+      </div>
+      ${deductTotal > 0 ? `
+      <div class="year-summary-row deduct">
+        <span class="year-summary-label">หักโปรซื้อครบ</span>
+        <span class="year-summary-val">−฿${deductTotal.toLocaleString()}</span>
+      </div>
+      <hr class="year-summary-divider">
+      <div class="year-summary-row net">
+        <span class="year-summary-label">ยอดสุทธิ</span>
+        <span class="year-summary-val">฿${net.toLocaleString()}</span>
+      </div>` : ''}
+    `;
+  }
 }
 
 function changePurchaseYear(delta) {
   currentPurchaseYear += delta;
   renderPurchaseGrid(currentDetailId, currentPurchaseYear);
+  renderPromoDeductions(currentDetailId, currentPurchaseYear);
 }
 
 function openPurchaseModal(id, year, month) {
@@ -605,6 +666,68 @@ function savePurchase() {
   renderPurchaseGrid(currentDetailId, currentPurchaseYear);
   apiUpdate(db[i]);
 }
+function renderPromoDeductions(id, year) {
+  const v = db.find(x => x.id === id);
+  const listEl = document.getElementById('promo-deduct-list');
+  if (!listEl || !v) return;
+  const items = (v.promo_deductions || []).filter(d => d.date && d.date.startsWith(String(year)));
+  if (items.length === 0) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0">ยังไม่มีรายการหัก</div>';
+  } else {
+    listEl.innerHTML = items.map(d => {
+      const [yr, mm] = d.date.split('-');
+      const label = `${MONTHS[parseInt(mm)] || mm} ${yr}`;
+      return `<div class="promo-deduct-row">
+        <span class="promo-deduct-date">${label}</span>
+        <span class="promo-deduct-amount">−฿${Number(d.amount).toLocaleString()}</span>
+        <button class="promo-deduct-del" onclick="removePromoDeduct('${id}','${d.id}')" title="ลบ">×</button>
+      </div>`;
+    }).join('');
+  }
+}
+
+function openPromoDeductModal(vipId) {
+  currentDetailId = vipId;
+  const now = new Date();
+  document.getElementById('pd-date').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('pd-amount').value = '';
+  document.getElementById('promo-deduct-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('pd-amount').focus(), 100);
+}
+
+function closePromoDeductModal(e) {
+  if (e && e.target !== document.getElementById('promo-deduct-overlay')) return;
+  document.getElementById('promo-deduct-overlay').classList.remove('open');
+}
+
+function savePromoDeduct() {
+  const ceDate = document.getElementById('pd-date').value;
+  const rawAmount = document.getElementById('pd-amount').value.trim();
+  if (!ceDate) { showToast('กรุณาเลือกเดือน-ปี'); return; }
+  const amount = parseFloat(rawAmount);
+  if (!rawAmount || isNaN(amount) || amount <= 0) { showToast('กรุณาใส่จำนวนเงินที่ถูกต้อง'); return; }
+  const [ceYear, mm] = ceDate.split('-');
+  const buddhistDate = String(parseInt(ceYear) + 543) + '-' + mm;
+  const i = db.findIndex(x => x.id === currentDetailId);
+  if (i < 0) return;
+  if (!db[i].promo_deductions) db[i].promo_deductions = [];
+  db[i].promo_deductions.push({ id: uid(), date: buddhistDate, amount });
+  document.getElementById('promo-deduct-overlay').classList.remove('open');
+  renderPurchaseGrid(currentDetailId, currentPurchaseYear);
+  renderPromoDeductions(currentDetailId, currentPurchaseYear);
+  apiUpdate(db[i]);
+  showToast('บันทึกยอดหักแล้ว');
+}
+
+function removePromoDeduct(vipId, deductId) {
+  const i = db.findIndex(x => x.id === vipId);
+  if (i < 0) return;
+  db[i].promo_deductions = (db[i].promo_deductions || []).filter(d => d.id !== deductId);
+  renderPurchaseGrid(vipId, currentPurchaseYear);
+  renderPromoDeductions(vipId, currentPurchaseYear);
+  apiUpdate(db[i]);
+}
+
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 const dayEl = document.getElementById('f-day');
@@ -897,13 +1020,18 @@ function openDetail(id) {
         <button class="year-nav-btn" onclick="changePurchaseYear(1)">›</button>
       </div>
       <div class="month-grid-purchase" id="purchase-month-grid"></div>
-      <div class="year-total" style="margin-top:12px">
-        <span class="year-total-label" id="purchase-year-total-label">รวม ${currentPurchaseYear}</span>
-        <span class="year-total-val" id="purchase-year-total-val">฿0</span>
+      <div class="year-summary" id="purchase-year-summary"></div>
+    </div>
+    <div class="purchase-section" style="margin-top:10px">
+      <div class="promo-deduct-header">
+        <div class="purchase-section-title" style="margin-bottom:0">หักยอดโปรซื้อครบ</div>
+        <button class="btn-add-deduct" onclick="openPromoDeductModal('${v.id}')">+ เพิ่ม</button>
       </div>
+      <div class="promo-deduct-list" id="promo-deduct-list"></div>
     </div>`;
   document.getElementById('detail-overlay').classList.add('open');
   renderPurchaseGrid(id, currentPurchaseYear);
+  renderPromoDeductions(id, currentPurchaseYear);
 }
 
 function renderReport() {

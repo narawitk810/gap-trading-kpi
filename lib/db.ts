@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 37
+const SCHEMA_VERSION = 38
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -371,6 +371,9 @@ export async function ensureSchema(): Promise<void> {
     await db.execute(`ALTER TABLE live_staff ADD COLUMN badge_emoji TEXT NOT NULL DEFAULT ''`)
   } catch { /* column already exists */ }
   await db.execute(`CREATE INDEX IF NOT EXISTS idx_live_staff_dept ON live_staff(department, rank_order)`)
+  try {
+    await db.execute(`ALTER TABLE vip_customers ADD COLUMN promo_deductions TEXT NOT NULL DEFAULT '[]'`)
+  } catch { /* column already exists */ }
 
   {
     const now = new Date().toISOString()

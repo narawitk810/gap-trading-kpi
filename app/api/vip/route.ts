@@ -10,6 +10,7 @@ export async function GET() {
     gifts: JSON.parse((r.gifts as string) || '[]'),
     notify: JSON.parse((r.notify as string) || '[7]'),
     purchases: JSON.parse((r.purchases as string) || '{}'),
+    promo_deductions: JSON.parse((r.promo_deductions as string) || '[]'),
     day: Number(r.day),
     month: Number(r.month),
   }))
@@ -27,8 +28,8 @@ export async function POST(request: NextRequest) {
     sql: `INSERT INTO vip_customers
           (id, firstname, lastname, nickname, gender, tier, day, month, year,
            phone, email, line, tiktok, manager, address, note,
-           gifts, notify, gift_status, purchases, created_at)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+           gifts, notify, gift_status, purchases, promo_deductions, created_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     args: [
       body.id, body.firstname, body.lastname,
       body.nickname || '', body.gender || '', body.tier,
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       JSON.stringify(body.notify || [7]),
       body.giftStatus || 'none',
       JSON.stringify(body.purchases || {}),
+      JSON.stringify(body.promo_deductions || []),
       body.createdAt ? String(body.createdAt) : new Date().toISOString(),
     ],
   })
@@ -56,7 +58,7 @@ export async function PUT(request: NextRequest) {
           firstname=?, lastname=?, nickname=?, gender=?, tier=?,
           day=?, month=?, year=?, phone=?, email=?, line=?,
           tiktok=?, manager=?, address=?, note=?,
-          gifts=?, notify=?, gift_status=?, purchases=?
+          gifts=?, notify=?, gift_status=?, purchases=?, promo_deductions=?
           WHERE id=?`,
     args: [
       body.firstname, body.lastname, body.nickname || '', body.gender || '', body.tier,
@@ -68,6 +70,7 @@ export async function PUT(request: NextRequest) {
       JSON.stringify(body.notify || [7]),
       body.giftStatus || 'none',
       JSON.stringify(body.purchases || {}),
+      JSON.stringify(body.promo_deductions || []),
       body.id,
     ],
   })
