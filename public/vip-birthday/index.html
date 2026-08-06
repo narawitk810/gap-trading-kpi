@@ -517,8 +517,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
   <div class="purchase-modal">
     <div class="purchase-modal-title">หักยอดโปรซื้อครบ</div>
     <div style="margin-bottom:12px">
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">เดือน-ปี (พ.ศ.)</div>
-      <input type="month" id="pd-date" class="pd-date-input">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">วันที่ (พ.ศ.)</div>
+      <input type="date" id="pd-date" class="pd-date-input">
     </div>
     <div class="purchase-input-row">
       <span class="purchase-currency">฿</span>
@@ -675,8 +675,8 @@ function renderPromoDeductions(id, year) {
     listEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0">ยังไม่มีรายการหัก</div>';
   } else {
     listEl.innerHTML = items.map(d => {
-      const [yr, mm] = d.date.split('-');
-      const label = `${MONTHS[parseInt(mm)] || mm} ${yr}`;
+      const [yr, mm, dd] = d.date.split('-');
+      const label = `${dd ? parseInt(dd) + ' ' : ''}${MONTHS[parseInt(mm)] || mm} ${yr}`;
       return `<div class="promo-deduct-row">
         <span class="promo-deduct-date">${label}</span>
         <span class="promo-deduct-amount">−฿${Number(d.amount).toLocaleString()}</span>
@@ -689,7 +689,7 @@ function renderPromoDeductions(id, year) {
 function openPromoDeductModal(vipId) {
   currentDetailId = vipId;
   const now = new Date();
-  document.getElementById('pd-date').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('pd-date').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   document.getElementById('pd-amount').value = '';
   document.getElementById('promo-deduct-overlay').classList.add('open');
   setTimeout(() => document.getElementById('pd-amount').focus(), 100);
@@ -703,11 +703,11 @@ function closePromoDeductModal(e) {
 function savePromoDeduct() {
   const ceDate = document.getElementById('pd-date').value;
   const rawAmount = document.getElementById('pd-amount').value.trim();
-  if (!ceDate) { showToast('กรุณาเลือกเดือน-ปี'); return; }
+  if (!ceDate) { showToast('กรุณาเลือกวันที่'); return; }
   const amount = parseFloat(rawAmount);
   if (!rawAmount || isNaN(amount) || amount <= 0) { showToast('กรุณาใส่จำนวนเงินที่ถูกต้อง'); return; }
-  const [ceYear, mm] = ceDate.split('-');
-  const buddhistDate = String(parseInt(ceYear) + 543) + '-' + mm;
+  const [ceYear, mm, dd] = ceDate.split('-');
+  const buddhistDate = String(parseInt(ceYear) + 543) + '-' + mm + '-' + dd;
   const i = db.findIndex(x => x.id === currentDetailId);
   if (i < 0) return;
   if (!db[i].promo_deductions) db[i].promo_deductions = [];
