@@ -4,18 +4,18 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 const NAV_ITEMS = [
-  { label: 'หน้าหลัก', icon: '🏠', badge: 0, active: true },
-  { label: 'เอกสาร HR', icon: '📁', badge: 0, active: false },
-  { label: 'เอกสารพนักงาน', icon: '👤', badge: 0, active: false },
-  { label: 'ศูนย์อบรม (Training)', icon: '🎓', badge: 0, active: false },
-  { label: 'นโยบายและระเบียบ', icon: '🛡️', badge: 0, active: false },
-  { label: 'แบบฟอร์ม', icon: '📝', badge: 0, active: false },
-  { label: 'ประกาศข่าวสาร', icon: '📢', badge: 3, active: false },
-  { label: 'รายงาน', icon: '📊', badge: 0, active: false },
-  { label: 'การอนุมัติเอกสาร', icon: '✅', badge: 5, active: false },
-  { label: 'ตั้งค่า', icon: '⚙️', badge: 0, active: false },
-  { label: 'ผู้ใช้งานระบบ', icon: '👥', badge: 0, active: false },
-  { label: 'Audit Log', icon: '🔍', badge: 0, active: false },
+  { label: 'หน้าหลัก', icon: '🏠', badge: 0, active: true, href: '/hr-system' },
+  { label: 'เอกสาร HR', icon: '📁', badge: 0, active: false, href: '#' },
+  { label: 'เอกสารพนักงาน', icon: '👤', badge: 0, active: false, href: '/hr-system/employee-documents' },
+  { label: 'ศูนย์อบรม (Training)', icon: '🎓', badge: 0, active: false, href: '#' },
+  { label: 'นโยบายและระเบียบ', icon: '🛡️', badge: 0, active: false, href: '#' },
+  { label: 'แบบฟอร์ม', icon: '📝', badge: 0, active: false, href: '#' },
+  { label: 'ประกาศข่าวสาร', icon: '📢', badge: 3, active: false, href: '#' },
+  { label: 'รายงาน', icon: '📊', badge: 0, active: false, href: '#' },
+  { label: 'การอนุมัติเอกสาร', icon: '✅', badge: 5, active: false, href: '#' },
+  { label: 'ตั้งค่า', icon: '⚙️', badge: 0, active: false, href: '#' },
+  { label: 'ผู้ใช้งานระบบ', icon: '👥', badge: 0, active: false, href: '#' },
+  { label: 'Audit Log', icon: '🔍', badge: 0, active: false, href: '#' },
 ]
 
 const RECENT_DOCS = [
@@ -98,9 +98,9 @@ export default function HRSystemPage() {
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {NAV_ITEMS.map((item) => (
-            <a
+            <Link
               key={item.label}
-              href="#"
+              href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 item.active ? 'bg-white/20 text-white' : 'text-blue-100 hover:bg-white/10'
               }`}
@@ -117,7 +117,7 @@ export default function HRSystemPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               )}
-            </a>
+            </Link>
           ))}
         </nav>
 

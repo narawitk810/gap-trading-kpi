@@ -364,6 +364,9 @@ export async function ensureSchema(): Promise<void> {
   try {
     await db.execute(`ALTER TABLE live_staff ADD COLUMN is_head INTEGER NOT NULL DEFAULT 0`)
   } catch { /* column already exists */ }
+  try {
+    await db.execute(`ALTER TABLE live_staff ADD COLUMN start_date TEXT NOT NULL DEFAULT ''`)
+  } catch { /* column already exists */ }
 
   {
     const now = new Date().toISOString()
