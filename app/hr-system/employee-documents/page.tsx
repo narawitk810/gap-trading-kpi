@@ -21,23 +21,45 @@ function formatThaiDate(iso: string) {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`
 }
 
-function getCountdownColor(days_until_180: number | null) {
-  if (days_until_180 === null) return '#374151'
-  if (days_until_180 <= 0) return '#16A34A'
-  if (days_until_180 <= 30) return '#DC2626'
+function getPhase(days_worked: number | null): 'unknown' | 'probation' | 'salary' | 'done' {
+  if (days_worked === null) return 'unknown'
+  if (days_worked < 90) return 'probation'
+  if (days_worked < 180) return 'salary'
+  return 'done'
+}
+
+function getCountdownColor(days_worked: number | null) {
+  const phase = getPhase(days_worked)
+  if (phase === 'unknown') return '#374151'
+  if (phase === 'done') return '#16A34A'
+  const daysLeft = phase === 'probation' ? 90 - days_worked! : 180 - days_worked!
+  if (daysLeft <= 30) return '#DC2626'
   return '#1E3A5F'
 }
 
-function getCountdownText(days_worked: number | null, days_until_180: number | null) {
-  if (days_until_180 === null) return 'ยังไม่ได้ตั้งค่าวันเริ่มงาน'
-  if (days_until_180 <= 0) return '🔔 ถึงเวลาประเมิน & ปรับเงินเดือน'
-  if (days_until_180 <= 30) return `⚠️ เหลืออีก ${days_until_180} วัน`
-  return `เหลืออีก ${days_until_180} วัน`
+function getCountdownText(days_worked: number | null) {
+  const phase = getPhase(days_worked)
+  if (phase === 'unknown') return 'ยังไม่ได้ตั้งค่าวันเริ่มงาน'
+  if (phase === 'done') return '🔔 ถึงเวลาประเมิน & ปรับเงินเดือน'
+  if (phase === 'probation') {
+    const left = 90 - days_worked!
+    return left <= 30 ? `⚠️ เหลืออีก ${left} วัน ผ่านทดลองงาน` : `เหลืออีก ${left} วัน ผ่านทดลองงาน`
+  }
+  const left = 180 - days_worked!
+  return left <= 30 ? `⚠️ เหลืออีก ${left} วัน` : `เหลืออีก ${left} วัน`
 }
 
 function getProgressPercent(days_worked: number | null) {
-  if (days_worked === null) return 0
-  return Math.min(100, Math.round((days_worked / 180) * 100))
+  const phase = getPhase(days_worked)
+  if (phase === 'unknown') return 0
+  if (phase === 'probation') return Math.round((days_worked! / 90) * 100)
+  return Math.min(100, Math.round((days_worked! / 180) * 100))
+}
+
+function getProgressLabel(days_worked: number | null) {
+  return getPhase(days_worked) === 'probation'
+    ? 'นับถอยหลังผ่านทดลองงาน (90 วัน)'
+    : 'นับถอยหลังปรับเงินเดือน (180 วัน)'
 }
 
 export default function EmployeeDocumentsPage() {
@@ -138,7 +160,7 @@ export default function EmployeeDocumentsPage() {
         ) : (
           <div className="space-y-3">
             {filtered.map((emp) => {
-              const color = getCountdownColor(emp.days_until_180)
+              const color = getCountdownColor(emp.days_worked)
               const progress = getProgressPercent(emp.days_worked)
               return (
                 <div key={emp.id} className="bg-white rounded-xl border border-[#E2E8F0] p-4 space-y-3">
@@ -150,7 +172,7 @@ export default function EmployeeDocumentsPage() {
                       </p>
                       <p className="text-xs text-[#374151] mt-0.5">{emp.rank_name} · {emp.department}</p>
                     </div>
-                    {emp.days_until_180 !== null && emp.days_until_180 <= 0 && (
+                    {emp.days_worked !== null && emp.days_worked >= 180 && (
                       <span className="shrink-0 text-[11px] font-semibold text-[#16A34A] bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
                         ถึงเวลาประเมิน &amp; ปรับเงินเดือน
                       </span>
@@ -176,9 +198,9 @@ export default function EmployeeDocumentsPage() {
                   {/* Row 3: Progress bar */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <p className="text-[11px] text-gray-400">นับถอยหลังปรับเงินเดือน (180 วัน)</p>
+                      <p className="text-[11px] text-gray-400">{getProgressLabel(emp.days_worked)}</p>
                       <p className="text-[11px] font-semibold" style={{ color }}>
-                        {getCountdownText(emp.days_worked, emp.days_until_180)}
+                        {getCountdownText(emp.days_worked)}
                       </p>
                     </div>
                     <div className="h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
