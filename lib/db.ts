@@ -679,6 +679,26 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_tcg_branch ON tcg_sessions(branch, status)`) } catch { /* exists */ }
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_disbursements_dept ON disbursements(department, created_at)`) } catch { /* exists */ }
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS hr_folders (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS hr_files (
+      id         TEXT PRIMARY KEY,
+      folder_id  TEXT NOT NULL,
+      name       TEXT NOT NULL,
+      file_type  TEXT NOT NULL,
+      file_size  INTEGER NOT NULL DEFAULT 0,
+      file_data  TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `)
+
   g.dbVersion = SCHEMA_VERSION
 }
 
