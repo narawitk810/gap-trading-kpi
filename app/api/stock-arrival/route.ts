@@ -5,12 +5,30 @@ const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
+  const db = getDb()
+
+  const imageId = searchParams.get('image_id')
+  if (imageId) {
+    const row = await db.execute({ sql: 'SELECT image_data FROM stock_arrivals WHERE id = ?', args: [imageId] })
+    const dataUri = row.rows[0]?.image_data as string
+    if (!dataUri) return new Response(null, { status: 404 })
+    const [header, base64] = dataUri.split(',')
+    const contentType = header.replace('data:', '').replace(';base64', '')
+    return new Response(Buffer.from(base64, 'base64'), {
+      headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' },
+    })
+  }
+
   if (searchParams.get('key') !== ADMIN_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   await ensureSchema()
-  const db = getDb()
-  const result = await db.execute('SELECT * FROM stock_arrivals ORDER BY created_at DESC')
+  const result = await db.execute(
+    `SELECT id, nickname, product_name, quantity, packs_per_box, cost, note,
+            status, created_at, acknowledged_at, pricing_data, old_pricing_data,
+            tiktok_listed_at, sku_code_box, sku_code_pack
+     FROM stock_arrivals ORDER BY created_at DESC`
+  )
   return NextResponse.json(result.rows)
 }
 

@@ -81,12 +81,14 @@ type StockArrival = {
   packs_per_box: string
   cost: string
   note: string | null
-  image_data: string
   status: string
   created_at: string
   acknowledged_at: string | null
   pricing_data: string | null
   old_pricing_data: string | null
+  tiktok_listed_at: string | null
+  sku_code_box: string | null
+  sku_code_pack: string | null
 }
 
 type PromoThreshold = {
@@ -1488,13 +1490,12 @@ export default function AdminDashboard() {
       fetchComplaints()
       fetchTaxInvoices()
       fetchRestock()
-      fetchStockArrivals()
       fetchCodes()
       fetchEquipment()
       fetchMeetings()
       fetchTournamentCreds()
     }
-  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchStockArrivals, fetchCodes, fetchEquipment, fetchMeetings, fetchTournamentCreds])
+  }, [authed, fetchEntries, fetchProductRequests, fetchComplaints, fetchTaxInvoices, fetchRestock, fetchCodes, fetchEquipment, fetchMeetings, fetchTournamentCreds])
 
   useEffect(() => {
     if (!authed || activeTab !== 'tcg-bookings') return
@@ -1579,7 +1580,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <button
-            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment(); fetchMeetings(); fetchTournamentCreds() }}
+            onClick={() => { fetchEntries(); fetchProductRequests(); fetchComplaints(); fetchTaxInvoices(taxMonth || undefined); fetchRestock(); if (activeTab === 'stock-arrival') fetchStockArrivals(); fetchCodes(); fetchPromoThresholds(); fetchEquipment(); fetchMeetings(); fetchTournamentCreds() }}
             className="text-xs text-white/70 border border-white/30 rounded-lg px-3 py-1.5 hover:bg-white/10"
           >
             รีเฟรช
@@ -1663,7 +1664,7 @@ export default function AdminDashboard() {
             )}
           </button>
           <button
-            onClick={() => setActiveTab('stock-arrival')}
+            onClick={() => { setActiveTab('stock-arrival'); if (stockArrivals.length === 0) fetchStockArrivals() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'stock-arrival'
                 ? 'bg-white text-[#16A34A]'
@@ -2956,14 +2957,13 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            {r.image_data && (
-                              <img
-                                src={r.image_data}
-                                alt="สินค้า"
-                                onClick={() => setArrivalImageModal(r.image_data)}
-                                className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
-                              />
-                            )}
+                            <img
+                              src={`/api/stock-arrival?image_id=${r.id}`}
+                              alt="สินค้า"
+                              loading="lazy"
+                              onClick={() => setArrivalImageModal(`/api/stock-arrival?image_id=${r.id}`)}
+                              className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                            />
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1.5">
