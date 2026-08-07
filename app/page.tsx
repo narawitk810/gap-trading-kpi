@@ -254,7 +254,7 @@ const VIP_BIRTHDAY_DEPTS = ['ไลฟ์สด', 'การตลาด', 'ผ�
 const TCG_DEPTS = ['ผู้จัดการหน้าร้าน', 'ธุรการ']
 const PROMO_THRESHOLD_DEPTS = ['การตลาด']
 const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
-const ANNOUNCE_DEPTS = ['ไลฟ์สด', 'สต๊อค&จัดซื้อ', 'Creative', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'บุคคล']
+const ANNOUNCE_DEPTS = ['ไลฟ์สด', 'สต๊อค&จัดซื้อ', 'Creative', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'บุคคล', 'ผู้จัดการหน้าร้าน']
 
 interface ChannelRow {
   id: string
