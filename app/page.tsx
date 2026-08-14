@@ -365,7 +365,7 @@ export default function Home() {
   const [marketingStaff, setMarketingStaff] = useState<LiveStaffMember[]>([])
   const [marketingPickerOpen, setMarketingPickerOpen] = useState(true)
   const [loadingMarketing, setLoadingMarketing] = useState(false)
-  const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false })
+  const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
@@ -520,7 +520,7 @@ export default function Home() {
     if (!formData.nickname.trim()) e.nickname = (formData.department === 'ไลฟ์สด' || formData.department === 'Creative') ? 'กรุณาเลือกชื่อ' : 'กรุณากรอกชื่อเล่น'
     if (CHANNEL_DEPTS.includes(formData.department) && (formData.department === 'การตลาด' ? channelRows.length === 0 : formData.channelName.length === 0)) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
-    if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo || !marketingChecklist.topFiveProducts)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
@@ -1760,6 +1760,7 @@ export default function Home() {
               {([
                 { key: 'newProductDiscount', label: 'สินค้าเข้าใหม่ทำส่วนลด 10%' },
                 { key: 'tiktokAiPromo', label: 'กดโปรโมชั่น AI ใน TikTok Seller' },
+                { key: 'topFiveProducts', label: 'จัดอันดับสินค้าขายดี 5 ชิ้น ในวันนี้ลงไลน์ 15.00 น.' },
               ] as { key: keyof typeof marketingChecklist; label: string }[]).map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-3 cursor-pointer">
                   <input
