@@ -654,7 +654,7 @@ export default function Home() {
     setPendingChannel('')
     setBestRoiEntry({ ...emptyBestRoiEntry })
     setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
-    setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false })
+    setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, genAiUsed: false })
     setErrors({})
     setPageState('form')
