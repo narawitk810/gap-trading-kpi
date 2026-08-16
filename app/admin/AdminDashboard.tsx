@@ -518,6 +518,7 @@ export default function AdminDashboard() {
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
   const [pmBoxSystemEnabled, setPmBoxSystemEnabled] = useState(true)
+  const [pmBoxNoExternal, setPmBoxNoExternal] = useState(false)
   const [pmBreakEnabled, setPmBreakEnabled] = useState(false)
   const [pmNoPackSale, setPmNoPackSale] = useState(false)
   const [pmSubmitting, setPmSubmitting] = useState(false)
@@ -1101,6 +1102,7 @@ export default function AdminDashboard() {
       setPmRisk(p.risk_amount)
       setPmCommission(p.commission_tier)
       setPmBoxSystemEnabled(p.box_system_enabled !== false)
+      setPmBoxNoExternal(p.box_no_external === true)
       setPmBreakEnabled(p.break_enabled === true)
       setPmNoPackSale(p.no_pack_sale === true)
     } else {
@@ -1109,6 +1111,7 @@ export default function AdminDashboard() {
       setPmRisk(0)
       setPmCommission('')
       setPmBoxSystemEnabled(true)
+      setPmBoxNoExternal(false)
       setPmBreakEnabled(false)
       setPmNoPackSale(false)
     }
@@ -1161,6 +1164,7 @@ export default function AdminDashboard() {
       risk_amount: pmRisk,
       commission_tier: pmCommission,
       box_system_enabled: pmBoxSystemEnabled,
+      box_no_external: pmBoxNoExternal,
       break_enabled: pmBreakEnabled,
       no_pack_sale: pmNoPackSale,
       box_price_system: boxPriceSystem,
@@ -3142,16 +3146,21 @@ export default function AdminDashboard() {
                                 <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_system} บาท</p>
                               )}
                               <div className="flex gap-1 mt-2">
-                                <button type="button" onClick={() => setPmBoxSystemEnabled(true)}
-                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBoxSystemEnabled ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                <button type="button" onClick={() => { setPmBoxSystemEnabled(true); setPmBoxNoExternal(false) }}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBoxSystemEnabled && !pmBoxNoExternal ? 'bg-[#16A34A] text-white border-[#16A34A]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
                                   ลงระบบ
                                 </button>
-                                <button type="button" onClick={() => setPmBoxSystemEnabled(false)}
+                                <button type="button" onClick={() => { setPmBoxSystemEnabled(false); setPmBoxNoExternal(false) }}
                                   className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${!pmBoxSystemEnabled ? 'bg-[#DC2626] text-white border-[#DC2626]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
                                   ไม่ลงระบบ
                                 </button>
+                                <button type="button" onClick={() => { setPmBoxSystemEnabled(true); setPmBoxNoExternal(true) }}
+                                  className={`flex-1 text-[10px] py-0.5 rounded border font-semibold transition-colors ${pmBoxNoExternal ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]' : 'bg-white text-gray-400 border-[#E2E8F0]'}`}>
+                                  ลงระบบไม่ยน.
+                                </button>
                               </div>
                             </div>
+                            {!pmBoxNoExternal && (
                             <div className="bg-white rounded-lg p-3 shadow-sm">
                               <p className="text-xs text-gray-400 mb-1">ยกกล่อง (โยนนอก)</p>
                               <p className="text-base font-bold text-[#374151]">{fmt(boxPriceExternal)}</p>
@@ -3160,6 +3169,7 @@ export default function AdminDashboard() {
                                 <p className="text-xs text-gray-400 mt-1 pt-1 border-t border-[#E2E8F0]">เดิม: {oldPricing.box_price_external} บาท</p>
                               )}
                             </div>
+                            )}
                             <div className="bg-white rounded-lg p-3 shadow-sm">
                               <p className="text-xs text-gray-400 mb-1">แยกซอง (ในระบบ){pmRisk > 0 ? ` +${pmRisk}฿` : ''}</p>
                               <p className="text-base font-bold text-[#16A34A]">{fmt(packPriceSystem)}</p>
