@@ -369,6 +369,7 @@ export default function Home() {
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
+  const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -526,7 +527,8 @@ export default function Home() {
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
-    if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
+    if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department !== 'ไลฟ์สด' && !formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -571,6 +573,9 @@ export default function Home() {
     }
     if (formData.department === 'สต๊อค&จัดซื้อ' && extra_data) {
       extra_data.checklist = stockChecklist
+    }
+    if (formData.department === 'ไลฟ์สด' && extra_data) {
+      extra_data.checklist = liveChecklist
     }
     try {
       const res = await fetch('/api/kpi', {
@@ -668,6 +673,7 @@ export default function Home() {
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, genAiUsed: false })
     setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setStockChecklist({ newStockFirst: false })
+    setLiveChecklist({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -1718,7 +1724,7 @@ export default function Home() {
         </div>
 
         {/* Tasks */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        {formData.department !== 'ไลฟ์สด' && <div className="bg-white rounded-2xl p-4 shadow-sm">
           <label className="block text-sm font-semibold text-[#374151] mb-3">
             สิ่งที่ทำวันนี้ <span className="text-[#DC2626]">*</span>
             <span className="text-xs font-normal text-gray-400 ml-2">
@@ -1762,7 +1768,38 @@ export default function Home() {
               + เพิ่มรายการ
             </button>
           )}
-        </div>
+        </div>}
+
+        {/* ไลฟ์สด — checklist */}
+        {formData.department === 'ไลฟ์สด' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <div className="space-y-2.5">
+              {([
+                { key: 'promo5', label: 'คิดโปรโมชั่น 5 โปรไม่ซ้ำ' },
+                { key: 'reviewReply', label: 'ตอบรีวิวดาวลูกค้าในระบบ' },
+                { key: 'chatReply', label: 'ตอบลูกค้าในแชท' },
+                { key: 'prepareForPack', label: 'เตรียมของส่งให้ทีมแพค' },
+                { key: 'story1Post', label: 'ลง story 1 โพส' },
+                { key: 'content1Clip', label: 'ลงคอนเทนต์ 1 คลิป' },
+                { key: 'content1FBPost', label: 'ลงคอนเทนต์ 1 โพสลง FB' },
+              ] as { key: keyof typeof liveChecklist; label: string }[]).map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={liveChecklist[key]}
+                    onChange={(e) => setLiveChecklist(prev => ({ ...prev, [key]: e.target.checked }))}
+                    className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                  />
+                  <span className="text-sm text-[#374151]">{label}</span>
+                </label>
+              ))}
+            </div>
+            {errors.liveChecklist && (
+              <p className="text-[#DC2626] text-xs mt-2">{errors.liveChecklist}</p>
+            )}
+          </div>
+        )}
 
         {/* การตลาด — checklist */}
         {formData.department === 'การตลาด' && (
