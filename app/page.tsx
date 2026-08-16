@@ -256,6 +256,12 @@ const PROMO_THRESHOLD_DEPTS = ['การตลาด']
 const PROMO_LIST_DEPTS = ['ไลฟ์สด', 'การตลาด']
 const ANNOUNCE_DEPTS = ['ไลฟ์สด', 'สต๊อค&จัดซื้อ', 'Creative', 'การตลาด', 'ผู้จัดการไลฟ์สด', 'บุคคล', 'ผู้จัดการหน้าร้าน']
 
+const DEPT_GROUPS = [
+  { label: 'กองหน้า', icon: '⚡', depts: ['ไลฟ์สด', 'Sales Admin', 'Store Retail'] },
+  { label: 'กองกลาง', icon: '🎯', depts: ['การตลาด', 'Creative', 'สต๊อค&จัดซื้อ'] },
+  { label: 'กองหลัง', icon: '🛡️', depts: ['ธุรการ', 'บัญชี&การเงิน', 'แพค', 'บุคคล', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน'] },
+] as const
+
 interface ChannelRow {
   id: string
   channel: string
@@ -751,39 +757,49 @@ export default function Home() {
           <label className="block text-sm font-semibold text-[#374151] mb-3">
             แผนก <span className="text-[#DC2626]">*</span>
           </label>
-          <div className="grid grid-cols-3 gap-2">
-            {DEPARTMENTS.map((dept) => (
-              <button
-                key={dept}
-                type="button"
-                onClick={() => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    department: dept,
-                    nickname: '',
-                    channelName: [],
-                    bestRoiChannel: '',
-                    extraData: { ...defaultExtraData, clipLinks: [''] },
-                  }))
-                  setChannelRows([])
-                  setPendingChannel('')
-                  setBestRoiEntry({ ...emptyBestRoiEntry })
-                  setPickerOpen(true)
-                  setCreativePickerOpen(true)
-                  setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
-                  setErrors((prev) => ({ ...prev, department: '', nickname: '' }))
-                  setCodeVerified(isCodeVerifiedLocally(dept))
-                  setCodeInput('')
-                  setCodeError('')
-                }}
-                className={`py-2.5 px-1 text-xs rounded-xl border-2 font-semibold transition-all ${
-                  formData.department === dept
-                    ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
-                    : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
-                }`}
-              >
-                {dept}
-              </button>
+          <div className="space-y-2.5">
+            {DEPT_GROUPS.map((group, gi) => (
+              <div key={group.label}>
+                {gi > 0 && <div className="border-t border-[#E2E8F0] pt-2.5" />}
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                  {group.icon} {group.label}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.depts.map((dept) => (
+                    <button
+                      key={dept}
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          department: dept,
+                          nickname: '',
+                          channelName: [],
+                          bestRoiChannel: '',
+                          extraData: { ...defaultExtraData, clipLinks: [''] },
+                        }))
+                        setChannelRows([])
+                        setPendingChannel('')
+                        setBestRoiEntry({ ...emptyBestRoiEntry })
+                        setPickerOpen(true)
+                        setCreativePickerOpen(true)
+                        setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
+                        setErrors((prev) => ({ ...prev, department: '', nickname: '' }))
+                        setCodeVerified(isCodeVerifiedLocally(dept))
+                        setCodeInput('')
+                        setCodeError('')
+                      }}
+                      className={`py-1.5 px-2.5 text-xs rounded-lg border-2 font-semibold transition-all ${
+                        formData.department === dept
+                          ? 'bg-[#1E3A5F] text-white border-[#1E3A5F]'
+                          : 'bg-white text-[#374151] border-[#E2E8F0] hover:border-[#1E3A5F]'
+                      }`}
+                    >
+                      {dept}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           {errors.department && (
