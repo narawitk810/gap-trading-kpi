@@ -367,6 +367,7 @@ export default function Home() {
   const [loadingMarketing, setLoadingMarketing] = useState(false)
   const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
+  const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -522,6 +523,7 @@ export default function Home() {
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo || !marketingChecklist.topFiveProducts)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (!formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -561,6 +563,9 @@ export default function Home() {
     }
     if (formData.department === 'ผู้จัดการหน้าร้าน' && extra_data) {
       extra_data.checklist = storeManagerChecklist
+    }
+    if (formData.department === 'แพค' && extra_data) {
+      extra_data.checklist = packChecklist
     }
     try {
       const res = await fetch('/api/kpi', {
@@ -656,6 +661,7 @@ export default function Home() {
     setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
     setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, genAiUsed: false })
+    setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -2430,6 +2436,31 @@ export default function Home() {
                 </span>
               </div>
             </div>
+          </div>
+        )}
+        {formData.department === 'แพค' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <div className="space-y-2.5">
+              {([
+                { key: 'restockSchedule', label: 'เติม stock ทุกๆ 11.30 น. และ 16.30 น. ของทุกวัน' },
+                { key: 'cleanWarehouse', label: 'ทำความสะอาดคลังสินค้าสม่ำเสมอ' },
+                { key: 'organizeShelf', label: 'จัดชั้นวางให้สวยงาม' },
+              ] as { key: keyof typeof packChecklist; label: string }[]).map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={packChecklist[key]}
+                    onChange={(e) => setPackChecklist(prev => ({ ...prev, [key]: e.target.checked }))}
+                    className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                  />
+                  <span className="text-sm text-[#374151]">{label}</span>
+                </label>
+              ))}
+            </div>
+            {errors.packChecklist && (
+              <p className="text-[#DC2626] text-xs mt-2">{errors.packChecklist}</p>
+            )}
           </div>
         )}
 
