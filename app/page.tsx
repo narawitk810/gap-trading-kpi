@@ -1773,7 +1773,7 @@ export default function Home() {
         {/* ไลฟ์สด — checklist */}
         {formData.department === 'ไลฟ์สด' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist 2 ชม.ก่อนขึ้นไลฟ์ <span className="text-[#DC2626]">*</span></p>
             <div className="space-y-2.5">
               {([
                 { key: 'promo5', label: 'คิดโปรโมชั่น 5 โปรไม่ซ้ำ' },
