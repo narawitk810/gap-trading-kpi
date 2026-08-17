@@ -376,6 +376,7 @@ export default function Home() {
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
   const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false })
+  const [thurakarnChecklist, setThurakarnChecklist] = useState({ storeDocs: false, checkDocInOut: false, followUpDocs: false, checkEquipment: false, dailyExpenses: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -534,6 +535,7 @@ export default function Home() {
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'ธุรการ' && (!thurakarnChecklist.storeDocs || !thurakarnChecklist.checkDocInOut || !thurakarnChecklist.followUpDocs || !thurakarnChecklist.checkEquipment || !thurakarnChecklist.dailyExpenses)) e.thurakarnChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department !== 'ไลฟ์สด' && !formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -582,6 +584,9 @@ export default function Home() {
     }
     if (formData.department === 'ไลฟ์สด' && extra_data) {
       extra_data.checklist = liveChecklist
+    }
+    if (formData.department === 'ธุรการ' && extra_data) {
+      extra_data.checklist = thurakarnChecklist
     }
     try {
       const res = await fetch('/api/kpi', {
@@ -2542,6 +2547,33 @@ export default function Home() {
             </div>
             {errors.stockChecklist && (
               <p className="text-[#DC2626] text-xs mt-2">{errors.stockChecklist}</p>
+            )}
+          </div>
+        )}
+        {formData.department === 'ธุรการ' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <div className="space-y-2.5">
+              {([
+                { key: 'storeDocs', label: 'จัดเก็บเอกสาร' },
+                { key: 'checkDocInOut', label: 'ตรวจเอกสารเข้า-ออก' },
+                { key: 'followUpDocs', label: 'ติดตามเอกสารค้างแต่ละแผนก' },
+                { key: 'checkEquipment', label: 'ตรวจอุปกรณ์สำนักงาน' },
+                { key: 'dailyExpenses', label: 'รวมรายจ่ายทั้งหมดในบริษัทต่อวัน' },
+              ] as { key: keyof typeof thurakarnChecklist; label: string }[]).map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={thurakarnChecklist[key]}
+                    onChange={(e) => setThurakarnChecklist(prev => ({ ...prev, [key]: e.target.checked }))}
+                    className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                  />
+                  <span className="text-sm text-[#374151]">{label}</span>
+                </label>
+              ))}
+            </div>
+            {errors.thurakarnChecklist && (
+              <p className="text-[#DC2626] text-xs mt-2">{errors.thurakarnChecklist}</p>
             )}
           </div>
         )}
