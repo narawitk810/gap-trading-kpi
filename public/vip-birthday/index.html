@@ -477,6 +477,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); font-family:
           <div class="notify-opt" data-days="0" onclick="toggleNotify(this)">วันเกิด</div>
         </div>
       </div>
+      <div class="field"><label>สิ่งลูกค้าชอบเป็นพิเศษ</label><input id="f-interests" type="text" placeholder="เช่น ทีมฟุตบอล หรืออนิเมะ"></div>
       <div class="field"><label>หมายเหตุพิเศษ</label><textarea id="f-note" placeholder="เช่น แพ้อาหาร ความชอบ ความต้องการพิเศษ"></textarea></div>
       <input type="hidden" id="f-edit-id">
       <button class="btn-save" onclick="saveVIP()">บันทึกข้อมูล</button>
@@ -776,7 +777,7 @@ function openAddSheet(editId) {
   document.querySelectorAll('.gift-opt').forEach(o=>{o.classList.remove('checked');o.querySelector('.gift-opt-check').textContent='';});
   document.querySelectorAll('.notify-opt').forEach(o=>o.classList.remove('active'));
   document.querySelector('[data-days="7"]').classList.add('active');
-  ['firstname','lastname','nickname','gender','phone','email','line','address','note','day','month','year','edit-id'].forEach(f=>{ const el=document.getElementById('f-'+f); if(el) el.value=''; });
+  ['firstname','lastname','nickname','gender','phone','email','line','address','note','interests','day','month','year','edit-id'].forEach(f=>{ const el=document.getElementById('f-'+f); if(el) el.value=''; });
   if(editId) {
     const v = db.find(x=>x.id===editId);
     if(v) {
@@ -790,6 +791,7 @@ function openAddSheet(editId) {
       document.getElementById('f-tiktok').value = v.tiktok||'';
       document.getElementById('f-manager').value = v.manager||'';
       document.getElementById('f-address').value = v.address||'';
+      document.getElementById('f-interests').value = v.interests||'';
       document.getElementById('f-note').value = v.note||'';
       document.getElementById('f-day').value = v.day||'';
       document.getElementById('f-month').value = v.month||'';
@@ -833,6 +835,7 @@ function saveVIP() {
     tiktok: document.getElementById('f-tiktok').value.trim(),
     manager: document.getElementById('f-manager').value.trim(),
     address: document.getElementById('f-address').value.trim(),
+    interests: document.getElementById('f-interests').value.trim(),
     note: document.getElementById('f-note').value.trim(),
     gifts: [...selectedGifts],
     notify: [...selectedNotify],
@@ -1001,6 +1004,7 @@ function openDetail(id) {
       ${v.manager?`<div class="detail-key">ผู้ดูแล</div><div class="detail-val">${v.manager}</div>`:''}
       ${v.address?`<div class="detail-key">ที่อยู่</div><div class="detail-val">${v.address}</div>`:''}
       ${v.gifts&&v.gifts.length?`<div class="detail-divider"></div><div class="detail-key">ของขวัญ</div><div class="detail-val">${v.gifts.map(g=>GIFT_LABELS[g]||g).join(', ')}</div>`:''}
+      ${v.interests?`<div class="detail-key">ชอบ</div><div class="detail-val">${v.interests}</div>`:''}
       ${v.note?`<div class="detail-key">หมายเหตุ</div><div class="detail-val">${v.note}</div>`:''}
     </div>
     <div style="margin-top:12px">

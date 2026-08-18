@@ -1957,7 +1957,7 @@ export default function Home() {
         )}
 
         {/* ระบบเบิกจ่าย — บัญชี / ธุรการ / บุคคล / การตลาด / Creative */}
-        {['บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'การตลาด', 'Creative'].includes(formData.department) && (
+        {['บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'การตลาด', 'Creative', 'Sales Admin'].includes(formData.department) && (
           <Link
             href="/disbursement"
             className="flex items-center gap-3 bg-orange-50 border border-orange-200 rounded-2xl p-4 hover:bg-orange-100 transition-colors"

@@ -27,16 +27,16 @@ export async function POST(request: NextRequest) {
   await db.execute({
     sql: `INSERT INTO vip_customers
           (id, firstname, lastname, nickname, gender, tier, day, month, year,
-           phone, email, line, tiktok, manager, address, note,
+           phone, email, line, tiktok, manager, address, note, interests,
            gifts, notify, gift_status, purchases, promo_deductions, created_at)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     args: [
       body.id, body.firstname, body.lastname,
       body.nickname || '', body.gender || '', body.tier,
       body.day, body.month, body.year || '',
       body.phone, body.email || '', body.line || '',
       body.tiktok || '', body.manager || '',
-      body.address || '', body.note || '',
+      body.address || '', body.note || '', body.interests || '',
       JSON.stringify(body.gifts || []),
       JSON.stringify(body.notify || [7]),
       body.giftStatus || 'none',
@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
     sql: `UPDATE vip_customers SET
           firstname=?, lastname=?, nickname=?, gender=?, tier=?,
           day=?, month=?, year=?, phone=?, email=?, line=?,
-          tiktok=?, manager=?, address=?, note=?,
+          tiktok=?, manager=?, address=?, note=?, interests=?,
           gifts=?, notify=?, gift_status=?, purchases=?, promo_deductions=?
           WHERE id=?`,
     args: [
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
       body.day, body.month, body.year || '', body.phone,
       body.email || '', body.line || '',
       body.tiktok || '', body.manager || '',
-      body.address || '', body.note || '',
+      body.address || '', body.note || '', body.interests || '',
       JSON.stringify(body.gifts || []),
       JSON.stringify(body.notify || [7]),
       body.giftStatus || 'none',
