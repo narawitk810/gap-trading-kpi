@@ -18,13 +18,13 @@ function getCurrentTime() {
   return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
-const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000
+const QUARTER_MS = 90 * 24 * 60 * 60 * 1000
 
 function isCodeVerifiedLocally(department: string): boolean {
   try {
     const raw = localStorage.getItem(`code_verified_${department}`)
     if (!raw) return false
-    return Date.now() - Number(raw) < TEN_DAYS_MS
+    return Date.now() - Number(raw) < QUARTER_MS
   } catch { return false }
 }
 
