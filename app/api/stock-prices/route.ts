@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   const result = await db.execute(
     `SELECT id, product_name, quantity, packs_per_box, cost, note,
             created_at, acknowledged_at, pricing_data, old_pricing_data,
-            status, tiktok_listed_at, sku_code_box, sku_code_pack
+            status, tiktok_listed_at, sku_code_box, sku_code_pack, allocation
      FROM stock_arrivals
      ${whereClause}
      ${orderClause}`

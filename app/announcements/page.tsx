@@ -58,6 +58,7 @@ type StockItem = {
   tiktok_listed_at: string | null
   sku_code_box?: string
   sku_code_pack?: string
+  allocation?: string
 }
 
 type PricingData = {
@@ -585,6 +586,7 @@ export default function AnnouncementsPage() {
                       <th className="text-center px-2 py-3">Comm.</th>
                       <th className="text-center px-2 py-3">รูป</th>
                       <th className="text-center px-2 py-3">SKU</th>
+                      <th className="text-left px-2 py-3">Allocation</th>
                       <th className="text-center px-2 py-3">สถานะ</th>
                     </tr>
                   </thead>
@@ -650,6 +652,9 @@ export default function AnnouncementsPage() {
                               <div className="text-gray-500"><span className="text-gray-400">ซอง </span>{item.sku_code_pack || '—'}</div>
                             </div>
                           </td>
+                          <td className="px-2 py-3 text-xs text-[#374151]">
+                            {item.allocation || <span className="text-gray-300">—</span>}
+                          </td>
                           <td className="px-2 py-3 text-center">
                             {item.tiktok_listed_at ? (
                               <span className="text-xs font-bold bg-[#16A34A]/10 text-[#16A34A] px-2 py-0.5 rounded-full whitespace-nowrap">✅ TikTok</span>
@@ -664,7 +669,7 @@ export default function AnnouncementsPage() {
                       item.product_name.toLowerCase().includes(stockSearch.toLowerCase())
                     ).length === 0 && stockSearch && (
                       <tr>
-                        <td colSpan={11} className="px-4 py-8 text-center text-sm text-gray-400">
+                        <td colSpan={12} className="px-4 py-8 text-center text-sm text-gray-400">
                           ไม่พบสินค้า &quot;{stockSearch}&quot;
                         </td>
                       </tr>
