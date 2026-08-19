@@ -45,7 +45,20 @@ function clearDraft() {
 }
 
 interface ExtraData {
-  // ไลฟ์สด
+  // ไลฟ์สด — live hours
+  tiktokStart: string
+  tiktokEnd: string
+  fbStart: string
+  fbEnd: string
+  // ไลฟ์สด — sales
+  salesShopee: string
+  salesTiktok: string
+  salesOutsideTiktok: string
+  salesOutsideFb: string
+  // ไลฟ์สด — notes
+  suggestions: string
+  note: string
+  // Sales Admin (keep)
   liveHours: string
   salesAmount: string
   // Creative
@@ -60,6 +73,16 @@ interface ExtraData {
 }
 
 const defaultExtraData: ExtraData = {
+  tiktokStart: '',
+  tiktokEnd: '',
+  fbStart: '',
+  fbEnd: '',
+  salesShopee: '',
+  salesTiktok: '',
+  salesOutsideTiktok: '',
+  salesOutsideFb: '',
+  suggestions: '',
+  note: '',
   liveHours: '',
   salesAmount: '',
   clipLinks: [''],
@@ -306,8 +329,16 @@ const emptyBestRoiEntry: BestRoiEntry = {
 function buildExtraDataPayload(dept: string, extra: ExtraData, channelRows: ChannelRow[] = []): Record<string, unknown> | undefined {
   if (dept === 'ไลฟ์สด') {
     const payload: Record<string, unknown> = {}
-    if (extra.liveHours.trim()) payload.live_hours = extra.liveHours.trim()
-    if (extra.salesAmount.trim()) payload.sales_amount = extra.salesAmount.trim()
+    if (extra.tiktokStart) payload.tiktok_start = extra.tiktokStart
+    if (extra.tiktokEnd)   payload.tiktok_end   = extra.tiktokEnd
+    if (extra.fbStart)     payload.fb_start      = extra.fbStart
+    if (extra.fbEnd)       payload.fb_end        = extra.fbEnd
+    if (extra.salesShopee)        payload.sales_shopee         = extra.salesShopee
+    if (extra.salesTiktok)        payload.sales_tiktok         = extra.salesTiktok
+    if (extra.salesOutsideTiktok) payload.sales_outside_tiktok = extra.salesOutsideTiktok
+    if (extra.salesOutsideFb)     payload.sales_outside_fb     = extra.salesOutsideFb
+    if (extra.suggestions.trim()) payload.suggestions           = extra.suggestions.trim()
+    if (extra.note.trim())        payload.note                  = extra.note.trim()
     return Object.keys(payload).length > 0 ? payload : undefined
   }
   if (dept === 'Sales Admin') {
@@ -2237,6 +2268,25 @@ export default function Home() {
           </Link>
         )}
 
+        {/* ไลฟ์สด — ประวัติ KPI */}
+        {formData.department === 'ไลฟ์สด' && (
+          <Link
+            href="/kpi-history"
+            className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              📅
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1E3A5F]">ประวัติ KPI ของฉัน</p>
+              <p className="text-xs text-gray-400 mt-0.5">ดูย้อนหลังรายเดือน — ชั่วโมงไลฟ์ / ยอดขาย</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
         {/* ไลฟ์สด / sale admin — ลิงก์ขอสินค้า */}
         {LIVE_DEPTS.includes(formData.department) && (
           <Link
@@ -2294,49 +2344,169 @@ export default function Home() {
           </Link>
         )}
 
-        {/* ไลฟ์สด / sale admin */}
-        {LIVE_DEPTS.includes(formData.department) && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-            <p className="text-sm font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
-            <div className={formData.department === 'ไลฟ์สด' ? 'grid grid-cols-2 gap-3' : ''}>
-              {formData.department === 'ไลฟ์สด' && (
-                <div>
-                  <label className="block text-xs font-semibold text-[#374151] mb-2">
-                    ชั่วโมงไลฟ์วันนี้
-                  </label>
-                  <div className="relative">
+        {/* ไลฟ์สด — ชั่วโมงไลฟ์ */}
+        {formData.department === 'ไลฟ์สด' && (() => {
+          const toMin = (t: string) => { if (!t) return null; const [h, m] = t.split(':').map(Number); return h * 60 + m }
+          const fmtHours = (mins: number) => { const h = Math.floor(mins / 60), m = mins % 60; return m === 0 ? `${h} ชม.` : `${h} ชม. ${m} นาที` }
+          const ttMin = (() => { const s = toMin(extra.tiktokStart), e = toMin(extra.tiktokEnd); if (s === null || e === null) return null; return (e <= s ? e + 1440 : e) - s })()
+          const fbMin = (() => { const s = toMin(extra.fbStart), e = toMin(extra.fbEnd); if (s === null || e === null) return null; return (e <= s ? e + 1440 : e) - s })()
+          const isDay = extra.tiktokStart ? toMin(extra.tiktokStart)! < 960 : (extra.fbStart ? toMin(extra.fbStart)! < 960 : true)
+          const kpiTarget = isDay ? 360 : 300
+          const kpiMin = isDay ? 330 : 270
+          const totalLiveMin = (ttMin ?? 0) + (fbMin ?? 0)
+          const hasAnyHours = ttMin !== null || fbMin !== null
+          return (
+            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+              <div className="p-3 bg-blue-50 rounded-xl text-xs text-blue-700 leading-relaxed">
+                ⚡ กะกลางวัน: เป้า <strong>6 ชม.</strong> / min <strong>5:30 ชม.</strong> &nbsp;|&nbsp; กะกลางคืน: เป้า <strong>5 ชม.</strong> / min <strong>4:30 ชม.</strong>
+              </div>
+              <p className="text-sm font-bold text-[#1E3A5F]">⏱️ ชั่วโมงไลฟ์</p>
+              {/* TikTok */}
+              <div>
+                <p className="text-xs font-semibold text-[#374151] mb-2">📱 TikTok <span className="font-normal text-gray-400">(ไม่บังคับ)</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">เวลาขึ้นไลฟ์</label>
+                    <input type="time" value={extra.tiktokStart} onChange={(e) => setExtra({ tiktokStart: e.target.value })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">เวลาลงไลฟ์</label>
+                    <input type="time" value={extra.tiktokEnd} onChange={(e) => setExtra({ tiktokEnd: e.target.value })} className={inputClass} />
+                  </div>
+                </div>
+                {ttMin !== null && (
+                  <div className={`mt-2 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 ${ttMin >= kpiTarget ? 'bg-green-50 text-green-700' : ttMin >= kpiMin ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-600'}`}>
+                    {ttMin >= kpiTarget ? '✅' : ttMin >= kpiMin ? '⚠️' : '❌'}
+                    {fmtHours(ttMin)} — {ttMin >= kpiTarget ? `ครบ KPI ${isDay ? 'กะกลางวัน' : 'กะกลางคืน'}` : ttMin >= kpiMin ? 'เกินขั้นต่ำ ยังไม่ถึงเป้า' : `ต่ำกว่าขั้นต่ำ (${isDay ? '5:30' : '4:30'} ชม.)`}
+                  </div>
+                )}
+              </div>
+              {/* Facebook */}
+              <div>
+                <p className="text-xs font-semibold text-[#374151] mb-2">📘 Facebook <span className="font-normal text-gray-400">(ไม่บังคับ)</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">เวลาขึ้นไลฟ์</label>
+                    <input type="time" value={extra.fbStart} onChange={(e) => setExtra({ fbStart: e.target.value })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">เวลาลงไลฟ์</label>
+                    <input type="time" value={extra.fbEnd} onChange={(e) => setExtra({ fbEnd: e.target.value })} className={inputClass} />
+                  </div>
+                </div>
+                {fbMin !== null && (
+                  <div className="mt-2 px-3 py-2 rounded-xl text-xs font-semibold bg-gray-50 text-gray-600">
+                    📘 {fmtHours(fbMin)}
+                  </div>
+                )}
+              </div>
+              {/* รวม */}
+              {hasAnyHours && (
+                <div className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ${totalLiveMin >= kpiTarget ? 'bg-green-100 text-green-800' : totalLiveMin >= kpiMin ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-700'}`}>
+                  รวมทั้งหมด: {fmtHours(totalLiveMin)}
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* ไลฟ์สด — ยอดขาย */}
+        {formData.department === 'ไลฟ์สด' && (() => {
+          const total = [extra.salesShopee, extra.salesTiktok, extra.salesOutsideTiktok, extra.salesOutsideFb]
+            .reduce((s, v) => s + (parseFloat(v) || 0), 0)
+          return (
+            <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+              <p className="text-sm font-bold text-[#1E3A5F]">💰 ยอดขาย <span className="text-xs font-normal text-gray-400">(ทุกช่องไม่บังคับ)</span></p>
+              {([
+                ['salesShopee',        'Shopee'],
+                ['salesTiktok',        'TikTok'],
+                ['salesOutsideTiktok', 'โยนนอก TikTok'],
+                ['salesOutsideFb',     'โยนนอก Facebook'],
+              ] as const).map(([key, label]) => (
+                <div key={key} className="flex items-center gap-3">
+                  <span className="text-xs text-[#374151] w-[120px] shrink-0">{label}</span>
+                  <div className="relative flex-1">
                     <input
                       type="number"
                       min="0"
-                      step="0.5"
-                      value={extra.liveHours}
-                      onChange={(e) => setExtra({ liveHours: e.target.value })}
+                      value={extra[key]}
+                      onChange={(e) => setExtra({ [key]: e.target.value } as Partial<ExtraData>)}
                       placeholder="0"
-                      className={inputClass + ' pr-16'}
+                      className={inputClass + ' pr-10'}
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                      ชั่วโมง
-                    </span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
                   </div>
                 </div>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-[#374151] mb-2">
-                  ยอดขายวันนี้
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    value={extra.salesAmount}
-                    onChange={(e) => setExtra({ salesAmount: e.target.value })}
-                    placeholder="0"
-                    className={inputClass + ' pr-10'}
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                    บาท
-                  </span>
+              ))}
+              {total > 0 && (
+                <div className="flex justify-between items-center pt-2 border-t border-[#E2E8F0]">
+                  <span className="text-xs font-semibold text-[#374151]">รวมทั้งหมด</span>
+                  <span className="text-base font-bold text-[#1E3A5F]">{total.toLocaleString('th-TH')} บาท</span>
                 </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* ไลฟ์สด — ปัญหา / แนวทางแก้ไข / หมายเหตุ */}
+        {formData.department === 'ไลฟ์สด' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+            <p className="text-sm font-bold text-[#1E3A5F]">📝 หมายเหตุและข้อเสนอแนะ</p>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">
+                ปัญหาและอุปสรรค / หมายเหตุ <span className="font-normal text-gray-400">(ไม่บังคับ)</span>
+              </label>
+              <textarea
+                value={formData.obstacles}
+                onChange={(e) => setFormData((prev) => ({ ...prev, obstacles: e.target.value }))}
+                placeholder="เช่น ไลฟ์ไม่ครบเพราะประชุม / เน็ตหลุด / ลูกค้าน้อย..."
+                rows={3}
+                className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">
+                แนวทางแก้ไข / ข้อเสนอแนะ <span className="font-normal text-gray-400">(ไม่บังคับ)</span>
+              </label>
+              <textarea
+                value={extra.suggestions}
+                onChange={(e) => setExtra({ suggestions: e.target.value })}
+                placeholder="เช่น จะชดชั่วโมงพรุ่งนี้ / เปลี่ยนมือถือที่ใช้ไลฟ์..."
+                rows={3}
+                className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">
+                หมายเหตุ <span className="font-normal text-gray-400">(ไม่บังคับ)</span>
+              </label>
+              <input
+                type="text"
+                value={extra.note}
+                onChange={(e) => setExtra({ note: e.target.value })}
+                placeholder="เช่น วันหยุด / พักร้อน / ชด 30 นาที..."
+                className={inputClass}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Sales Admin — ยอดขาย */}
+        {formData.department === 'Sales Admin' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+            <p className="text-sm font-bold text-[#1E3A5F]">ข้อมูลการขาย</p>
+            <div>
+              <label className="block text-xs font-semibold text-[#374151] mb-2">ยอดขายวันนี้</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  value={extra.salesAmount}
+                  onChange={(e) => setExtra({ salesAmount: e.target.value })}
+                  placeholder="0"
+                  className={inputClass + ' pr-10'}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">บาท</span>
               </div>
             </div>
           </div>
@@ -2596,20 +2766,22 @@ export default function Home() {
           </svg>
         </Link>
 
-        {/* Obstacles */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="block text-sm font-semibold text-[#374151] mb-2">
-            อุปสรรคที่เจอวันนี้
-            <span className="text-xs font-normal text-gray-400 ml-2">(ไม่บังคับ)</span>
-          </label>
-          <textarea
-            value={formData.obstacles}
-            onChange={(e) => setFormData((prev) => ({ ...prev, obstacles: e.target.value }))}
-            placeholder="อธิบายอุปสรรคที่พบ หากมี"
-            rows={3}
-            className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
-          />
-        </div>
+        {/* Obstacles — hidden for ไลฟ์สด (handled in custom card above) */}
+        {formData.department !== 'ไลฟ์สด' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <label className="block text-sm font-semibold text-[#374151] mb-2">
+              อุปสรรคที่เจอวันนี้
+              <span className="text-xs font-normal text-gray-400 ml-2">(ไม่บังคับ)</span>
+            </label>
+            <textarea
+              value={formData.obstacles}
+              onChange={(e) => setFormData((prev) => ({ ...prev, obstacles: e.target.value }))}
+              placeholder="อธิบายอุปสรรคที่พบ หากมี"
+              rows={3}
+              className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+            />
+          </div>
+        )}
 
 
         <Link
@@ -2772,18 +2944,34 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Extra fields in confirm — ไลฟ์สด / sale admin */}
-              {LIVE_DEPTS.includes(formData.department) && extraPayload && (
-                <div className="grid grid-cols-2 gap-4 pt-1 border-t border-[#E2E8F0]">
-                  {formData.department === 'ไลฟ์สด' && extra.liveHours && (
-                    <ConfirmRow label="ชั่วโมงไลฟ์" value={`${extra.liveHours} ชั่วโมง`} />
-                  )}
-                  {extra.salesAmount && (
-                    <ConfirmRow
-                      label="ยอดขาย"
-                      value={`${Number(extra.salesAmount).toLocaleString()} บาท`}
-                    />
-                  )}
+              {/* Extra fields in confirm — ไลฟ์สด */}
+              {formData.department === 'ไลฟ์สด' && (() => {
+                const toMin = (t: string) => { if (!t) return null; const [h, m] = t.split(':').map(Number); return h * 60 + m }
+                const fmtH = (mins: number) => { const h = Math.floor(mins / 60), m = mins % 60; return m === 0 ? `${h} ชม.` : `${h} ชม. ${m} นาที` }
+                const ttMin = (() => { const s = toMin(extra.tiktokStart), e = toMin(extra.tiktokEnd); if (s === null || e === null) return null; return (e <= s ? e + 1440 : e) - s })()
+                const fbMin = (() => { const s = toMin(extra.fbStart), e = toMin(extra.fbEnd); if (s === null || e === null) return null; return (e <= s ? e + 1440 : e) - s })()
+                const totalSales = [extra.salesShopee, extra.salesTiktok, extra.salesOutsideTiktok, extra.salesOutsideFb].reduce((s, v) => s + (parseFloat(v) || 0), 0)
+                return (
+                  <div className="space-y-3 pt-1 border-t border-[#E2E8F0]">
+                    <div className="grid grid-cols-2 gap-3">
+                      {ttMin !== null && <ConfirmRow label="ชั่วโมงไลฟ์ TikTok" value={fmtH(ttMin)} />}
+                      {fbMin !== null && <ConfirmRow label="ชั่วโมงไลฟ์ Facebook" value={fmtH(fbMin)} />}
+                      {totalSales > 0 && <ConfirmRow label="รวมยอดขาย" value={`${totalSales.toLocaleString('th-TH')} บาท`} />}
+                      {extra.note.trim() && <ConfirmRow label="หมายเหตุ" value={extra.note.trim()} />}
+                    </div>
+                    {extra.suggestions.trim() && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">แนวทางแก้ไข</p>
+                        <p className="text-sm font-medium text-[#374151]">{extra.suggestions.trim()}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+              {/* Extra fields in confirm — Sales Admin */}
+              {formData.department === 'Sales Admin' && extra.salesAmount && (
+                <div className="pt-1 border-t border-[#E2E8F0]">
+                  <ConfirmRow label="ยอดขาย" value={`${Number(extra.salesAmount).toLocaleString()} บาท`} />
                 </div>
               )}
 

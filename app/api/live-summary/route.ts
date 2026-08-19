@@ -30,9 +30,20 @@ export async function GET(request: NextRequest) {
       nickname: r.nickname,
       time: r.time,
       channels: r.channel_name ? r.channel_name.split(', ').filter(Boolean) : [],
-      live_hours: String(ex.live_hours || ''),
-      sales_amount: String(ex.sales_amount || ''),
       obstacles: r.obstacles || '',
+      tiktok_start: String(ex.tiktok_start || ''),
+      tiktok_end:   String(ex.tiktok_end   || ''),
+      fb_start:     String(ex.fb_start     || ''),
+      fb_end:       String(ex.fb_end       || ''),
+      sales_shopee:          String(ex.sales_shopee          || ''),
+      sales_tiktok:          String(ex.sales_tiktok          || ''),
+      sales_outside_tiktok:  String(ex.sales_outside_tiktok  || ''),
+      sales_outside_fb:      String(ex.sales_outside_fb      || ''),
+      suggestions:           String(ex.suggestions           || ''),
+      note:                  String(ex.note                  || ''),
+      // backwards compat
+      live_hours:   String(ex.live_hours   || ''),
+      sales_amount: String(ex.sales_amount || ''),
     }
   })
 

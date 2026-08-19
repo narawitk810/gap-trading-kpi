@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mockup — ฟอร์ม KPI ไลฟ์สด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #F5F6F8;
+    color: #374151;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .phone-frame { max-width: 420px; margin: 0 auto; }
+  .top-bar {
+    background: #1E3A5F;
+    color: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1E3A5F;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 5px;
+  }
+  input[type="time"], input[type="number"], input[type="text"], textarea {
+    width: 100%;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: 'Sarabun', sans-serif;
+    background: #fff;
+    color: #1E3A5F;
+    outline: none;
+    transition: border 0.15s;
+  }
+  input:focus, textarea:focus { border-color: #1E3A5F; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .divider { border: none; border-top: 1px solid #E2E8F0; margin: 14px 0; }
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .optional-tag {
+    font-size: 10px;
+    font-weight: 400;
+    color: #9CA3AF;
+    background: #F3F4F6;
+    border-radius: 20px;
+    padding: 1px 8px;
+  }
+  .kpi-status {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+  }
+  .kpi-ok   { background: #DCFCE7; color: #16A34A; }
+  .kpi-warn { background: #FEF9C3; color: #CA8A04; }
+  .kpi-fail { background: #FEE2E2; color: #DC2626; }
+  .kpi-empty { background: #F3F4F6; color: #9CA3AF; }
+  .kpi-sub  { font-size: 10px; font-weight: 400; color: #6B7280; margin-top: 3px; }
+  .sales-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .sales-label {
+    font-size: 12px;
+    color: #374151;
+    white-space: nowrap;
+    min-width: 120px;
+  }
+  .sales-input-wrap { position: relative; flex: 1; }
+  .sales-input-wrap input { padding-right: 36px; }
+  .unit {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: #9CA3AF;
+  }
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0 0;
+    border-top: 1px solid #E2E8F0;
+    margin-top: 4px;
+  }
+  .total-label { font-size: 12px; color: #374151; font-weight: 600; }
+  .total-value { font-size: 16px; font-weight: 700; color: #1E3A5F; }
+  textarea { resize: none; height: 72px; line-height: 1.5; }
+  .rules-banner {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    color: #1D4ED8;
+    line-height: 1.8;
+  }
+  .rules-banner strong { font-weight: 700; }
+  .submit-btn {
+    width: 100%;
+    background: #1E3A5F;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .shift-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .shift-day   { background: #FEF3C7; color: #92400E; }
+  .shift-night { background: #EDE9FE; color: #5B21B6; }
+  .fb-hours-display {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #F3F4F6;
+    border-radius: 10px;
+    font-size: 12px;
+    color: #374151;
+  }
+  .field-group { margin-bottom: 14px; }
+  .field-group:last-child { margin-bottom: 0; }
+  .col-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #6B7280;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="top-bar">KPI ประจำวัน — ไลฟ์สด</div>
+  <div style="height:12px"></div>
+
+  <!-- กฎ KPI -->
+  <div class="rules-banner">
+    ⚡ <strong>เป้า KPI ชั่วโมงไลฟ์</strong><br>
+    กะกลางวัน: เป้า <strong>6 ชม.</strong> / ห้ามต่ำกว่า <strong>5:30 ชม.</strong><br>
+    กะกลางคืน: เป้า <strong>5 ชม.</strong> / ห้ามต่ำกว่า <strong>4:30 ชม.</strong><br>
+    ส่วนต่างจากระบบ &gt;30 นาที → ปรับ <strong>300 บาท/วัน</strong>
+  </div>
+
+  <!-- ============================================
+       SECTION: ชั่วโมงไลฟ์
+  ============================================= -->
+  <div class="card">
+    <div class="card-title">⏱️ ชั่วโมงไลฟ์</div>
+
+    <!-- TikTok -->
+    <div class="section-label">
+      📱 TikTok
+      <span id="shift-badge"></span>
+    </div>
+    <div class="row-2">
+      <div>
+        <label>เวลาขึ้นไลฟ์</label>
+        <input type="time" id="tt-start" value="12:07" oninput="calcTT()" />
+      </div>
+      <div>
+        <label>เวลาลงไลฟ์</label>
+        <input type="time" id="tt-end" value="19:19" oninput="calcTT()" />
+      </div>
+    </div>
+    <div id="tt-status" class="kpi-status kpi-ok">
+      <div>
+        <div>✅ 7 ชม. 12 นาที — ครบ KPI กะกลางวัน</div>
+        <div class="kpi-sub">เป้า 6 ชม. / ขั้นต่ำ 5:30 ชม.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- Facebook -->
+    <div class="section-label">
+      📘 Facebook
+      <span class="optional-tag">ไม่บังคับ</span>
+    </div>
+    <div class="row-2">
+      <div>
+        <label>เวลาขึ้นไลฟ์</label>
+        <input type="time" id="fb-start" oninput="calcFB()" />
+      </div>
+      <div>
+        <label>เวลาลงไลฟ์</label>
+        <input type="time" id="fb-end" oninput="calcFB()" />
+      </div>
+    </div>
+    <div id="fb-hours" class="fb-hours-display" style="display:none">
+      📘 รวมชั่วโมง Facebook: <strong id="fb-total">—</strong>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SECTION: ยอดขาย
+  ============================================= -->
+  <div class="card">
+    <div class="card-title">
+      💰 ยอดขาย
+      <span class="optional-tag" style="font-weight:400">ทุกช่องไม่บังคับ</span>
+    </div>
+
+    <div class="sales-row">
+      <span class="sales-label">Shopee</span>
+      <div class="sales-input-wrap">
+        <input type="number" id="s-shopee" min="0" placeholder="0" oninput="calcTotal()" />
+        <span class="unit">บาท</span>
+      </div>
+    </div>
+    <div class="sales-row">
+      <span class="sales-label">TikTok</span>
+      <div class="sales-input-wrap">
+        <input type="number" id="s-tiktok" min="0" placeholder="0" value="9034" oninput="calcTotal()" />
+        <span class="unit">บาท</span>
+      </div>
+    </div>
+    <div class="sales-row">
+      <span class="sales-label">โยนนอก TikTok</span>
+      <div class="sales-input-wrap">
+        <input type="number" id="s-out-tt" min="0" placeholder="0" oninput="calcTotal()" />
+        <span class="unit">บาท</span>
+      </div>
+    </div>
+    <div class="sales-row">
+      <span class="sales-label">โยนนอก Facebook</span>
+      <div class="sales-input-wrap">
+        <input type="number" id="s-out-fb" min="0" placeholder="0" oninput="calcTotal()" />
+        <span class="unit">บาท</span>
+      </div>
+    </div>
+    <div class="total-row">
+      <span class="total-label">รวมทั้งหมด</span>
+      <span class="total-value" id="total-val">9,034 บาท</span>
+    </div>
+  </div>
+
+  <!-- ============================================
+       SECTION: 3 ช่องข้อความ (ตรงตาม spreadsheet)
+  ============================================= -->
+  <div class="card">
+    <div class="card-title">📝 หมายเหตุและข้อเสนอแนะ</div>
+
+    <!-- C13: ปัญหาและอุปสรรค/หมายเหตุ -->
+    <div class="field-group">
+      <label>ปัญหาและอุปสรรค / หมายเหตุ <span style="color:#9CA3AF;font-weight:400">(ไม่บังคับ)</span></label>
+      <textarea placeholder="เช่น ไลฟ์ไม่ครบเพราะประชุม / เน็ตหลุด / ลูกค้าน้อย...">ปวดท้องหน้ามืดค่ะ ไลฟ์ไม่ครบ ชดให้พรุ่งนี้นะคะ</textarea>
+    </div>
+
+    <!-- C14: แนวทางแก้ไข -->
+    <div class="field-group">
+      <label>แนวทางแก้ไข / ข้อเสนอแนะ <span style="color:#9CA3AF;font-weight:400">(ไม่บังคับ)</span></label>
+      <textarea placeholder="เช่น จะชดชั่วโมงพรุ่งนี้ / เปลี่ยนมือถือที่ใช้ไลฟ์..."></textarea>
+    </div>
+
+    <!-- C15: หมายเหตุ -->
+    <div class="field-group">
+      <label>หมายเหตุ <span style="color:#9CA3AF;font-weight:400">(ไม่บังคับ)</span></label>
+      <input type="text" placeholder="เช่น วันหยุด / พักร้อน / ชด 30 นาที..." />
+    </div>
+  </div>
+
+  <button class="submit-btn" onclick="alert('✅ ตัวอย่างเท่านั้น — ระบบจริงจะแสดงหน้ายืนยันก่อนส่ง')">ถัดไป (ยืนยัน)</button>
+
+  <div style="height:24px"></div>
+
+  <!-- เปรียบเทียบ spreadsheet column ↔ form field -->
+  <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+    <div style="font-size:12px;font-weight:700;color:#1E3A5F;margin-bottom:10px">📊 ตรง Spreadsheet ทุก column</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <tr style="background:#F5F6F8">
+        <th style="text-align:left;padding:6px 8px;color:#6B7280">Spreadsheet column</th>
+        <th style="text-align:left;padding:6px 8px;color:#6B7280">ฟอร์ม KPI</th>
+      </tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">TikTok เวลาขึ้นไลฟ์</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ time input</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">TikTok เวลาลงไลฟ์</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ time input</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">TikTok รวมชั่วโมง</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ auto-calc + KPI status</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">Facebook เวลาขึ้นไลฟ์</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ time input (ไม่บังคับ)</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">Facebook เวลาลงไลฟ์</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ time input (ไม่บังคับ)</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">Facebook รวมชั่วโมง</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ auto-calc</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">ยอดขาย Shopee</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ number input</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">ยอดขาย TikTok</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ number input</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">ยอดขาย โยนนอก TikTok</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ number input</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">ยอดขาย โยนนอก Facebook</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ number input</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">รวมยอดขายทั้งหมด</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ auto-calc</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">ปัญหาและอุปสรรค/หมายเหตุ</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ textarea</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">แนวทางแก้ไข (ข้อเสนอแนะ)</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ textarea</td></tr>
+      <tr><td style="padding:5px 8px;border-top:1px solid #E2E8F0">หมายเหตุ</td><td style="padding:5px 8px;border-top:1px solid #E2E8F0">✅ text input</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<script>
+function toMin(t) {
+  if (!t) return null;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+function fmt(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m === 0 ? `${h} ชม.` : `${h} ชม. ${m} นาที`;
+}
+
+function calcTT() {
+  const s = document.getElementById('tt-start').value;
+  const e = document.getElementById('tt-end').value;
+  const el = document.getElementById('tt-status');
+  const badge = document.getElementById('shift-badge');
+  if (!s || !e) {
+    el.className = 'kpi-status kpi-empty';
+    el.innerHTML = '<div>— กรุณากรอกเวลาขึ้น/ลงไลฟ์</div>';
+    badge.innerHTML = '';
+    return;
+  }
+  let sm = toMin(s), em = toMin(e);
+  if (em <= sm) em += 1440;
+  const diff = em - sm;
+  const isDay = sm < 960; // before 16:00
+  const tgt = isDay ? 360 : 300, minReq = isDay ? 330 : 270;
+  const sName = isDay ? 'กะกลางวัน' : 'กะกลางคืน';
+  const bClass = isDay ? 'shift-day' : 'shift-night';
+  const rule = isDay ? 'เป้า 6 ชม. / ขั้นต่ำ 5:30 ชม.' : 'เป้า 5 ชม. / ขั้นต่ำ 4:30 ชม.';
+  badge.innerHTML = `<span class="shift-badge ${bClass}">${sName}</span>`;
+  let icon, cls, msg;
+  if (diff >= tgt)       { icon='✅'; cls='kpi-ok';   msg=`ครบ KPI ${sName}`; }
+  else if (diff >= minReq) { icon='⚠️'; cls='kpi-warn'; msg='เกินขั้นต่ำ แต่ยังไม่ถึงเป้า'; }
+  else                   { icon='❌'; cls='kpi-fail'; msg=`ต่ำกว่าขั้นต่ำ`; }
+  el.className = `kpi-status ${cls}`;
+  el.innerHTML = `<div><div>${icon} ${fmt(diff)} — ${msg}</div><div class="kpi-sub">${rule}</div></div>`;
+}
+
+function calcFB() {
+  const s = document.getElementById('fb-start').value;
+  const e = document.getElementById('fb-end').value;
+  const el = document.getElementById('fb-hours');
+  const tot = document.getElementById('fb-total');
+  if (!s || !e) { el.style.display = 'none'; return; }
+  let sm = toMin(s), em = toMin(e);
+  if (em <= sm) em += 1440;
+  tot.textContent = fmt(em - sm);
+  el.style.display = 'block';
+}
+
+function calcTotal() {
+  const v = (id) => parseFloat(document.getElementById(id).value) || 0;
+  const total = v('s-shopee') + v('s-tiktok') + v('s-out-tt') + v('s-out-fb');
+  document.getElementById('total-val').textContent =
+    total > 0 ? total.toLocaleString('th-TH') + ' บาท' : '0 บาท';
+}
+
+calcTT(); calcTotal();
+</script>
+</body>
+</html>
