@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 
   const validTasks = (body.tasks || []).filter((t) => t.trim())
-  if (validTasks.length === 0) {
+  if (body.department !== 'ไลฟ์สด' && validTasks.length === 0) {
     return NextResponse.json({ error: 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ' }, { status: 400 })
   }
   if (validTasks.length > 10) {
