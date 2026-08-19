@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       `ต้นทุน: ${body.cost.trim()} บาท/กล่อง`,
       `บันทึกโดย: ${body.nickname.trim()}`,
       body.note?.trim() ? `📝 ${body.note.trim()}` : '',
+      'ดูระบบ: https://gap-trading-kpi.vercel.app',
     ].filter(Boolean).join('\n')
     fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',

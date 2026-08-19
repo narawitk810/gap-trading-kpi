@@ -24,16 +24,15 @@ export async function notifyPromoAcknowledged(promo: {
     const [y, mo] = m.split('-')
     return `${names[parseInt(mo) - 1]} ${parseInt(y) + 543}`
   }
-  const baseUrl = process.env.APP_BASE_URL
   const text = [
     '🎁 มีโปรซื้อครบใหม่ที่ Admin อนุมัติแล้ว',
     `สินค้า: ${promo.product_name}`,
     `ซื้อครบ: ${promo.threshold_amount} บาท`,
     `ช่วงโปร: ${fmt(promo.start_month)} – ${fmt(promo.end_month)}`,
-    baseUrl ? `ดูรายละเอียด: ${baseUrl}/promo-list` : '',
-  ].filter(Boolean).join('\n')
+    'ดูรายละเอียด: https://gap-trading-kpi.vercel.app/promo-list',
+  ].join('\n')
 
-  const groupIds = [process.env.LINE_GROUP_ID_LIVE, process.env.LINE_GROUP_ID_MARKETING]
+  const groupIds = [process.env.LINE_GROUP_ID_LIVE]
     .filter((id): id is string => !!id)
   await Promise.all(groupIds.map((id) => sendLinePushMessage(id, text)))
 }
