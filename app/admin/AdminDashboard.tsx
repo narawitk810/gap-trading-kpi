@@ -514,6 +514,7 @@ export default function AdminDashboard() {
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
   const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState<string>('')
+  const [pmCustomMultiplier, setPmCustomMultiplier] = useState('')
   const [pmMsrpPrice, setPmMsrpPrice] = useState('')
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
@@ -1093,11 +1094,19 @@ export default function AdminDashboard() {
     finally { setLoadingArrivals(false) }
   }, [])
 
+  const FIXED_MULTIPLIER_KEYS = ['2.4', '2.6', '2.8', '3', 'msrp', 'old']
+
   function openPricingModal(r: StockArrival) {
     setPricingModal(r)
     if (r.pricing_data) {
       const p = JSON.parse(r.pricing_data)
-      setPmMultiplier(p.multiplier)
+      if (!FIXED_MULTIPLIER_KEYS.includes(p.multiplier)) {
+        setPmMultiplier('custom')
+        setPmCustomMultiplier(p.multiplier)
+      } else {
+        setPmMultiplier(p.multiplier)
+        setPmCustomMultiplier('')
+      }
       setPmMsrpPrice(p.msrp_price || '')
       setPmRisk(p.risk_amount)
       setPmCommission(p.commission_tier)
@@ -1107,6 +1116,7 @@ export default function AdminDashboard() {
       setPmNoPackSale(p.no_pack_sale === true)
     } else {
       setPmMultiplier('')
+      setPmCustomMultiplier('')
       setPmMsrpPrice('')
       setPmRisk(0)
       setPmCommission('')
@@ -1121,6 +1131,7 @@ export default function AdminDashboard() {
     if (!pricingModal) return
     if (!pmMultiplier) { alert('กรุณาเลือกประเภทสินค้า'); return }
     if (pmMultiplier === 'msrp' && !pmMsrpPrice.trim()) { alert('กรุณาระบุราคา MSRP'); return }
+    if (pmMultiplier === 'custom' && (!pmCustomMultiplier || Number(pmCustomMultiplier) <= 0)) { alert('กรุณาระบุตัวคูณ'); return }
     if (!pmCommission) { alert('กรุณาเลือกค่าคอมมิชชั่น'); return }
 
     let oldPricing: Record<string, string> | null = null
@@ -1149,7 +1160,8 @@ export default function AdminDashboard() {
         ? roundUp10(boxPriceExternal / packs)
         : (oldPricing!.pack_price_external ? Number(oldPricing!.pack_price_external) : roundUp10(packPriceSystem * 0.90))
     } else {
-      const rawBoxSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
+      const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
+      const rawBoxSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * effectiveMult
       boxPriceSystem = pmMultiplier === 'msrp' ? rawBoxSystem : roundUp10(rawBoxSystem)
       boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
       packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
@@ -1159,7 +1171,7 @@ export default function AdminDashboard() {
     }
 
     const pricing = {
-      multiplier: pmMultiplier,
+      multiplier: pmMultiplier === 'custom' ? pmCustomMultiplier : pmMultiplier,
       msrp_price: pmMsrpPrice || null,
       risk_amount: pmRisk,
       commission_tier: pmCommission,
@@ -3032,8 +3044,11 @@ export default function AdminDashboard() {
                     : (oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90))
                   calcReady = true
                 } else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') {
-                  boxPriceSystem = roundUp10(cost * Number(pmMultiplier))
-                  calcReady = true
+                  const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
+                  if (pmMultiplier !== 'custom' || (pmCustomMultiplier && Number(pmCustomMultiplier) > 0)) {
+                    boxPriceSystem = roundUp10(cost * effectiveMult)
+                    calcReady = true
+                  }
                 }
                 if (calcReady && pmMultiplier !== 'old') {
                   boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
@@ -3045,11 +3060,12 @@ export default function AdminDashboard() {
               }
 
               const fmt = (n: number) => n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-              const MULTIPLIERS = [
+              const MULTIPLIERS: { key: string; label: string; value?: number }[] = [
                 { key: '2.4', label: 'ทั่วไป', value: 2.4 },
                 { key: '2.6', label: 'หายาก', value: 2.6 },
                 { key: '2.8', label: 'หายากมาก', value: 2.8 },
                 { key: '3', label: 'สั่งไม่ได้อีก', value: 3 },
+                { key: 'custom', label: 'อื่นๆ' },
               ]
 
               return (
@@ -3108,8 +3124,15 @@ export default function AdminDashboard() {
                                 <label key={m.key} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${pmMultiplier === m.key ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
                                   <input type="radio" name="multiplier" value={m.key} checked={pmMultiplier === m.key} onChange={() => setPmMultiplier(m.key)} className="accent-[#1E3A5F]" />
                                   <span className="text-sm font-semibold text-[#374151]">{m.label}</span>
-                                  <span className="text-xs text-gray-400">× {m.value}</span>
-                                  {cost > 0 && <span className="ml-auto text-sm font-bold text-[#1E3A5F]">{(cost * m.value).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿</span>}
+                                  {m.value != null && <span className="text-xs text-gray-400">× {m.value}</span>}
+                                  {m.key === 'custom' && pmMultiplier === 'custom' ? (
+                                    <input type="number" value={pmCustomMultiplier} onChange={(e) => setPmCustomMultiplier(e.target.value)}
+                                      placeholder="เช่น 2, 4, 5" step="0.1" min="0.1"
+                                      className="ml-auto border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-28 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                                      onClick={(e) => e.stopPropagation()} />
+                                  ) : (
+                                    m.value != null && cost > 0 && <span className="ml-auto text-sm font-bold text-[#1E3A5F]">{(cost * m.value).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿</span>
+                                  )}
                                 </label>
                               ))}
                             </div>

@@ -43,11 +43,13 @@ function formatDate(iso: string) {
 const fmt = (n: number) => n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const roundUp10 = (n: number) => Math.ceil(n / 10) * 10
 
-const MULTIPLIERS = [
+const FIXED_MULTIPLIER_KEYS = ['2.4', '2.6', '2.8', '3', 'msrp', 'old']
+const MULTIPLIERS: { key: string; label: string; value?: number }[] = [
   { key: '2.4', label: 'ทั่วไป', value: 2.4 },
   { key: '2.6', label: 'หายาก', value: 2.6 },
   { key: '2.8', label: 'หายากมาก', value: 2.8 },
   { key: '3', label: 'สั่งไม่ได้อีก', value: 3 },
+  { key: 'custom', label: 'อื่นๆ' },
 ]
 
 export default function StockPricesPage() {
@@ -60,6 +62,7 @@ export default function StockPricesPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [pricingModal, setPricingModal] = useState<StockPrice | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState('')
+  const [pmCustomMultiplier, setPmCustomMultiplier] = useState('')
   const [pmMsrpPrice, setPmMsrpPrice] = useState('')
   const [pmRisk, setPmRisk] = useState(0)
   const [pmCommission, setPmCommission] = useState('')
@@ -189,7 +192,13 @@ export default function StockPricesPage() {
     if (!r.pricing_data) return
     setPricingModal(r)
     const p: PricingData = JSON.parse(r.pricing_data)
-    setPmMultiplier(p.multiplier)
+    if (!FIXED_MULTIPLIER_KEYS.includes(p.multiplier)) {
+      setPmMultiplier('custom')
+      setPmCustomMultiplier(p.multiplier)
+    } else {
+      setPmMultiplier(p.multiplier)
+      setPmCustomMultiplier('')
+    }
     setPmMsrpPrice(p.msrp_price || '')
     setPmRisk(p.risk_amount)
     setPmCommission(p.commission_tier)
@@ -199,6 +208,7 @@ export default function StockPricesPage() {
     if (!pricingModal) return
     if (!pmMultiplier) { alert('กรุณาเลือกประเภทสินค้า'); return }
     if (pmMultiplier === 'msrp' && !pmMsrpPrice.trim()) { alert('กรุณาระบุราคา MSRP'); return }
+    if (pmMultiplier === 'custom' && (!pmCustomMultiplier || Number(pmCustomMultiplier) <= 0)) { alert('กรุณาระบุตัวคูณ'); return }
     if (!pmCommission) { alert('กรุณาเลือกค่าคอมมิชชั่น'); return }
 
     let oldPricing: Record<string, string> | null = null
@@ -225,7 +235,8 @@ export default function StockPricesPage() {
       packPriceSystem = oldPricing!.pack_price_system ? Number(oldPricing!.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
       packPriceExternal = oldPricing!.pack_price_external ? Number(oldPricing!.pack_price_external) : roundUp10(packPriceSystem * 0.90)
     } else {
-      const rawBox = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * Number(pmMultiplier)
+      const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
+      const rawBox = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * effectiveMult
       boxPriceSystem = pmMultiplier === 'msrp' ? rawBox : roundUp10(rawBox)
       boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
       packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
@@ -233,7 +244,7 @@ export default function StockPricesPage() {
     }
 
     const pricing = {
-      multiplier: pmMultiplier,
+      multiplier: pmMultiplier === 'custom' ? pmCustomMultiplier : pmMultiplier,
       msrp_price: pmMsrpPrice || null,
       risk_amount: pmRisk,
       commission_tier: pmCommission,
@@ -654,7 +665,12 @@ export default function StockPricesPage() {
             packPriceExternal = oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90)
             calcReady = true
           }
-          else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') { boxPriceSystem = roundUp10(cost * Number(pmMultiplier)); calcReady = true }
+          else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') {
+            const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
+            if (pmMultiplier !== 'custom' || (pmCustomMultiplier && Number(pmCustomMultiplier) > 0)) {
+              boxPriceSystem = roundUp10(cost * effectiveMult); calcReady = true
+            }
+          }
           if (calcReady && pmMultiplier !== 'old') {
             boxPriceExternal = roundUp10(boxPriceSystem * 0.90 * 0.84)
             packPriceSystem = roundUp10((boxPriceSystem / packs) + pmRisk)
@@ -707,8 +723,15 @@ export default function StockPricesPage() {
                       <label key={m.key} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${pmMultiplier === m.key ? 'border-[#16A34A] bg-green-50' : 'border-[#E2E8F0]'}`}>
                         <input type="radio" name="spm" value={m.key} checked={pmMultiplier === m.key} onChange={() => setPmMultiplier(m.key)} className="accent-[#16A34A]" />
                         <span className="text-sm font-semibold text-[#374151]">{m.label}</span>
-                        <span className="text-xs text-gray-400">× {m.value}</span>
-                        {cost > 0 && <span className="ml-auto text-sm font-bold text-[#16A34A]">{(cost * m.value).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿</span>}
+                        {m.value != null && <span className="text-xs text-gray-400">× {m.value}</span>}
+                        {m.key === 'custom' && pmMultiplier === 'custom' ? (
+                          <input type="number" value={pmCustomMultiplier} onChange={(e) => setPmCustomMultiplier(e.target.value)}
+                            placeholder="เช่น 2, 4, 5" step="0.1" min="0.1"
+                            className="ml-auto border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs w-28 focus:outline-none focus:ring-2 focus:ring-[#16A34A]"
+                            onClick={(e) => e.stopPropagation()} />
+                        ) : (
+                          m.value != null && cost > 0 && <span className="ml-auto text-sm font-bold text-[#16A34A]">{(cost * m.value).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿</span>
+                        )}
                       </label>
                     ))}
                   </div>
