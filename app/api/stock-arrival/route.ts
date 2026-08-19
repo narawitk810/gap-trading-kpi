@@ -49,6 +49,24 @@ export async function POST(request: NextRequest) {
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
     args: [id, body.nickname.trim(), body.product_name.trim(), body.quantity.trim(), body.packs_per_box.trim(), body.cost.trim(), body.note?.trim() || null, body.image_data, now, oldPricing],
   })
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const groupId = process.env.LINE_GROUP_ID_ADMIN
+  if (token && groupId) {
+    const msg = [
+      '📦 สินค้าเข้าใหม่!',
+      `สินค้า: ${body.product_name.trim()}`,
+      `จำนวน: ${body.quantity.trim()} ชิ้น (${body.packs_per_box.trim()} ซอง/กล่อง)`,
+      `ต้นทุน: ${body.cost.trim()} บาท/กล่อง`,
+      `บันทึกโดย: ${body.nickname.trim()}`,
+      body.note?.trim() ? `📝 ${body.note.trim()}` : '',
+    ].filter(Boolean).join('\n')
+    fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: groupId, messages: [{ type: 'text', text: msg }] }),
+    }).catch(() => {})
+  }
+
   return NextResponse.json({ id }, { status: 201 })
 }
 
