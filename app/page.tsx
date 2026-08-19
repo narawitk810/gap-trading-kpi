@@ -2287,6 +2287,25 @@ export default function Home() {
           </Link>
         )}
 
+        {/* ไลฟ์สด — รายงานการขาย-ของแถม */}
+        {formData.department === 'ไลฟ์สด' && (
+          <Link
+            href="/live-report"
+            className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4 hover:bg-green-100 transition-colors"
+          >
+            <div className="w-10 h-10 bg-[#16A34A] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+              📊
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#16A34A]">รายงานการขาย-ของแถม</p>
+              <p className="text-xs text-gray-400 mt-0.5">บันทึกยอดขายสินค้าและของแถมรายวัน</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        )}
+
         {/* ไลฟ์สด / sale admin — ลิงก์ขอสินค้า */}
         {LIVE_DEPTS.includes(formData.department) && (
           <Link

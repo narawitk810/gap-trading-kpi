@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 39
+const SCHEMA_VERSION = 40
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -754,6 +754,39 @@ export async function ensureSchema(): Promise<void> {
       created_at TEXT NOT NULL
     )
   `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS live_sales_report (
+      id           TEXT PRIMARY KEY,
+      nickname     TEXT NOT NULL,
+      date         TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      qty_box      INTEGER NOT NULL DEFAULT 0,
+      qty_pack     INTEGER NOT NULL DEFAULT 0,
+      amount       REAL NOT NULL DEFAULT 0,
+      platform     TEXT NOT NULL DEFAULT '',
+      note         TEXT NOT NULL DEFAULT '',
+      created_at   TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS live_gifts (
+      id         TEXT PRIMARY KEY,
+      nickname   TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      gift_name  TEXT NOT NULL,
+      promo_type TEXT NOT NULL DEFAULT '',
+      qty        INTEGER NOT NULL DEFAULT 1,
+      unit       TEXT NOT NULL DEFAULT '',
+      price      REAL NOT NULL DEFAULT 0,
+      note       TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    )
+  `)
+
+  try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_live_sales_nick_date ON live_sales_report(nickname, date)`) } catch { /* exists */ }
+  try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_live_gifts_nick_date ON live_gifts(nickname, date)`) } catch { /* exists */ }
 
   g.dbVersion = SCHEMA_VERSION
 }
