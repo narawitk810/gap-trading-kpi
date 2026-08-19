@@ -89,6 +89,7 @@ type StockArrival = {
   tiktok_listed_at: string | null
   sku_code_box: string | null
   sku_code_pack: string | null
+  allocation: string | null
 }
 
 type PromoThreshold = {
@@ -512,6 +513,7 @@ export default function AdminDashboard() {
   const [deletingArrivalId, setDeletingArrivalId] = useState<string | null>(null)
   const [arrivalFilters, setArrivalFilters] = useState({ dateFrom: '', dateTo: '', search: '' })
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
+  const [allocationEdits, setAllocationEdits] = useState<Record<string, string>>({})
   const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState<string>('')
   const [pmCustomMultiplier, setPmCustomMultiplier] = useState('')
@@ -2947,6 +2949,7 @@ export default function AdminDashboard() {
                         <th className="text-right px-4 py-3">ต้นทุน (บาท)</th>
                         <th className="text-center px-4 py-3">สถานะ</th>
                         <th className="text-center px-4 py-3">รูป</th>
+                        <th className="text-left px-4 py-3">Allocation</th>
                         <th className="text-center px-4 py-3">การดำเนินการ</th>
                       </tr>
                     </thead>
@@ -2979,6 +2982,25 @@ export default function AdminDashboard() {
                               loading="lazy"
                               onClick={() => setArrivalImageModal(`/api/stock-arrival?image_id=${r.id}`)}
                               className="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80 mx-auto"
+                            />
+                          </td>
+                          <td className="px-4 py-3 min-w-[140px]">
+                            <input
+                              type="text"
+                              value={allocationEdits[r.id] ?? (r.allocation || '')}
+                              onChange={(e) => setAllocationEdits((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                              onBlur={async (e) => {
+                                const val = e.target.value.trim()
+                                if (val === (r.allocation || '')) return
+                                await fetch('/api/stock-arrival', {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ id: r.id, action: 'update_allocation', allocation: val }),
+                                })
+                                setStockArrivals((prev) => prev.map((x) => x.id === r.id ? { ...x, allocation: val } : x))
+                              }}
+                              placeholder="เช่น แบม 5 กล่อง"
+                              className="w-full border border-transparent hover:border-[#E2E8F0] focus:border-[#1E3A5F] rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F] bg-transparent focus:bg-white transition-colors"
                             />
                           </td>
                           <td className="px-4 py-3 text-center">

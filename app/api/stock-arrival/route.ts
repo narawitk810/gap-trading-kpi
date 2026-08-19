@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   const result = await db.execute(
     `SELECT id, nickname, product_name, quantity, packs_per_box, cost, note,
             status, created_at, acknowledged_at, pricing_data, old_pricing_data,
-            tiktok_listed_at, sku_code_box, sku_code_pack
+            tiktok_listed_at, sku_code_box, sku_code_pack, allocation
      FROM stock_arrivals ORDER BY created_at DESC`
   )
   return NextResponse.json(result.rows)
@@ -113,6 +113,11 @@ export async function PATCH(request: NextRequest) {
       sql: `UPDATE stock_arrivals SET tiktok_listed_at = '' WHERE id = ? AND status = 'acknowledged'`,
       args: [body.id],
     })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'update_allocation') {
+    await db.execute({ sql: 'UPDATE stock_arrivals SET allocation = ? WHERE id = ?', args: [body.allocation ?? '', body.id] })
     return NextResponse.json({ ok: true })
   }
 

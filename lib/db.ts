@@ -640,6 +640,7 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE tcg_members ADD COLUMN date_of_birth TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE stock_arrivals ADD COLUMN sku_code_box TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE stock_arrivals ADD COLUMN sku_code_pack TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE stock_arrivals ADD COLUMN allocation TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tcg_members (
