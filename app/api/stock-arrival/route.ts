@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     args: [id, body.nickname.trim(), body.product_name.trim(), body.quantity.trim(), body.packs_per_box.trim(), body.cost.trim(), body.note?.trim() || null, body.image_data, now, oldPricing],
   })
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
-  const groupId = process.env.LINE_GROUP_ID_ADMIN
+  const groupId = process.env.LINE_GROUP_ID_STOCK
   if (token && groupId) {
     const msg = [
       '📦 สินค้าเข้าใหม่!',
