@@ -2999,7 +2999,7 @@ export default function AdminDashboard() {
                                 })
                                 setStockArrivals((prev) => prev.map((x) => x.id === r.id ? { ...x, allocation: val } : x))
                               }}
-                              placeholder="เช่น แบม 5 กล่อง"
+                              placeholder=""
                               className="w-full border border-transparent hover:border-[#E2E8F0] focus:border-[#1E3A5F] rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F] bg-transparent focus:bg-white transition-colors"
                             />
                           </td>
