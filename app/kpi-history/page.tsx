@@ -5,21 +5,6 @@ import Link from 'next/link'
 const NICKNAME_KEY = 'gap_kpi_nickname'
 const DEPT_KEY = 'gap_kpi_department'
 
-function toMin(t: string) {
-  if (!t) return null
-  const [h, m] = t.split(':').map(Number)
-  return h * 60 + m
-}
-function fmtHours(mins: number) {
-  const h = Math.floor(mins / 60), m = mins % 60
-  return m === 0 ? `${h} ชม.` : `${h} ชม. ${m} นาที`
-}
-function calcMins(start: string, end: string) {
-  const s = toMin(start), e = toMin(end)
-  if (s === null || e === null) return null
-  return (e <= s ? e + 1440 : e) - s
-}
-
 const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
 
 function buddhistMonthYear(isoMonth: string) {
@@ -40,31 +25,7 @@ interface Entry {
   created_at: string
 }
 
-function getTotalSales(ex: Record<string, unknown>): number {
-  return (['sales_shopee', 'sales_tiktok', 'sales_outside_tiktok', 'sales_outside_fb', 'sales_amount'] as const)
-    .reduce<number>((s, k) => s + (parseFloat(String(ex[k] || '')) || 0), 0)
-}
-
 function EntryCard({ entry }: { entry: Entry }) {
-  const ex = entry.extra
-  const ttMin = calcMins(String(ex.tiktok_start || ''), String(ex.tiktok_end || ''))
-  const fbMin = calcMins(String(ex.fb_start || ''), String(ex.fb_end || ''))
-  const totalLive = (ttMin ?? 0) + (fbMin ?? 0)
-  const legacyLiveHours = String(ex.live_hours || '')
-  const hasLiveHours = ttMin !== null || fbMin !== null || legacyLiveHours.length > 0
-  const totalSales = getTotalSales(ex)
-  const shopeeAmt = parseFloat(String(ex.sales_shopee || '')) || 0
-  const tiktokAmt = parseFloat(String(ex.sales_tiktok || '')) || 0
-  const outsideTtAmt = parseFloat(String(ex.sales_outside_tiktok || '')) || 0
-  const outsideFbAmt = parseFloat(String(ex.sales_outside_fb || '')) || 0
-  const legacyAmt = parseFloat(String(ex.sales_amount || '')) || 0
-  const hasNewFormat = tiktokAmt > 0 || shopeeAmt > 0 || outsideTtAmt > 0 || outsideFbAmt > 0
-  const ttStart = String(ex.tiktok_start || '')
-  const ttEnd = String(ex.tiktok_end || '')
-  const fbStart = String(ex.fb_start || '')
-  const fbEnd = String(ex.fb_end || '')
-  const suggestions = String(ex.suggestions || '')
-  const note = String(ex.note || '')
   const doneTasks = entry.tasks.filter(t => t.length > 0)
   const dt = new Date(entry.date + 'T00:00:00')
   const d = dt.getDate()
@@ -88,31 +49,7 @@ function EntryCard({ entry }: { entry: Entry }) {
         )}
       </div>
 
-      {/* Live hours */}
-      {hasLiveHours && (
-        <div className="bg-blue-50 rounded-xl px-3 py-2 text-xs text-blue-800 space-y-1">
-          {ttMin !== null && <div>📱 TikTok: <strong>{fmtHours(ttMin)}</strong> ({ttStart} – {ttEnd})</div>}
-          {fbMin !== null && <div>📘 Facebook: <strong>{fmtHours(fbMin)}</strong> ({fbStart} – {fbEnd})</div>}
-          {legacyLiveHours.length > 0 && !ttMin && !fbMin && <div>⏱️ ชั่วโมงไลฟ์: <strong>{legacyLiveHours} ชม.</strong></div>}
-          {(ttMin !== null || fbMin !== null) && (
-            <div className="pt-1 border-t border-blue-200 font-semibold">รวม: {fmtHours(totalLive)}</div>
-          )}
-        </div>
-      )}
-
-      {/* Sales */}
-      {totalSales > 0 && (
-        <div className="bg-green-50 rounded-xl px-3 py-2 text-xs text-green-800 space-y-1">
-          {shopeeAmt > 0 && <div>Shopee: {shopeeAmt.toLocaleString('th-TH')} บาท</div>}
-          {tiktokAmt > 0 && <div>TikTok: {tiktokAmt.toLocaleString('th-TH')} บาท</div>}
-          {outsideTtAmt > 0 && <div>โยนนอก TikTok: {outsideTtAmt.toLocaleString('th-TH')} บาท</div>}
-          {outsideFbAmt > 0 && <div>โยนนอก Facebook: {outsideFbAmt.toLocaleString('th-TH')} บาท</div>}
-          {legacyAmt > 0 && !hasNewFormat && <div>ยอดขาย: {legacyAmt.toLocaleString('th-TH')} บาท</div>}
-          <div className="pt-1 border-t border-green-200 font-semibold">รวม: {totalSales.toLocaleString('th-TH')} บาท</div>
-        </div>
-      )}
-
-      {/* Tasks (non-live departments) */}
+      {/* Tasks */}
       {doneTasks.length > 0 && (
         <div className="space-y-1">
           {doneTasks.map((t, i) => (
@@ -124,19 +61,11 @@ function EntryCard({ entry }: { entry: Entry }) {
         </div>
       )}
 
-      {/* Notes */}
+      {/* Obstacles */}
       {entry.obstacles && (
         <div className="text-xs text-gray-500 border-l-2 border-yellow-300 pl-2">
           <span className="font-semibold text-gray-700">ปัญหา:</span> {entry.obstacles}
         </div>
-      )}
-      {suggestions.length > 0 && (
-        <div className="text-xs text-gray-500 border-l-2 border-blue-300 pl-2">
-          <span className="font-semibold text-gray-700">แนวทาง:</span> {suggestions}
-        </div>
-      )}
-      {note.length > 0 && (
-        <div className="text-xs text-gray-400 italic">{note}</div>
       )}
     </div>
   )
@@ -186,8 +115,6 @@ export default function KpiHistoryPage() {
     setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
 
-  const totalSalesMonth = entries?.reduce((s, e) => s + getTotalSales(e.extra), 0) ?? 0
-
   return (
     <div className="min-h-screen bg-[#F5F6F8] font-['Sarabun']">
       {/* Header */}
@@ -199,7 +126,7 @@ export default function KpiHistoryPage() {
         </Link>
         <div>
           <h1 className="text-base font-bold">ประวัติ KPI ของฉัน</h1>
-          <p className="text-xs text-white/60">ดูย้อนหลังรายเดือน</p>
+          <p className="text-xs text-white/60">ดูย้อนหลังรายเดือน — checklist / งานที่ทำ</p>
         </div>
       </div>
 
@@ -235,17 +162,9 @@ export default function KpiHistoryPage() {
 
         {/* Summary */}
         {entries !== null && entries.length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-2xl p-3 shadow-sm text-center">
-              <p className="text-2xl font-bold text-[#1E3A5F]">{entries.length}</p>
-              <p className="text-xs text-gray-500 mt-0.5">วันที่ส่ง KPI</p>
-            </div>
-            {totalSalesMonth > 0 && (
-              <div className="bg-white rounded-2xl p-3 shadow-sm text-center">
-                <p className="text-lg font-bold text-[#16A34A]">{totalSalesMonth.toLocaleString('th-TH')}</p>
-                <p className="text-xs text-gray-500 mt-0.5">ยอดขายรวม (บาท)</p>
-              </div>
-            )}
+          <div className="bg-white rounded-2xl p-3 shadow-sm text-center">
+            <p className="text-2xl font-bold text-[#1E3A5F]">{entries.length}</p>
+            <p className="text-xs text-gray-500 mt-0.5">วันที่ส่ง KPI</p>
           </div>
         )}
 
