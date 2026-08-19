@@ -6263,7 +6263,7 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา *</label>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา</label>
                       <textarea
                         value={annForm.content}
                         onChange={(e) => setAnnForm((f) => ({ ...f, content: e.target.value }))}
@@ -6333,7 +6333,7 @@ export default function AdminDashboard() {
                     </label>
                     <button
                       onClick={async () => {
-                        if (!annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()) return
+                        if (!annForm.title.trim() || !annForm.created_by.trim()) return
                         setSubmittingAnn(true)
                         try {
                           const res = await fetch('/api/announcements', {
@@ -6355,7 +6355,7 @@ export default function AdminDashboard() {
                           setSubmittingAnn(false)
                         }
                       }}
-                      disabled={submittingAnn || !annForm.title.trim() || !annForm.content.trim() || !annForm.created_by.trim()}
+                      disabled={submittingAnn || !annForm.title.trim() || !annForm.created_by.trim()}
                       className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
                     >
                       {submittingAnn ? 'กำลังสร้าง...' : 'สร้างประกาศ'}
@@ -6460,7 +6460,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ *</label>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ</label>
                       <textarea
                         value={companyRuleForm.content}
                         onChange={(e) => setCompanyRuleForm((f) => ({ ...f, content: e.target.value }))}
@@ -6507,7 +6507,7 @@ export default function AdminDashboard() {
                     </div>
                     <button
                       onClick={async () => {
-                        if (!companyRuleForm.title.trim() || !companyRuleForm.content.trim()) return
+                        if (!companyRuleForm.title.trim()) return
                         setSubmittingCompanyRule(true)
                         try {
                           const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}`, {
@@ -6523,7 +6523,7 @@ export default function AdminDashboard() {
                           }
                         } catch { /* silent */ } finally { setSubmittingCompanyRule(false) }
                       }}
-                      disabled={submittingCompanyRule || !companyRuleForm.title.trim() || !companyRuleForm.content.trim()}
+                      disabled={submittingCompanyRule || !companyRuleForm.title.trim()}
                       className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
                     >
                       {submittingCompanyRule ? 'กำลังบันทึก...' : 'เพิ่มกฎบริษัท'}
@@ -6600,7 +6600,7 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา *</label>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา</label>
                       <textarea
                         value={deptAnnForm.content}
                         onChange={(e) => setDeptAnnForm((f) => ({ ...f, content: e.target.value }))}
@@ -6647,7 +6647,7 @@ export default function AdminDashboard() {
                     </div>
                     <button
                       onClick={async () => {
-                        if (!deptAnnForm.department.trim() || !deptAnnForm.title.trim() || !deptAnnForm.content.trim()) return
+                        if (!deptAnnForm.department.trim() || !deptAnnForm.title.trim()) return
                         setSubmittingDeptAnn(true)
                         try {
                           const res = await fetch(`/api/dept-announcements?key=${ADMIN_KEY}`, {
@@ -6663,7 +6663,7 @@ export default function AdminDashboard() {
                           }
                         } catch { /* silent */ } finally { setSubmittingDeptAnn(false) }
                       }}
-                      disabled={submittingDeptAnn || !deptAnnForm.department.trim() || !deptAnnForm.title.trim() || !deptAnnForm.content.trim()}
+                      disabled={submittingDeptAnn || !deptAnnForm.department.trim() || !deptAnnForm.title.trim()}
                       className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
                     >
                       {submittingDeptAnn ? 'กำลังสร้าง...' : 'เพิ่มประกาศแผนก'}
@@ -6775,7 +6775,7 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ *</label>
+                      <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ</label>
                       <textarea
                         value={deptRuleForm.content}
                         onChange={(e) => setDeptRuleForm((f) => ({ ...f, content: e.target.value }))}
@@ -6822,7 +6822,7 @@ export default function AdminDashboard() {
                     </div>
                     <button
                       onClick={async () => {
-                        if (!deptRuleForm.department.trim() || !deptRuleForm.title.trim() || !deptRuleForm.content.trim()) return
+                        if (!deptRuleForm.department.trim() || !deptRuleForm.title.trim()) return
                         setSubmittingDeptRule(true)
                         try {
                           const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}`, {
@@ -6838,7 +6838,7 @@ export default function AdminDashboard() {
                           }
                         } catch { /* silent */ } finally { setSubmittingDeptRule(false) }
                       }}
-                      disabled={submittingDeptRule || !deptRuleForm.department.trim() || !deptRuleForm.title.trim() || !deptRuleForm.content.trim()}
+                      disabled={submittingDeptRule || !deptRuleForm.department.trim() || !deptRuleForm.title.trim()}
                       className="w-full bg-[#1E3A5F] text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
                     >
                       {submittingDeptRule ? 'กำลังบันทึก...' : 'เพิ่มกฎ'}
