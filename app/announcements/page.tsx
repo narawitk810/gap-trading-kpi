@@ -59,6 +59,7 @@ type StockItem = {
   sku_code_box?: string
   sku_code_pack?: string
   allocation?: string
+  status?: string
 }
 
 type PricingData = {
@@ -117,7 +118,7 @@ export default function AnnouncementsPage() {
     if (!silent) setLoadingData(true)
     Promise.all([
       fetch('/api/announcements').then((r) => r.json()).catch(() => []),
-      fetch('/api/stock-prices?acknowledged_only=true').then((r) => r.json()).catch(() => []),
+      fetch('/api/stock-prices').then((r) => r.json()).catch(() => []),
     ]).then(([ann, stock]) => {
       if (Array.isArray(ann)) setAnnouncements(ann)
       if (Array.isArray(stock)) setStockItems(stock)
@@ -656,7 +657,9 @@ export default function AnnouncementsPage() {
                             {item.allocation || <span className="text-gray-300">—</span>}
                           </td>
                           <td className="px-2 py-3 text-center">
-                            {item.tiktok_listed_at ? (
+                            {item.status === 'pending' ? (
+                              <span className="text-xs font-bold bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full whitespace-nowrap">รอดำเนินการ</span>
+                            ) : item.tiktok_listed_at ? (
                               <span className="text-xs font-bold bg-[#16A34A]/10 text-[#16A34A] px-2 py-0.5 rounded-full whitespace-nowrap">✅ TikTok</span>
                             ) : (
                               <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full whitespace-nowrap">ตั้งราคาแล้ว</span>
