@@ -481,6 +481,14 @@ export default function AdminDashboard() {
   const [companyRuleForm, setCompanyRuleForm] = useState({ title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingCompanyRule, setSubmittingCompanyRule] = useState(false)
   const [deletingCompanyRuleId, setDeletingCompanyRuleId] = useState<string | null>(null)
+  const [editingAnn, setEditingAnn] = useState<{ id: string; title: string; content: string; image_data: string; file_name: string; file_data: string; attached_file_name: string; is_pinned: boolean } | null>(null)
+  const [savingEditAnn, setSavingEditAnn] = useState(false)
+  const [editingCompanyRule, setEditingCompanyRule] = useState<{ id: string; title: string; content: string; sort_order: number; created_by: string; image_data: string; image_name: string; file_data: string; file_name: string } | null>(null)
+  const [savingEditCompanyRule, setSavingEditCompanyRule] = useState(false)
+  const [editingDeptAnn, setEditingDeptAnn] = useState<{ id: string; department: string; title: string; content: string; created_by: string; image_data: string; image_name: string; file_data: string; file_name: string } | null>(null)
+  const [savingEditDeptAnn, setSavingEditDeptAnn] = useState(false)
+  const [editingDeptRule, setEditingDeptRule] = useState<{ id: string; department: string; title: string; content: string; sort_order: number; created_by: string; image_data: string; image_name: string; file_data: string; file_name: string } | null>(null)
+  const [savingEditDeptRule, setSavingEditDeptRule] = useState(false)
   const [deptCodes, setDeptCodes] = useState<{ department: string; code: string; quarter: string; created_at: string }[]>([])
   const [loadingCodes, setLoadingCodes] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
@@ -1585,6 +1593,70 @@ export default function AdminDashboard() {
   })
 
   const hasFilters = filters.department || filters.dateFrom || filters.dateTo || filters.nickname
+
+  async function handleSaveEditAnn() {
+    if (!editingAnn || !editingAnn.title.trim()) return
+    setSavingEditAnn(true)
+    try {
+      const res = await fetch('/api/announcements', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: ADMIN_KEY, id: editingAnn.id, title: editingAnn.title, content: editingAnn.content, image_data: editingAnn.image_data, file_name: editingAnn.file_name, file_data: editingAnn.file_data, attached_file_name: editingAnn.attached_file_name, is_pinned: editingAnn.is_pinned }),
+      })
+      if (res.ok) {
+        setAnnouncements((prev) => prev.map((a) => a.id === editingAnn.id ? { ...a, title: editingAnn.title, content: editingAnn.content, image_data: editingAnn.image_data, file_name: editingAnn.file_name, is_pinned: editingAnn.is_pinned ? 1 : 0 } : a))
+        setEditingAnn(null)
+      }
+    } catch { /* silent */ } finally { setSavingEditAnn(false) }
+  }
+
+  async function handleSaveEditCompanyRule() {
+    if (!editingCompanyRule || !editingCompanyRule.title.trim()) return
+    setSavingEditCompanyRule(true)
+    try {
+      const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingCompanyRule.id, title: editingCompanyRule.title, content: editingCompanyRule.content, sort_order: editingCompanyRule.sort_order, image_data: editingCompanyRule.image_data, image_name: editingCompanyRule.image_name, file_data: editingCompanyRule.file_data, file_name: editingCompanyRule.file_name }),
+      })
+      if (res.ok) {
+        setCompanyRules((prev) => prev.map((r) => r.id === editingCompanyRule.id ? { ...r, title: editingCompanyRule.title, content: editingCompanyRule.content, sort_order: editingCompanyRule.sort_order } : r))
+        setEditingCompanyRule(null)
+      }
+    } catch { /* silent */ } finally { setSavingEditCompanyRule(false) }
+  }
+
+  async function handleSaveEditDeptAnn() {
+    if (!editingDeptAnn || !editingDeptAnn.title.trim()) return
+    setSavingEditDeptAnn(true)
+    try {
+      const res = await fetch(`/api/dept-announcements?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingDeptAnn.id, title: editingDeptAnn.title, content: editingDeptAnn.content, image_data: editingDeptAnn.image_data, image_name: editingDeptAnn.image_name, file_data: editingDeptAnn.file_data, file_name: editingDeptAnn.file_name }),
+      })
+      if (res.ok) {
+        setDeptAnns((prev) => prev.map((a) => a.id === editingDeptAnn.id ? { ...a, title: editingDeptAnn.title, content: editingDeptAnn.content } : a))
+        setEditingDeptAnn(null)
+      }
+    } catch { /* silent */ } finally { setSavingEditDeptAnn(false) }
+  }
+
+  async function handleSaveEditDeptRule() {
+    if (!editingDeptRule || !editingDeptRule.title.trim()) return
+    setSavingEditDeptRule(true)
+    try {
+      const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingDeptRule.id, title: editingDeptRule.title, content: editingDeptRule.content, sort_order: editingDeptRule.sort_order, image_data: editingDeptRule.image_data, image_name: editingDeptRule.image_name, file_data: editingDeptRule.file_data, file_name: editingDeptRule.file_name }),
+      })
+      if (res.ok) {
+        setDeptRules((prev) => prev.map((r) => r.id === editingDeptRule.id ? { ...r, title: editingDeptRule.title, content: editingDeptRule.content, sort_order: editingDeptRule.sort_order } : r))
+        setEditingDeptRule(null)
+      }
+    } catch { /* silent */ } finally { setSavingEditDeptRule(false) }
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F6F8]">
@@ -6385,6 +6457,12 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex gap-1.5 shrink-0">
                               <button
+                                onClick={() => setEditingAnn({ id: ann.id, title: ann.title, content: ann.content, image_data: ann.image_data || '', file_name: ann.file_name || '', file_data: '', attached_file_name: '', is_pinned: ann.is_pinned === 1 })}
+                                className="text-xs px-2.5 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20 whitespace-nowrap"
+                              >
+                                แก้ไข
+                              </button>
+                              <button
                                 onClick={async () => {
                                   setTogglingAnnId(ann.id)
                                   try {
@@ -6550,20 +6628,28 @@ export default function AdminDashboard() {
                             <p className="text-xs font-semibold text-[#374151]">{rule.title}</p>
                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.content}</p>
                           </div>
-                          <button
-                            onClick={async () => {
-                              if (!confirm('ลบกฎนี้?')) return
-                              setDeletingCompanyRuleId(rule.id)
-                              try {
-                                const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}&id=${rule.id}`, { method: 'DELETE' })
-                                if (res.ok) setCompanyRules((prev) => prev.filter((r) => r.id !== rule.id))
-                              } catch { /* silent */ } finally { setDeletingCompanyRuleId(null) }
-                            }}
-                            disabled={deletingCompanyRuleId === rule.id}
-                            className="shrink-0 text-xs px-2 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50"
-                          >
-                            {deletingCompanyRuleId === rule.id ? '...' : 'ลบ'}
-                          </button>
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              onClick={() => setEditingCompanyRule({ id: rule.id, title: rule.title, content: rule.content, sort_order: rule.sort_order, created_by: rule.created_by, image_data: '', image_name: '', file_data: '', file_name: '' })}
+                              className="text-xs px-2 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20"
+                            >
+                              แก้ไข
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!confirm('ลบกฎนี้?')) return
+                                setDeletingCompanyRuleId(rule.id)
+                                try {
+                                  const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}&id=${rule.id}`, { method: 'DELETE' })
+                                  if (res.ok) setCompanyRules((prev) => prev.filter((r) => r.id !== rule.id))
+                                } catch { /* silent */ } finally { setDeletingCompanyRuleId(null) }
+                              }}
+                              disabled={deletingCompanyRuleId === rule.id}
+                              className="text-xs px-2 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50"
+                            >
+                              {deletingCompanyRuleId === rule.id ? '...' : 'ลบ'}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -6692,6 +6778,12 @@ export default function AdminDashboard() {
                               </span>
                             </div>
                             <div className="flex gap-1.5 shrink-0">
+                              <button
+                                onClick={() => setEditingDeptAnn({ id: ann.id, department: ann.department, title: ann.title, content: ann.content, created_by: ann.created_by, image_data: '', image_name: '', file_data: '', file_name: '' })}
+                                className="text-xs px-2.5 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20 whitespace-nowrap"
+                              >
+                                แก้ไข
+                              </button>
                               <button
                                 onClick={async () => {
                                   setTogglingDeptAnnId(ann.id)
@@ -6878,20 +6970,28 @@ export default function AdminDashboard() {
                                   <p className="text-xs font-semibold text-[#374151]">{rule.title}</p>
                                   <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.content}</p>
                                 </div>
-                                <button
-                                  onClick={async () => {
-                                    if (!confirm('ลบกฎนี้?')) return
-                                    setDeletingDeptRuleId(rule.id)
-                                    try {
-                                      const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}&id=${rule.id}`, { method: 'DELETE' })
-                                      if (res.ok) setDeptRules((prev) => prev.filter((r) => r.id !== rule.id))
-                                    } catch { /* silent */ } finally { setDeletingDeptRuleId(null) }
-                                  }}
-                                  disabled={deletingDeptRuleId === rule.id}
-                                  className="shrink-0 text-xs px-2 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50"
-                                >
-                                  {deletingDeptRuleId === rule.id ? '...' : 'ลบ'}
-                                </button>
+                                <div className="flex gap-1 shrink-0">
+                                  <button
+                                    onClick={() => setEditingDeptRule({ id: rule.id, department: rule.department, title: rule.title, content: rule.content, sort_order: rule.sort_order, created_by: rule.created_by, image_data: '', image_name: '', file_data: '', file_name: '' })}
+                                    className="text-xs px-2 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20"
+                                  >
+                                    แก้ไข
+                                  </button>
+                                  <button
+                                    onClick={async () => {
+                                      if (!confirm('ลบกฎนี้?')) return
+                                      setDeletingDeptRuleId(rule.id)
+                                      try {
+                                        const res = await fetch(`/api/dept-rules?key=${ADMIN_KEY}&id=${rule.id}`, { method: 'DELETE' })
+                                        if (res.ok) setDeptRules((prev) => prev.filter((r) => r.id !== rule.id))
+                                      } catch { /* silent */ } finally { setDeletingDeptRuleId(null) }
+                                    }}
+                                    disabled={deletingDeptRuleId === rule.id}
+                                    className="text-xs px-2 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] hover:bg-[#DC2626]/20 disabled:opacity-50"
+                                  >
+                                    {deletingDeptRuleId === rule.id ? '...' : 'ลบ'}
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -6902,6 +7002,210 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal — ประกาศสำคัญ */}
+      {editingAnn && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setEditingAnn(null) }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <h2 className="font-bold text-[#1E3A5F] text-base">แก้ไขประกาศ</h2>
+              <button onClick={() => setEditingAnn(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อประกาศ *</label>
+                <input type="text" value={editingAnn.title} onChange={(e) => setEditingAnn((f) => f ? { ...f, title: e.target.value } : f)} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา</label>
+                <textarea value={editingAnn.content} onChange={(e) => setEditingAnn((f) => f ? { ...f, content: e.target.value } : f)} rows={4} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingAnn((f) => f ? { ...f, image_data: ev.target?.result as string || '', file_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                {editingAnn.image_data && (
+                  <div className="mt-2 relative inline-block">
+                    <img src={editingAnn.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                    <button onClick={() => setEditingAnn((f) => f ? { ...f, image_data: '', file_name: '' } : f)} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingAnn((f) => f ? { ...f, file_data: ev.target?.result as string || '', attached_file_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]" />
+                {editingAnn.attached_file_name && (
+                  <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                    <span className="truncate flex-1">📎 {editingAnn.attached_file_name}</span>
+                    <button onClick={() => setEditingAnn((f) => f ? { ...f, file_data: '', attached_file_name: '' } : f)} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                  </div>
+                )}
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={editingAnn.is_pinned} onChange={(e) => setEditingAnn((f) => f ? { ...f, is_pinned: e.target.checked } : f)} className="w-4 h-4 accent-[#1E3A5F]" />
+                <span className="text-sm text-[#374151]">📌 ปักหมุด</span>
+              </label>
+            </div>
+            <div className="px-5 pb-5 flex gap-3">
+              <button onClick={() => setEditingAnn(null)} disabled={savingEditAnn} className="flex-1 border border-[#E2E8F0] text-[#374151] py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">ยกเลิก</button>
+              <button onClick={handleSaveEditAnn} disabled={savingEditAnn || !editingAnn.title.trim()} className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">{savingEditAnn ? 'กำลังบันทึก...' : 'บันทึก'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal — กฎบริษัท */}
+      {editingCompanyRule && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setEditingCompanyRule(null) }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <h2 className="font-bold text-[#1E3A5F] text-base">แก้ไขกฎบริษัท</h2>
+              <button onClick={() => setEditingCompanyRule(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อกฎ *</label>
+                <input type="text" value={editingCompanyRule.title} onChange={(e) => setEditingCompanyRule((f) => f ? { ...f, title: e.target.value } : f)} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ</label>
+                <textarea value={editingCompanyRule.content} onChange={(e) => setEditingCompanyRule((f) => f ? { ...f, content: e.target.value } : f)} rows={3} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">ลำดับที่</label>
+                <input type="number" value={editingCompanyRule.sort_order} onChange={(e) => setEditingCompanyRule((f) => f ? { ...f, sort_order: Number(e.target.value) } : f)} min={0} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพใหม่ (ไม่บังคับ)</label>
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingCompanyRule((f) => f ? { ...f, image_data: ev.target?.result as string || '', image_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                {editingCompanyRule.image_data && (
+                  <div className="mt-2 relative inline-block">
+                    <img src={editingCompanyRule.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                    <button onClick={() => setEditingCompanyRule((f) => f ? { ...f, image_data: '', image_name: '' } : f)} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingCompanyRule((f) => f ? { ...f, file_data: ev.target?.result as string || '', file_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]" />
+                {editingCompanyRule.file_name && editingCompanyRule.file_data && (
+                  <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                    <span className="truncate flex-1">📎 {editingCompanyRule.file_name}</span>
+                    <button onClick={() => setEditingCompanyRule((f) => f ? { ...f, file_data: '', file_name: '' } : f)} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-5 pb-5 flex gap-3">
+              <button onClick={() => setEditingCompanyRule(null)} disabled={savingEditCompanyRule} className="flex-1 border border-[#E2E8F0] text-[#374151] py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">ยกเลิก</button>
+              <button onClick={handleSaveEditCompanyRule} disabled={savingEditCompanyRule || !editingCompanyRule.title.trim()} className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">{savingEditCompanyRule ? 'กำลังบันทึก...' : 'บันทึก'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal — ประกาศแผนก */}
+      {editingDeptAnn && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setEditingDeptAnn(null) }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <h2 className="font-bold text-[#1E3A5F] text-base">แก้ไขประกาศแผนก</h2>
+              <button onClick={() => setEditingDeptAnn(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แผนก</label>
+                <p className="text-sm text-[#374151] font-semibold px-3 py-2 bg-[#F5F6F8] rounded-xl">{editingDeptAnn.department}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อ *</label>
+                <input type="text" value={editingDeptAnn.title} onChange={(e) => setEditingDeptAnn((f) => f ? { ...f, title: e.target.value } : f)} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหา</label>
+                <textarea value={editingDeptAnn.content} onChange={(e) => setEditingDeptAnn((f) => f ? { ...f, content: e.target.value } : f)} rows={4} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพใหม่ (ไม่บังคับ)</label>
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingDeptAnn((f) => f ? { ...f, image_data: ev.target?.result as string || '', image_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                {editingDeptAnn.image_data && (
+                  <div className="mt-2 relative inline-block">
+                    <img src={editingDeptAnn.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                    <button onClick={() => setEditingDeptAnn((f) => f ? { ...f, image_data: '', image_name: '' } : f)} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingDeptAnn((f) => f ? { ...f, file_data: ev.target?.result as string || '', file_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]" />
+                {editingDeptAnn.file_name && editingDeptAnn.file_data && (
+                  <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                    <span className="truncate flex-1">📎 {editingDeptAnn.file_name}</span>
+                    <button onClick={() => setEditingDeptAnn((f) => f ? { ...f, file_data: '', file_name: '' } : f)} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-5 pb-5 flex gap-3">
+              <button onClick={() => setEditingDeptAnn(null)} disabled={savingEditDeptAnn} className="flex-1 border border-[#E2E8F0] text-[#374151] py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">ยกเลิก</button>
+              <button onClick={handleSaveEditDeptAnn} disabled={savingEditDeptAnn || !editingDeptAnn.title.trim()} className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">{savingEditDeptAnn ? 'กำลังบันทึก...' : 'บันทึก'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal — กฎแผนก */}
+      {editingDeptRule && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setEditingDeptRule(null) }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <h2 className="font-bold text-[#1E3A5F] text-base">แก้ไขกฎแผนก</h2>
+              <button onClick={() => setEditingDeptRule(null)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แผนก</label>
+                <p className="text-sm text-[#374151] font-semibold px-3 py-2 bg-[#F5F6F8] rounded-xl">{editingDeptRule.department}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">หัวข้อกฎ *</label>
+                <input type="text" value={editingDeptRule.title} onChange={(e) => setEditingDeptRule((f) => f ? { ...f, title: e.target.value } : f)} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เนื้อหากฎ</label>
+                <textarea value={editingDeptRule.content} onChange={(e) => setEditingDeptRule((f) => f ? { ...f, content: e.target.value } : f)} rows={3} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">ลำดับที่</label>
+                <input type="number" value={editingDeptRule.sort_order} onChange={(e) => setEditingDeptRule((f) => f ? { ...f, sort_order: Number(e.target.value) } : f)} min={0} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพใหม่ (ไม่บังคับ)</label>
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingDeptRule((f) => f ? { ...f, image_data: ev.target?.result as string || '', image_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                {editingDeptRule.image_data && (
+                  <div className="mt-2 relative inline-block">
+                    <img src={editingDeptRule.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                    <button onClick={() => setEditingDeptRule((f) => f ? { ...f, image_data: '', image_name: '' } : f)} className="absolute -top-1.5 -right-1.5 bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">แนบไฟล์ PDF / เอกสาร (ไม่บังคับ)</label>
+                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingDeptRule((f) => f ? { ...f, file_data: ev.target?.result as string || '', file_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#16A34A]/10 file:text-[#16A34A]" />
+                {editingDeptRule.file_name && editingDeptRule.file_data && (
+                  <div className="mt-2 flex items-center gap-2 bg-[#F5F6F8] border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm text-[#374151]">
+                    <span className="truncate flex-1">📎 {editingDeptRule.file_name}</span>
+                    <button onClick={() => setEditingDeptRule((f) => f ? { ...f, file_data: '', file_name: '' } : f)} className="bg-[#DC2626] text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shrink-0">×</button>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-5 pb-5 flex gap-3">
+              <button onClick={() => setEditingDeptRule(null)} disabled={savingEditDeptRule} className="flex-1 border border-[#E2E8F0] text-[#374151] py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">ยกเลิก</button>
+              <button onClick={handleSaveEditDeptRule} disabled={savingEditDeptRule || !editingDeptRule.title.trim()} className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">{savingEditDeptRule ? 'กำลังบันทึก...' : 'บันทึก'}</button>
+            </div>
           </div>
         </div>
       )}

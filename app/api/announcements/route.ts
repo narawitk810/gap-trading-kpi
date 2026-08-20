@@ -74,8 +74,8 @@ export async function PATCH(request: NextRequest) {
       args: [now, body.id],
     })
   } else {
-    if (!body.title?.trim() || !body.content?.trim()) {
-      return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 })
+    if (!body.title?.trim()) {
+      return NextResponse.json({ error: 'กรุณาระบุหัวข้อ' }, { status: 400 })
     }
     await db.execute({
       sql: `UPDATE announcements SET title = ?, content = ?, image_data = ?, file_name = ?, file_data = ?, attached_file_name = ?, is_pinned = ?, updated_at = ? WHERE id = ?`,
