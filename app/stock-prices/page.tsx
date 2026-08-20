@@ -264,6 +264,17 @@ export default function StockPricesPage() {
       packPriceExternal = roundUp10(packPriceSystem * 0.90)
     }
 
+    let existingFlags: { box_system_enabled?: boolean; box_no_external?: boolean; break_enabled?: boolean; no_pack_sale?: boolean } = {}
+    try {
+      const ep = pricingModal.pricing_data ? JSON.parse(pricingModal.pricing_data) : {}
+      existingFlags = {
+        box_system_enabled: ep.box_system_enabled,
+        box_no_external: ep.box_no_external,
+        break_enabled: ep.break_enabled,
+        no_pack_sale: ep.no_pack_sale,
+      }
+    } catch { existingFlags = {} }
+
     const pricing = {
       multiplier: pmMultiplier === 'custom' ? pmCustomMultiplier : pmMultiplier,
       msrp_price: pmMsrpPrice || null,
@@ -273,6 +284,7 @@ export default function StockPricesPage() {
       box_price_external: boxPriceExternal,
       pack_price_system: packPriceSystem,
       pack_price_external: packPriceExternal,
+      ...existingFlags,
     }
 
     setPmSubmitting(true)
