@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, generateId, ensureSchema } from '@/lib/db'
+import { notifyTiktokSeller } from '@/lib/line'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
 
@@ -105,6 +106,22 @@ export async function PATCH(request: NextRequest) {
       sql: `UPDATE stock_arrivals SET tiktok_listed_at = ? WHERE id = ? AND status = 'acknowledged'`,
       args: [now, body.id],
     })
+    db.execute({
+      sql: `SELECT id, product_name, quantity, packs_per_box, pricing_data, allocation, sku_code_box, sku_code_pack FROM stock_arrivals WHERE id = ?`,
+      args: [body.id],
+    }).then((row) => {
+      const r = row.rows[0]
+      if (r) notifyTiktokSeller({
+        id: r.id as string,
+        product_name: r.product_name as string,
+        quantity: r.quantity as string,
+        packs_per_box: r.packs_per_box as string,
+        pricing_data: r.pricing_data as string | null,
+        allocation: r.allocation as string | null,
+        sku_code_box: r.sku_code_box as string | null,
+        sku_code_pack: r.sku_code_pack as string | null,
+      })
+    }).catch(() => {})
     return NextResponse.json({ ok: true })
   }
 
