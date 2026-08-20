@@ -22,6 +22,7 @@ export async function notifyTiktokSeller(item: {
   allocation: string | null
   sku_code_box: string | null
   sku_code_pack: string | null
+  has_image?: boolean
 }): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
   const groupId = process.env.LINE_GROUP_ID_LIVE
@@ -66,17 +67,17 @@ export async function notifyTiktokSeller(item: {
     if (item.sku_code_pack) lines.push(`📋 SKU ซอง: ${item.sku_code_pack}`)
   }
 
+  const messages: object[] = []
+  if (item.has_image) {
+    messages.push({ type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl })
+  }
+  messages.push({ type: 'text', text: lines.join('\n') })
+
   try {
     await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        to: groupId,
-        messages: [
-          { type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl },
-          { type: 'text', text: lines.join('\n') },
-        ],
-      }),
+      body: JSON.stringify({ to: groupId, messages }),
     })
   } catch (err) {
     console.error('[LINE] tiktokSeller failed:', err instanceof Error ? err.message : err)

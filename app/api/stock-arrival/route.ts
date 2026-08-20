@@ -107,7 +107,9 @@ export async function PATCH(request: NextRequest) {
       args: [now, body.id],
     })
     db.execute({
-      sql: `SELECT id, product_name, quantity, packs_per_box, pricing_data, allocation, sku_code_box, sku_code_pack FROM stock_arrivals WHERE id = ?`,
+      sql: `SELECT id, product_name, quantity, packs_per_box, pricing_data, allocation, sku_code_box, sku_code_pack,
+                   CASE WHEN image_data IS NOT NULL AND image_data != '' THEN 1 ELSE 0 END AS has_image
+            FROM stock_arrivals WHERE id = ?`,
       args: [body.id],
     }).then((row) => {
       const r = row.rows[0]
@@ -120,6 +122,7 @@ export async function PATCH(request: NextRequest) {
         allocation: r.allocation as string | null,
         sku_code_box: r.sku_code_box as string | null,
         sku_code_pack: r.sku_code_pack as string | null,
+        has_image: r.has_image === 1,
       })
     }).catch(() => {})
     return NextResponse.json({ ok: true })
