@@ -11,9 +11,14 @@ export async function GET(request: NextRequest) {
   const imageId = searchParams.get('image_id')
   if (imageId) {
     const row = await db.execute({ sql: 'SELECT image_data FROM stock_arrivals WHERE id = ?', args: [imageId] })
-    const dataUri = row.rows[0]?.image_data as string
-    if (!dataUri) return new Response(null, { status: 404 })
-    const [header, base64] = dataUri.split(',')
+    const data = row.rows[0]?.image_data as string
+    if (!data) return new Response(null, { status: 404 })
+    // Blob URL — redirect โดยตรง
+    if (data.startsWith('https://')) {
+      return Response.redirect(data, 302)
+    }
+    // Legacy base64 data URI
+    const [header, base64] = data.split(',')
     const contentType = header.replace('data:', '').replace(';base64', '')
     const buffer = Buffer.from(base64, 'base64')
     return new Response(buffer, {

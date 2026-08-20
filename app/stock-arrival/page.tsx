@@ -51,6 +51,7 @@ export default function StockArrivalPage() {
   const [oldPackExternal, setOldPackExternal] = useState('')
   const [note, setNote] = useState('')
   const [imageData, setImageData] = useState<string | null>(null)
+  const [imageUploading, setImageUploading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -60,11 +61,25 @@ export default function StockArrivalPage() {
       setErrors((p) => ({ ...p, image: 'กรุณาเลือกไฟล์รูปภาพเท่านั้น' }))
       return
     }
+    setImageUploading(true)
+    setErrors((p) => ({ ...p, image: '' }))
     try {
-      setImageData(await compressImage(file))
-      setErrors((p) => ({ ...p, image: '' }))
+      const base64 = await compressImage(file)
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64 }),
+      })
+      if (res.ok) {
+        const { url } = await res.json()
+        setImageData(url)
+      } else {
+        setImageData(base64)
+      }
     } catch {
       setErrors((p) => ({ ...p, image: 'โหลดรูปไม่ได้ กรุณาลองใหม่' }))
+    } finally {
+      setImageUploading(false)
     }
   }
 
@@ -441,6 +456,11 @@ export default function StockArrivalPage() {
                   className="absolute top-2 right-2 bg-[#DC2626] text-white w-7 h-7 rounded-full text-sm font-bold flex items-center justify-center shadow">
                   ×
                 </button>
+              </div>
+            ) : imageUploading ? (
+              <div className="w-full border-2 border-dashed border-[#E2E8F0] rounded-xl py-8 flex flex-col items-center gap-2">
+                <span className="text-3xl animate-pulse">📸</span>
+                <span className="text-sm text-gray-400">กำลังอัปโหลดรูป...</span>
               </div>
             ) : (
               <button type="button" onClick={() => fileRef.current?.click()}

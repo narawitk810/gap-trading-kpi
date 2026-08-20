@@ -109,7 +109,11 @@ export async function PATCH(request: NextRequest) {
     try {
       const row = await db.execute({
         sql: `SELECT id, product_name, quantity, packs_per_box, pricing_data, allocation, sku_code_box, sku_code_pack,
-                     CASE WHEN image_data IS NOT NULL AND image_data != '' THEN 1 ELSE 0 END AS has_image
+                     CASE
+                       WHEN image_data LIKE 'https://%' THEN image_data
+                       WHEN image_data IS NOT NULL AND image_data != '' THEN 'legacy'
+                       ELSE NULL
+                     END AS image_ref
               FROM stock_arrivals WHERE id = ?`,
         args: [body.id],
       })
@@ -123,7 +127,7 @@ export async function PATCH(request: NextRequest) {
         allocation: r.allocation as string | null,
         sku_code_box: r.sku_code_box as string | null,
         sku_code_pack: r.sku_code_pack as string | null,
-        has_image: r.has_image === 1,
+        image_ref: r.image_ref as string | null,
       })
     } catch { /* ไม่ throw — LINE failure ต้องไม่กระทบ response */ }
     return NextResponse.json({ ok: true })

@@ -22,7 +22,7 @@ export async function notifyTiktokSeller(item: {
   allocation: string | null
   sku_code_box: string | null
   sku_code_pack: string | null
-  has_image?: boolean
+  image_ref?: string | null
 }): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
   const groupId = process.env.LINE_GROUP_ID_LIVE
@@ -38,10 +38,16 @@ export async function notifyTiktokSeller(item: {
   try { p = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { p = null }
 
   const fmt = (n: number) => n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
+  // ถ้ามี blob URL ใช้โดยตรง, legacy ใช้ผ่าน endpoint, ไม่มีรูปไม่ส่ง image message
   const baseUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : 'https://gap-trading-kpi.vercel.app'
-  const imageUrl = `${baseUrl}/api/stock-prices?image_id=${item.id}`
+  const imageUrl = item.image_ref?.startsWith('https://')
+    ? item.image_ref
+    : item.image_ref === 'legacy'
+      ? `${baseUrl}/api/stock-prices?image_id=${item.id}`
+      : null
 
   const lines = [
     '🛒 สินค้า TikTok Seller ใหม่!',
@@ -68,7 +74,7 @@ export async function notifyTiktokSeller(item: {
   }
 
   const messages: object[] = []
-  if (item.has_image) {
+  if (imageUrl) {
     messages.push({ type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl })
   }
   messages.push({ type: 'text', text: lines.join('\n') })
