@@ -106,14 +106,15 @@ export async function PATCH(request: NextRequest) {
       sql: `UPDATE stock_arrivals SET tiktok_listed_at = ? WHERE id = ? AND status = 'acknowledged'`,
       args: [now, body.id],
     })
-    db.execute({
-      sql: `SELECT id, product_name, quantity, packs_per_box, pricing_data, allocation, sku_code_box, sku_code_pack,
-                   CASE WHEN image_data IS NOT NULL AND image_data != '' THEN 1 ELSE 0 END AS has_image
-            FROM stock_arrivals WHERE id = ?`,
-      args: [body.id],
-    }).then((row) => {
+    try {
+      const row = await db.execute({
+        sql: `SELECT id, product_name, quantity, packs_per_box, pricing_data, allocation, sku_code_box, sku_code_pack,
+                     CASE WHEN image_data IS NOT NULL AND image_data != '' THEN 1 ELSE 0 END AS has_image
+              FROM stock_arrivals WHERE id = ?`,
+        args: [body.id],
+      })
       const r = row.rows[0]
-      if (r) notifyTiktokSeller({
+      if (r) await notifyTiktokSeller({
         id: r.id as string,
         product_name: r.product_name as string,
         quantity: r.quantity as string,
@@ -124,7 +125,7 @@ export async function PATCH(request: NextRequest) {
         sku_code_pack: r.sku_code_pack as string | null,
         has_image: r.has_image === 1,
       })
-    }).catch(() => {})
+    } catch { /* ไม่ throw — LINE failure ต้องไม่กระทบ response */ }
     return NextResponse.json({ ok: true })
   }
 
