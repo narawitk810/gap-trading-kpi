@@ -408,6 +408,24 @@ interface PreorderProduct { id: string; name: string; description: string; price
 interface PreorderOrder { id: string; product_id: string; nickname: string; quantity: number; phone: string; note: string; status: string; created_at: string }
 interface PreorderFormData { id?: string; name: string; description: string; price: string; close_date: string; release_date: string; sku: string; max_qty: string; image_data: string }
 
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const MAX = 1200
+      const ratio = Math.min(MAX / img.width, MAX / img.height, 1)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * ratio)
+      canvas.height = Math.round(img.height * ratio)
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/jpeg', 0.82))
+    }
+    img.src = url
+  })
+}
+
 export default function AdminDashboard() {
   const searchParams = useSearchParams()
   const [authed, setAuthed] = useState(false)
@@ -6358,13 +6376,7 @@ export default function AdminDashboard() {
                       <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (PNG/JPG ไม่บังคับ)</label>
                       <input
                         type="file" accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (!file) return
-                          const reader = new FileReader()
-                          reader.onload = (ev) => setAnnForm((f) => ({ ...f, image_data: ev.target?.result as string || '', file_name: file.name }))
-                          reader.readAsDataURL(file)
-                        }}
+                        onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; compressImage(file).then((data) => setAnnForm((f) => ({ ...f, image_data: data, file_name: file.name }))) }}
                         className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
                       />
                       {annForm.image_data && (
@@ -6560,7 +6572,7 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
                       <input type="file" accept="image/*"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setCompanyRuleForm((s) => ({ ...s, image_data: ev.target?.result as string || '', image_name: f.name })); r.readAsDataURL(f) }}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; compressImage(f).then((data) => setCompanyRuleForm((s) => ({ ...s, image_data: data, image_name: f.name }))) }}
                         className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
                       />
                       {companyRuleForm.image_data && (
@@ -6708,7 +6720,7 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
                       <input type="file" accept="image/*"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setDeptAnnForm((s) => ({ ...s, image_data: ev.target?.result as string || '', image_name: f.name })); r.readAsDataURL(f) }}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; compressImage(f).then((data) => setDeptAnnForm((s) => ({ ...s, image_data: data, image_name: f.name }))) }}
                         className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
                       />
                       {deptAnnForm.image_data && (
@@ -6889,7 +6901,7 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
                       <input type="file" accept="image/*"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setDeptRuleForm((s) => ({ ...s, image_data: ev.target?.result as string || '', image_name: f.name })); r.readAsDataURL(f) }}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; compressImage(f).then((data) => setDeptRuleForm((s) => ({ ...s, image_data: data, image_name: f.name }))) }}
                         className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]"
                       />
                       {deptRuleForm.image_data && (
@@ -7025,7 +7037,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพ (ไม่บังคับ)</label>
-                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingAnn((f) => f ? { ...f, image_data: ev.target?.result as string || '', file_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; compressImage(file).then((data) => setEditingAnn((f) => f ? { ...f, image_data: data, file_name: file.name } : f)) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
                 {editingAnn.image_data && (
                   <div className="mt-2 relative inline-block">
                     <img src={editingAnn.image_data} alt="preview" className="h-20 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
@@ -7079,7 +7091,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพใหม่ (ไม่บังคับ)</label>
-                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingCompanyRule((f) => f ? { ...f, image_data: ev.target?.result as string || '', image_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; compressImage(file).then((data) => setEditingCompanyRule((f) => f ? { ...f, image_data: data, image_name: file.name } : f)) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
                 {editingCompanyRule.image_data && (
                   <div className="mt-2 relative inline-block">
                     <img src={editingCompanyRule.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
@@ -7129,7 +7141,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพใหม่ (ไม่บังคับ)</label>
-                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingDeptAnn((f) => f ? { ...f, image_data: ev.target?.result as string || '', image_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; compressImage(file).then((data) => setEditingDeptAnn((f) => f ? { ...f, image_data: data, image_name: file.name } : f)) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
                 {editingDeptAnn.image_data && (
                   <div className="mt-2 relative inline-block">
                     <img src={editingDeptAnn.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
@@ -7183,7 +7195,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-[#374151] mb-1">แนบรูปภาพใหม่ (ไม่บังคับ)</label>
-                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; const r = new FileReader(); r.onload = (ev) => setEditingDeptRule((f) => f ? { ...f, image_data: ev.target?.result as string || '', image_name: file.name } : f); r.readAsDataURL(file) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
+                <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (!file) return; compressImage(file).then((data) => setEditingDeptRule((f) => f ? { ...f, image_data: data, image_name: file.name } : f)) }} className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#1E3A5F]/10 file:text-[#1E3A5F]" />
                 {editingDeptRule.image_data && (
                   <div className="mt-2 relative inline-block">
                     <img src={editingDeptRule.image_data} alt="preview" className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />

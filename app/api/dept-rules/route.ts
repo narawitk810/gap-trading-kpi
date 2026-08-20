@@ -81,7 +81,6 @@ export async function POST(request: NextRequest) {
   const { department, title, content, sort_order = 0, created_by = 'HR', image_data = '', image_name = '', file_data = '', file_name = '' } = body
   if (!department?.trim()) return NextResponse.json({ error: 'กรุณาระบุแผนก' }, { status: 400 })
   if (!title?.trim()) return NextResponse.json({ error: 'กรุณากรอกหัวข้อ' }, { status: 400 })
-  if (!content?.trim()) return NextResponse.json({ error: 'กรุณากรอกเนื้อหากฎ' }, { status: 400 })
   try {
     await ensureSchema()
     const db = getDb()
@@ -89,7 +88,7 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString()
     await db.execute({
       sql: 'INSERT INTO dept_rules (id, department, title, content, sort_order, image_data, image_name, file_data, file_name, is_active, created_by, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,1,?,?,?)',
-      args: [id, department.trim(), title.trim(), content.trim(), sort_order, image_data, image_name, file_data, file_name, created_by.trim(), now, now],
+      args: [id, department.trim(), title.trim(), (content || '').trim(), sort_order, image_data, image_name, file_data, file_name, created_by.trim(), now, now],
     })
     return NextResponse.json({ ok: true, id }, { status: 201 })
   } catch (e) {

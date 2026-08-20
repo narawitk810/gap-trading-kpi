@@ -43,21 +43,31 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  if (body.key !== ADMIN_KEY) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!body.title?.trim() || !body.content?.trim() || !body.created_by?.trim()) {
-    return NextResponse.json({ error: 'กรุณากรอกข้อมูลให้ครบถ้วน' }, { status: 400 })
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
-  await ensureSchema()
-  const db = getDb()
-  const id = generateId()
-  const now = new Date().toISOString()
-  await db.execute({
-    sql: `INSERT INTO announcements (id, title, content, image_data, file_name, file_data, attached_file_name, is_pinned, is_active, created_by, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
-    args: [id, body.title.trim(), body.content.trim(), body.image_data || '', body.file_name || '', body.file_data || '', body.attached_file_name || '', body.is_pinned ? 1 : 0, body.created_by.trim(), now, now],
-  })
-  return NextResponse.json({ id }, { status: 201 })
+  if (body.key !== ADMIN_KEY) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!String(body.title || '').trim()) {
+    return NextResponse.json({ error: 'กรุณาระบุหัวข้อ' }, { status: 400 })
+  }
+  try {
+    await ensureSchema()
+    const db = getDb()
+    const id = generateId()
+    const now = new Date().toISOString()
+    await db.execute({
+      sql: `INSERT INTO announcements (id, title, content, image_data, file_name, file_data, attached_file_name, is_pinned, is_active, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
+      args: [id, String(body.title || '').trim(), String(body.content || '').trim(), String(body.image_data || ''), String(body.file_name || ''), String(body.file_data || ''), String(body.attached_file_name || ''), body.is_pinned ? 1 : 0, String(body.created_by || 'HR').trim(), now, now],
+    })
+    return NextResponse.json({ id }, { status: 201 })
+  } catch (e) {
+    console.error('[announcements POST]', e)
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
 }
 
 export async function PATCH(request: NextRequest) {
