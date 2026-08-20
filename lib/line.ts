@@ -27,7 +27,12 @@ export async function notifyTiktokSeller(item: {
   const groupId = process.env.LINE_GROUP_ID_LIVE
   if (!token || !groupId) return
 
-  type P = { box_price_system: number; pack_price_system: number; box_system_enabled?: boolean; no_pack_sale?: boolean }
+  type P = {
+    box_price_system: number; box_price_external: number
+    pack_price_system: number; pack_price_external: number
+    box_system_enabled?: boolean; box_no_external?: boolean
+    break_enabled?: boolean; no_pack_sale?: boolean
+  }
   let p: P | null = null
   try { p = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { p = null }
 
@@ -45,8 +50,14 @@ export async function notifyTiktokSeller(item: {
   ]
   if (p) {
     lines.push('', '💰 ราคา:')
-    if (p.box_system_enabled !== false) lines.push(`• ยกกล่อง (ในระบบ): ${fmt(p.box_price_system)} บาท`)
-    if (!p.no_pack_sale) lines.push(`• แยกซอง (ในระบบ): ${fmt(p.pack_price_system)} บาท`)
+    if (p.box_system_enabled !== false)
+      lines.push(`• ยกกล่อง (ในระบบ): ${fmt(p.box_price_system)} บาท`)
+    if (!p.box_no_external)
+      lines.push(`• ยกกล่อง (โยนนอก): ${fmt(p.box_price_external)} บาท`)
+    if (!p.no_pack_sale && !p.break_enabled)
+      lines.push(`• แยกซอง (ในระบบ): ${fmt(p.pack_price_system)} บาท`)
+    if (!p.no_pack_sale)
+      lines.push(`• แยกซอง (โยนนอก): ${fmt(p.pack_price_external)} บาท${p.break_enabled ? ' (เปิด break เท่านั้น)' : ''}`)
   }
   if (item.allocation) lines.push(`🏷 Allocation: ${item.allocation}`)
   if (item.sku_code_box || item.sku_code_pack) {
