@@ -76,6 +76,7 @@ export default function StockPricesPage() {
   const [skuEdits, setSkuEdits] = useState<Record<string, { box: string; pack: string }>>({})
   const [skuStatus, setSkuStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [allocationEdits, setAllocationEdits] = useState<Record<string, string>>({})
+  const [allocationStatus, setAllocationStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
 
   const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
@@ -151,6 +152,24 @@ export default function StockPricesPage() {
       }
     } catch { alert('เกิดข้อผิดพลาด') }
     finally { setSavingEdit(false) }
+  }
+
+  async function saveAllocation(id: string, val: string) {
+    setAllocationStatus(prev => ({ ...prev, [id]: 'saving' }))
+    try {
+      const res = await fetch('/api/stock-arrival', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'update_allocation', allocation: val.trim() }),
+      })
+      if (!res.ok) throw new Error()
+      setItems(prev => prev.map(x => x.id === id ? { ...x, allocation: val.trim() } : x))
+      setAllocationStatus(prev => ({ ...prev, [id]: 'saved' }))
+      setTimeout(() => setAllocationStatus(prev => ({ ...prev, [id]: 'idle' })), 2000)
+    } catch {
+      setAllocationStatus(prev => ({ ...prev, [id]: 'error' }))
+      setTimeout(() => setAllocationStatus(prev => ({ ...prev, [id]: 'idle' })), 3000)
+    }
   }
 
   async function saveSku(id: string, box: string, pack: string) {
@@ -416,22 +435,30 @@ export default function StockPricesPage() {
                             </div>
                           </td>
                           <td className="px-3 py-3 min-w-[120px]">
-                            <input
-                              type="text"
-                              value={allocationEdits[r.id] ?? (r.allocation || '')}
-                              onChange={(e) => setAllocationEdits((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                              onBlur={async (e) => {
-                                const val = e.target.value.trim()
-                                if (val === (r.allocation || '')) return
-                                await fetch('/api/stock-arrival', {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ id: r.id, action: 'update_allocation', allocation: val }),
-                                })
-                                setItems((prev) => prev.map((x) => x.id === r.id ? { ...x, allocation: val } : x))
-                              }}
-                              className="w-full border border-transparent hover:border-[#E2E8F0] focus:border-[#1E3A5F] rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F] bg-transparent focus:bg-white transition-colors"
-                            />
+                            <div className="flex flex-col items-start gap-1">
+                              <input
+                                type="text"
+                                value={allocationEdits[r.id] ?? (r.allocation || '')}
+                                onChange={(e) => {
+                                  setAllocationEdits(prev => ({ ...prev, [r.id]: e.target.value }))
+                                  setAllocationStatus(prev => ({ ...prev, [r.id]: 'idle' }))
+                                }}
+                                className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#1E3A5F]"
+                              />
+                              {allocationStatus[r.id] === 'saved' ? (
+                                <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                              ) : allocationStatus[r.id] === 'error' ? (
+                                <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                              ) : (
+                                <button
+                                  onClick={() => saveAllocation(r.id, allocationEdits[r.id] ?? (r.allocation || ''))}
+                                  disabled={allocationStatus[r.id] === 'saving'}
+                                  className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {allocationStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-center">
                             <div className="flex flex-col items-center gap-1.5">
@@ -542,22 +569,30 @@ export default function StockPricesPage() {
                           </div>
                         </td>
                         <td className="px-3 py-3 min-w-[120px]">
-                          <input
-                            type="text"
-                            value={allocationEdits[r.id] ?? (r.allocation || '')}
-                            onChange={(e) => setAllocationEdits((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                            onBlur={async (e) => {
-                              const val = e.target.value.trim()
-                              if (val === (r.allocation || '')) return
-                              await fetch('/api/stock-arrival', {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: r.id, action: 'update_allocation', allocation: val }),
-                              })
-                              setItems((prev) => prev.map((x) => x.id === r.id ? { ...x, allocation: val } : x))
-                            }}
-                            className="w-full border border-transparent hover:border-[#E2E8F0] focus:border-[#1E3A5F] rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#1E3A5F] bg-transparent focus:bg-white transition-colors"
-                          />
+                          <div className="flex flex-col items-start gap-1">
+                            <input
+                              type="text"
+                              value={allocationEdits[r.id] ?? (r.allocation || '')}
+                              onChange={(e) => {
+                                setAllocationEdits(prev => ({ ...prev, [r.id]: e.target.value }))
+                                setAllocationStatus(prev => ({ ...prev, [r.id]: 'idle' }))
+                              }}
+                              className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#1E3A5F]"
+                            />
+                            {allocationStatus[r.id] === 'saved' ? (
+                              <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                            ) : allocationStatus[r.id] === 'error' ? (
+                              <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                            ) : (
+                              <button
+                                onClick={() => saveAllocation(r.id, allocationEdits[r.id] ?? (r.allocation || ''))}
+                                disabled={allocationStatus[r.id] === 'saving'}
+                                className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {allocationStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-center">
                           <div className="flex flex-col items-center gap-1.5">
