@@ -369,7 +369,7 @@ export default function Home() {
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
-  const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false })
+  const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
   const [thurakarnChecklist, setThurakarnChecklist] = useState({ storeDocs: false, checkDocInOut: false, followUpDocs: false, checkEquipment: false, dailyExpenses: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
@@ -528,7 +528,7 @@ export default function Home() {
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
-    if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost || !liveChecklist.uniqueLiveLayout)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ธุรการ' && (!thurakarnChecklist.storeDocs || !thurakarnChecklist.checkDocInOut || !thurakarnChecklist.followUpDocs || !thurakarnChecklist.checkEquipment || !thurakarnChecklist.dailyExpenses)) e.thurakarnChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department !== 'ไลฟ์สด' && !formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
@@ -678,7 +678,7 @@ export default function Home() {
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, genAiUsed: false })
     setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setStockChecklist({ newStockFirst: false })
-    setLiveChecklist({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false })
+    setLiveChecklist({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
     setErrors({})
     setPageState('form')
     setSubmittedId('')
@@ -1793,11 +1793,12 @@ export default function Home() {
               {([
                 { key: 'promo5', label: 'คิดโปรโมชั่น 5 โปรไม่ซ้ำ' },
                 { key: 'reviewReply', label: 'ตอบรีวิวดาวลูกค้าในระบบ' },
-                { key: 'chatReply', label: 'ตอบลูกค้าในแชท' },
+                { key: 'chatReply', label: 'ตอบลูกค้าในแชท tiktok facebook openchat และช่องทางอื่นๆ' },
                 { key: 'prepareForPack', label: 'เตรียมของส่งให้ทีมแพค' },
                 { key: 'story1Post', label: 'ลง story 1 โพส' },
                 { key: 'content1Clip', label: 'ลงคอนเทนต์ 1 คลิป' },
                 { key: 'content1FBPost', label: 'ลงคอนเทนต์ 1 โพสลง FB' },
+                { key: 'uniqueLiveLayout', label: 'จัดหน้าไลฟ์ไม่ซ้ำในแต่ละวัน' },
               ] as { key: keyof typeof liveChecklist; label: string }[]).map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-3 cursor-pointer">
                   <input
@@ -2289,7 +2290,7 @@ export default function Home() {
         )}
 
         {/* เว็บไซต์ประกาศ */}
-        {ANNOUNCE_DEPTS.includes(formData.department) && (
+        {formData.department && (
           <Link
             href={process.env.NEXT_PUBLIC_ANNOUNCEMENTS_URL || '/announcements'}
             className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
