@@ -29,6 +29,13 @@ export function getDb(): Client {
 export async function ensureSchema(): Promise<void> {
   if (g.dbVersion >= SCHEMA_VERSION) return
   const db = getDb()
+  // Persistent check — prevents 50+ queries on every Vercel cold start
+  await db.execute(`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)`)
+  const versionRow = await db.execute(`SELECT value FROM _meta WHERE key='schema_version'`)
+  if (versionRow.rows[0]?.value === String(SCHEMA_VERSION)) {
+    g.dbVersion = SCHEMA_VERSION
+    return
+  }
   await db.execute(`
     CREATE TABLE IF NOT EXISTS kpi_entries (
       id          TEXT PRIMARY KEY,
@@ -834,6 +841,7 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
 
+  await db.execute(`INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', '${SCHEMA_VERSION}')`)
   g.dbVersion = SCHEMA_VERSION
 }
 
