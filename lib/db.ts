@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 41
+const SCHEMA_VERSION = 42
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -809,6 +809,30 @@ export async function ensureSchema(): Promise<void> {
     )
   `)
   try { await db.execute(`CREATE INDEX IF NOT EXISTS idx_live_daily_nick_date ON live_daily_log(nickname, date)`) } catch { /* exists */ }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS content_clips (
+      id                 TEXT PRIMARY KEY,
+      title              TEXT NOT NULL,
+      drive_link         TEXT NOT NULL,
+      shoot_date         TEXT NOT NULL,
+      created_by         TEXT NOT NULL,
+      status             TEXT NOT NULL DEFAULT 'raw',
+      assigned_to        TEXT,
+      assigned_at        TEXT,
+      platform_links     TEXT,
+      submitted_at       TEXT,
+      days_to_submit     INTEGER,
+      review_result      TEXT,
+      reviewed_by        TEXT,
+      reviewed_at        TEXT,
+      views              INTEGER,
+      avg_watch_time     TEXT,
+      likes              INTEGER,
+      result_recorded_at TEXT,
+      created_at         TEXT NOT NULL
+    )
+  `)
 
   g.dbVersion = SCHEMA_VERSION
 }

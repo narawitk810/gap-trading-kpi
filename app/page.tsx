@@ -362,7 +362,6 @@ export default function Home() {
   const [creativeStaff, setCreativeStaff] = useState<LiveStaffMember[]>([])
   const [creativePickerOpen, setCreativePickerOpen] = useState(true)
   const [loadingCreative, setLoadingCreative] = useState(false)
-  const [showCreativeContent, setShowCreativeContent] = useState(false)
   const [marketingStaff, setMarketingStaff] = useState<LiveStaffMember[]>([])
   const [marketingPickerOpen, setMarketingPickerOpen] = useState(true)
   const [loadingMarketing, setLoadingMarketing] = useState(false)
@@ -2352,22 +2351,12 @@ export default function Home() {
         {/* Creative — ปุ่มผลิตคอนเทนต์ */}
         {formData.department === 'Creative' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setShowCreativeContent(prev => !prev)}
-              className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                showCreativeContent
-                  ? 'bg-[#1E3A5F] text-white'
-                  : 'border border-[#1E3A5F] text-[#1E3A5F] bg-white'
-              }`}
+            <a
+              href="/content-production"
+              className="w-full py-2.5 rounded-xl text-sm font-semibold border border-[#1E3A5F] text-[#1E3A5F] bg-white text-center block hover:bg-[#1E3A5F] hover:text-white transition-colors"
             >
-              ผลิตคอนเทนต์
-            </button>
-            {showCreativeContent && (
-              <div className="mt-3">
-                {/* content จะถูกเพิ่มในขั้นต่อไป */}
-              </div>
-            )}
+              ผลิตคอนเทนต์ →
+            </a>
           </div>
         )}
 
