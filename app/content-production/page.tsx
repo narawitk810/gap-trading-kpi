@@ -155,7 +155,8 @@ export default function ContentProductionPage() {
       {/* Header */}
       <div className="bg-[#1E3A5F] text-white px-4 py-4 flex items-center gap-3">
         <a href="/" className="text-white/70 text-sm">← กลับ</a>
-        <h1 className="text-base font-bold">ระบบผลิตคอนเทนต์</h1>
+        <h1 className="text-base font-bold flex-1">ระบบผลิตคอนเทนต์</h1>
+        <button onClick={fetchClips} className="text-white/70 text-sm px-2 py-1 rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors">⟳ รีเฟรช</button>
       </div>
 
       {/* Pipeline Strip */}
