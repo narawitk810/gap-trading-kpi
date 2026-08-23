@@ -72,7 +72,6 @@ export default function ContentProductionPage() {
   const [creating, setCreating] = useState(false)
 
   // Action form state
-  const [actionKey, setActionKey] = useState('')
   const [assignTo, setAssignTo] = useState('')
   const [platformLinks, setPlatformLinks] = useState<PlatformLinks>({ tiktok: '', facebook: '', youtube: '', instagram: '' })
   const [reviewedBy, setReviewedBy] = useState('')
@@ -104,7 +103,6 @@ export default function ContentProductionPage() {
   function openDetail(clip: ContentClip) {
     setSelected(clip)
     setModalState('detail')
-    setActionKey('')
     setAssignTo('')
     setPlatformLinks({ tiktok: '', facebook: '', youtube: '', instagram: '' })
     setReviewedBy('')
@@ -134,9 +132,9 @@ export default function ContentProductionPage() {
     setModalState('submitting')
     const payload: Record<string, unknown> = { action }
 
-    if (action === 'assign') { payload.key = actionKey; payload.assigned_to = assignTo }
+    if (action === 'assign') { payload.assigned_to = assignTo }
     else if (action === 'submit') { payload.platform_links = platformLinks }
-    else if (action === 'pass' || action === 'revise') { payload.key = actionKey; payload.reviewed_by = reviewedBy }
+    else if (action === 'pass' || action === 'revise') { payload.reviewed_by = reviewedBy }
     else if (action === 'record_result') { payload.views = resultViews; payload.avg_watch_time = resultWatchTime; payload.likes = resultLikes }
 
     const res = await fetch(`/api/content-clips/${selected.id}`, {
@@ -372,10 +370,6 @@ export default function ContentProductionPage() {
                               {creativeStaff.map(n => <option key={n} value={n}>{n}</option>)}
                             </select>
                           </div>
-                          <div>
-                            <label className="text-xs font-semibold text-[#374151] block mb-1">รหัสหัวหน้า <span className="text-[#DC2626]">*</span></label>
-                            <input type="password" value={actionKey} onChange={e => setActionKey(e.target.value)} placeholder="Admin key" className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
-                          </div>
                           <button onClick={() => handleAction('assign')} className="w-full py-2.5 rounded-xl bg-yellow-500 text-white text-sm font-semibold">ยืนยันมอบหมาย</button>
                         </>
                       )}
@@ -400,10 +394,6 @@ export default function ContentProductionPage() {
                           <div>
                             <label className="text-xs font-semibold text-[#374151] block mb-1">ชื่อผู้ตรวจสอบ <span className="text-[#DC2626]">*</span></label>
                             <input value={reviewedBy} onChange={e => setReviewedBy(e.target.value)} placeholder="ชื่อหัวหน้า" className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-[#374151] block mb-1">รหัสหัวหน้า <span className="text-[#DC2626]">*</span></label>
-                            <input type="password" value={actionKey} onChange={e => setActionKey(e.target.value)} placeholder="Admin key" className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => handleAction('pass')} className="flex-1 py-2.5 rounded-xl bg-[#16A34A] text-white text-sm font-semibold">✓ ผ่าน</button>

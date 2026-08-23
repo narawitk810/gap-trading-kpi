@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, ensureSchema } from '@/lib/db'
 
-const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
-
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const body = await request.json()
@@ -12,7 +10,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const now = new Date().toISOString()
 
   if (action === 'assign') {
-    if (body.key !== ADMIN_KEY) return NextResponse.json({ error: 'รหัสไม่ถูกต้อง' }, { status: 401 })
     if (!body.assigned_to?.trim()) return NextResponse.json({ error: 'กรุณาเลือกชื่อพนักงาน' }, { status: 400 })
     await db.execute({
       sql: `UPDATE content_clips SET status='assigned', assigned_to=?, assigned_at=? WHERE id=? AND status='raw'`,
@@ -37,7 +34,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   if (action === 'pass') {
-    if (body.key !== ADMIN_KEY) return NextResponse.json({ error: 'รหัสไม่ถูกต้อง' }, { status: 401 })
     if (!body.reviewed_by?.trim()) return NextResponse.json({ error: 'กรุณากรอกชื่อผู้ตรวจสอบ' }, { status: 400 })
     await db.execute({
       sql: `UPDATE content_clips SET status='recorded', review_result='pass', reviewed_by=?, reviewed_at=? WHERE id=? AND status='reviewing'`,
@@ -47,7 +43,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   if (action === 'revise') {
-    if (body.key !== ADMIN_KEY) return NextResponse.json({ error: 'รหัสไม่ถูกต้อง' }, { status: 401 })
     if (!body.reviewed_by?.trim()) return NextResponse.json({ error: 'กรุณากรอกชื่อผู้ตรวจสอบ' }, { status: 400 })
     await db.execute({
       sql: `UPDATE content_clips SET status='submitted', review_result='revise', reviewed_by=?, reviewed_at=?, platform_links=NULL, submitted_at=NULL, days_to_submit=NULL WHERE id=? AND status='reviewing'`,
