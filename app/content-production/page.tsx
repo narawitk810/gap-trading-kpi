@@ -177,7 +177,15 @@ export default function ContentProductionPage() {
       </div>
 
       {/* Add Button */}
-      <div className="px-4 py-2">
+      <div className="px-4 py-2 space-y-2">
+        <a
+          href="https://drive.google.com/drive/folders/1GM33p4AvefmgVjd8-yVt768-4bXvd3mx?usp=sharing"
+          target="_blank"
+          rel="noreferrer"
+          className="w-full py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[#374151] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#F5F6F8] transition-colors"
+        >
+          <span>📁</span> ลิ้ง Google Drive สำหรับโยนไฟล์ดิบ
+        </a>
         <button
           onClick={() => setShowCreate(true)}
           className="w-full py-2.5 rounded-xl border-2 border-dashed border-[#1E3A5F]/30 text-[#1E3A5F] text-sm font-semibold hover:bg-[#1E3A5F]/5 transition-colors"
