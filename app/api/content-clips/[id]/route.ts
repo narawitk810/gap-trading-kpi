@@ -60,5 +60,44 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'rollback') {
+    const row = await db.execute({ sql: `SELECT status FROM content_clips WHERE id=?`, args: [id] })
+    const status = row.rows[0]?.status as string | undefined
+    if (!status) return NextResponse.json({ error: 'ไม่พบงานนี้' }, { status: 404 })
+
+    if (status === 'assigned') {
+      await db.execute({
+        sql: `UPDATE content_clips SET status='raw', assigned_to=NULL, assigned_at=NULL WHERE id=?`,
+        args: [id],
+      })
+    } else if (status === 'submitted') {
+      await db.execute({
+        sql: `UPDATE content_clips SET status='assigned', review_result=NULL, reviewed_by=NULL, reviewed_at=NULL WHERE id=?`,
+        args: [id],
+      })
+    } else if (status === 'reviewing') {
+      await db.execute({
+        sql: `UPDATE content_clips SET status='assigned', platform_links=NULL, submitted_at=NULL, days_to_submit=NULL WHERE id=?`,
+        args: [id],
+      })
+    } else if (status === 'recorded') {
+      await db.execute({
+        sql: `UPDATE content_clips SET status='reviewing', review_result=NULL, reviewed_by=NULL, reviewed_at=NULL, views=NULL, avg_watch_time=NULL, likes=NULL, result_recorded_at=NULL WHERE id=?`,
+        args: [id],
+      })
+    } else {
+      return NextResponse.json({ error: 'ไม่สามารถย้อนกลับจากสถานะนี้ได้' }, { status: 400 })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
+}
+
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  await ensureSchema()
+  const db = getDb()
+  await db.execute({ sql: `DELETE FROM content_clips WHERE id=?`, args: [id] })
+  return NextResponse.json({ ok: true })
 }

@@ -127,6 +127,30 @@ export default function ContentProductionPage() {
     fetchClips()
   }
 
+  async function handleDelete() {
+    if (!selected) return
+    if (!window.confirm(`ลบ "${selected.title}" ออกจากระบบ? ไม่สามารถกู้คืนได้`)) return
+    setModalState('submitting')
+    await fetch(`/api/content-clips/${selected.id}`, { method: 'DELETE' })
+    setSelected(null)
+    fetchClips()
+  }
+
+  async function handleRollback() {
+    if (!selected) return
+    if (!window.confirm('ย้อนกลับไปสถานะก่อนหน้า?')) return
+    setModalState('submitting')
+    const res = await fetch(`/api/content-clips/${selected.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rollback' }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setActionError(data.error || 'เกิดข้อผิดพลาด'); setModalState('detail'); return }
+    setSelected(null)
+    fetchClips()
+  }
+
   async function handleAction(action: string) {
     if (!selected) return
     setModalState('submitting')
@@ -453,6 +477,12 @@ export default function ContentProductionPage() {
                       {selected.status === 'recorded' && selected.result_recorded_at && (
                         <div className="py-2 text-center text-sm text-[#16A34A] font-semibold">เสร็จสิ้น ✓</div>
                       )}
+                      <div className="flex gap-2 pt-1 border-t border-[#E2E8F0] mt-2">
+                        {selected.status !== 'raw' && (
+                          <button onClick={handleRollback} className="flex-1 py-2 rounded-xl border border-[#E2E8F0] text-sm text-gray-500 hover:bg-gray-50 transition-colors">← ย้อนกลับ</button>
+                        )}
+                        <button onClick={handleDelete} className="flex-1 py-2 rounded-xl border border-[#DC2626] text-sm text-[#DC2626] hover:bg-red-50 transition-colors">ลบงานนี้</button>
+                      </div>
                     </div>
                   )}
 
