@@ -92,8 +92,8 @@ export default function ContentProductionPage() {
     fetchClips()
     fetch('/api/live-staff')
       .then(r => r.json())
-      .then((all: { nickname: string; department: string }[]) =>
-        setCreativeStaff(all.filter(s => s.department === 'Creative').map(s => s.nickname))
+      .then((data: { staff: { name: string; department: string }[] }) =>
+        setCreativeStaff((data.staff || []).filter(s => s.department === 'Creative').map(s => s.name))
       )
   }, [fetchClips])
 
