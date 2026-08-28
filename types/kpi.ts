@@ -12,6 +12,7 @@ export const DEPARTMENTS = [
   'ผู้จัดการไลฟ์สด',
   'ผู้จัดการหน้าร้าน',
   'กฎหมาย',
+  'Audit',
 ] as const
 
 export type Department = (typeof DEPARTMENTS)[number]
