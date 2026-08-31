@@ -7,6 +7,13 @@ export async function GET(request: NextRequest) {
   await ensureSchema()
   const db = getDb()
   const { searchParams } = new URL(request.url)
+  const adminId = searchParams.get('admin_id')
+  if (adminId) {
+    if (searchParams.get('key') !== ADMIN_KEY) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const row = await db.execute({ sql: 'SELECT id, title, content, image_data, file_name, file_data, attached_file_name, is_pinned FROM announcements WHERE id = ?', args: [adminId] })
+    if (!row.rows[0]) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(row.rows[0])
+  }
   const imageId = searchParams.get('image_id')
   const fileId = searchParams.get('file_id')
   if (imageId) {

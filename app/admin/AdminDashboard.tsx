@@ -6494,7 +6494,12 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex gap-1.5 shrink-0">
                               <button
-                                onClick={() => setEditingAnn({ id: ann.id, title: ann.title, content: ann.content, image_data: ann.image_data || '', file_name: ann.file_name || '', file_data: '', attached_file_name: '', is_pinned: ann.is_pinned === 1 })}
+                                onClick={async () => {
+                                  const res = await fetch(`/api/announcements?admin_id=${ann.id}&key=${ADMIN_KEY}`)
+                                  if (!res.ok) return
+                                  const data = await res.json()
+                                  setEditingAnn({ id: data.id, title: data.title, content: data.content, image_data: data.image_data || '', file_name: data.file_name || '', file_data: data.file_data || '', attached_file_name: data.attached_file_name || '', is_pinned: data.is_pinned === 1 })
+                                }}
                                 className="text-xs px-2.5 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20 whitespace-nowrap"
                               >
                                 แก้ไข
@@ -6816,7 +6821,12 @@ export default function AdminDashboard() {
                             </div>
                             <div className="flex gap-1.5 shrink-0">
                               <button
-                                onClick={() => setEditingDeptAnn({ id: ann.id, department: ann.department, title: ann.title, content: ann.content, created_by: ann.created_by, image_data: '', image_name: '', file_data: '', file_name: '' })}
+                                onClick={async () => {
+                                  const res = await fetch(`/api/dept-announcements?admin_id=${ann.id}&key=${ADMIN_KEY}`)
+                                  if (!res.ok) return
+                                  const data = await res.json()
+                                  setEditingDeptAnn({ id: data.id, department: data.department, title: data.title, content: data.content, created_by: data.created_by, image_data: data.image_data || '', image_name: data.image_name || '', file_data: data.file_data || '', file_name: data.file_name || '' })
+                                }}
                                 className="text-xs px-2.5 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20 whitespace-nowrap"
                               >
                                 แก้ไข
