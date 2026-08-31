@@ -460,7 +460,7 @@ export default function AdminDashboard() {
   }
 
   const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members' | 'tcg-bookings'>('kpi')
-  const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; file_name: string; is_pinned: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; file_name: string; is_pinned: number; is_active: number; created_by: string; created_at: string; has_image?: number; has_file?: number; attached_file_name?: string }[]>([])
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
   const [tcgGames, setTcgGames] = useState<{ id: string; name: string; short_name: string }[]>([])
   const [tcgRewardGame, setTcgRewardGame] = useState('')
@@ -483,18 +483,18 @@ export default function AdminDashboard() {
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
   const [togglingAnnId, setTogglingAnnId] = useState<string | null>(null)
   const [annSubTab, setAnnSubTab] = useState<'general' | 'company' | 'dept' | 'rules'>('general')
-  const [deptAnns, setDeptAnns] = useState<{ id: string; department: string; title: string; content: string; is_active: number; created_by: string; created_at: string }[]>([])
+  const [deptAnns, setDeptAnns] = useState<{ id: string; department: string; title: string; content: string; is_active: number; created_by: string; created_at: string; has_image?: number; has_file?: number; image_name?: string; file_name?: string }[]>([])
   const [loadingDeptAnns, setLoadingDeptAnns] = useState(false)
   const [deptAnnForm, setDeptAnnForm] = useState({ department: '', title: '', content: '', created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingDeptAnn, setSubmittingDeptAnn] = useState(false)
   const [deletingDeptAnnId, setDeletingDeptAnnId] = useState<string | null>(null)
   const [togglingDeptAnnId, setTogglingDeptAnnId] = useState<string | null>(null)
-  const [deptRules, setDeptRules] = useState<{ id: string; department: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [deptRules, setDeptRules] = useState<{ id: string; department: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string; has_image?: number; has_file?: number; image_name?: string; file_name?: string }[]>([])
   const [loadingDeptRules, setLoadingDeptRules] = useState(false)
   const [deptRuleForm, setDeptRuleForm] = useState({ department: '', title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingDeptRule, setSubmittingDeptRule] = useState(false)
   const [deletingDeptRuleId, setDeletingDeptRuleId] = useState<string | null>(null)
-  const [companyRules, setCompanyRules] = useState<{ id: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string }[]>([])
+  const [companyRules, setCompanyRules] = useState<{ id: string; title: string; content: string; sort_order: number; is_active: number; created_by: string; created_at: string; has_image?: number; has_file?: number; image_name?: string; file_name?: string }[]>([])
   const [loadingCompanyRules, setLoadingCompanyRules] = useState(false)
   const [companyRuleForm, setCompanyRuleForm] = useState({ title: '', content: '', sort_order: 0, created_by: 'HR', image_data: '', image_name: '', file_data: '', file_name: '' })
   const [submittingCompanyRule, setSubmittingCompanyRule] = useState(false)
@@ -6542,6 +6542,12 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+                          {(ann.has_image || ann.has_file) && (
+                            <div className="flex gap-2 mt-1.5 flex-wrap">
+                              {ann.has_image ? <a href={`/api/announcements?image_id=${ann.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F]">🖼️ ดูรูป</a> : null}
+                              {ann.has_file ? <a href={`/api/announcements?file_id=${ann.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#16A34A]">📎 {ann.attached_file_name || ann.file_name || 'ดาวน์โหลด'}</a> : null}
+                            </div>
+                          )}
                           <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by} · {new Date(ann.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</p>
                         </div>
                       ))}
@@ -6669,6 +6675,12 @@ export default function AdminDashboard() {
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-[#374151]">{rule.title}</p>
                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.content}</p>
+                            {(rule.has_image || rule.has_file) && (
+                              <div className="flex gap-2 mt-1.5 flex-wrap">
+                                {rule.has_image ? <a href={`/api/dept-rules?image_id=${rule.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F]">🖼️ ดูรูป</a> : null}
+                                {rule.has_file ? <a href={`/api/dept-rules?file_id=${rule.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#16A34A]">📎 {rule.file_name || 'ดาวน์โหลด'}</a> : null}
+                              </div>
+                            )}
                           </div>
                           <div className="flex gap-1 shrink-0">
                             <button
@@ -6870,6 +6882,12 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <p className="text-xs text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+                          {(ann.has_image || ann.has_file) && (
+                            <div className="flex gap-2 mt-1.5 flex-wrap">
+                              {ann.has_image ? <a href={`/api/dept-announcements?image_id=${ann.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F]">🖼️ ดูรูป</a> : null}
+                              {ann.has_file ? <a href={`/api/dept-announcements?file_id=${ann.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#16A34A]">📎 {ann.file_name || 'ดาวน์โหลด'}</a> : null}
+                            </div>
+                          )}
                           <p className="text-[10px] text-gray-300 mt-1">โดย {ann.created_by} · {new Date(ann.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}</p>
                         </div>
                       ))}
@@ -7021,6 +7039,12 @@ export default function AdminDashboard() {
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-semibold text-[#374151]">{rule.title}</p>
                                   <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{rule.content}</p>
+                                  {(rule.has_image || rule.has_file) && (
+                                    <div className="flex gap-2 mt-1.5 flex-wrap">
+                                      {rule.has_image ? <a href={`/api/dept-rules?image_id=${rule.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F]">🖼️ ดูรูป</a> : null}
+                                      {rule.has_file ? <a href={`/api/dept-rules?file_id=${rule.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#16A34A]">📎 {rule.file_name || 'ดาวน์โหลด'}</a> : null}
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="flex gap-1 shrink-0">
                                   <button
