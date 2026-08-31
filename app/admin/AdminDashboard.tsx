@@ -6672,7 +6672,12 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex gap-1 shrink-0">
                             <button
-                              onClick={() => setEditingCompanyRule({ id: rule.id, title: rule.title, content: rule.content, sort_order: rule.sort_order, created_by: rule.created_by, image_data: '', image_name: '', file_data: '', file_name: '' })}
+                              onClick={async () => {
+                                const res = await fetch(`/api/dept-rules?admin_id=${rule.id}&key=${ADMIN_KEY}`)
+                                if (!res.ok) return
+                                const data = await res.json()
+                                setEditingCompanyRule({ id: data.id, title: data.title, content: data.content, sort_order: data.sort_order, created_by: data.created_by, image_data: data.image_data || '', image_name: data.image_name || '', file_data: data.file_data || '', file_name: data.file_name || '' })
+                              }}
                               className="text-xs px-2 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20"
                             >
                               แก้ไข
@@ -7019,7 +7024,12 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="flex gap-1 shrink-0">
                                   <button
-                                    onClick={() => setEditingDeptRule({ id: rule.id, department: rule.department, title: rule.title, content: rule.content, sort_order: rule.sort_order, created_by: rule.created_by, image_data: '', image_name: '', file_data: '', file_name: '' })}
+                                    onClick={async () => {
+                                      const res = await fetch(`/api/dept-rules?admin_id=${rule.id}&key=${ADMIN_KEY}`)
+                                      if (!res.ok) return
+                                      const data = await res.json()
+                                      setEditingDeptRule({ id: data.id, department: data.department, title: data.title, content: data.content, sort_order: data.sort_order, created_by: data.created_by, image_data: data.image_data || '', image_name: data.image_name || '', file_data: data.file_data || '', file_name: data.file_name || '' })
+                                    }}
                                     className="text-xs px-2 py-1 rounded-lg bg-[#1E3A5F]/10 text-[#1E3A5F] hover:bg-[#1E3A5F]/20"
                                   >
                                     แก้ไข

@@ -9,12 +9,20 @@ function generateId(): string {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
+  const adminId = searchParams.get('admin_id')
   const dept = searchParams.get('dept')
   const imageId = searchParams.get('image_id')
   const fileId = searchParams.get('file_id')
 
   await ensureSchema()
   const db = getDb()
+
+  if (adminId) {
+    if (searchParams.get('key') !== ADMIN_KEY) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const row = await db.execute({ sql: 'SELECT id, department, title, content, sort_order, image_data, image_name, file_data, file_name, created_by FROM dept_rules WHERE id = ?', args: [adminId] })
+    if (!row.rows[0]) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(row.rows[0])
+  }
 
   if (imageId) {
     try {
