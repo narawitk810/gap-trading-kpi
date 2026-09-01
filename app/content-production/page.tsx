@@ -33,12 +33,12 @@ interface PlatformLinks {
   instagram: string
 }
 
-const STAGES: { key: ClipStatus; label: string; color: string; activeColor: string }[] = [
-  { key: 'raw', label: 'คลิปดิบ+มอบหมาย', color: 'bg-gray-100 text-gray-600 border border-gray-200', activeColor: 'bg-[#374151] text-white' },
-  { key: 'assigned', label: 'มอบหมาย+ส่งงาน+โพส', color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', activeColor: 'bg-yellow-500 text-white' },
-  { key: 'submitted', label: 'งานแก้', color: 'bg-blue-50 text-blue-700 border border-blue-200', activeColor: 'bg-blue-600 text-white' },
-  { key: 'reviewing', label: 'รอตรวจสอบ', color: 'bg-orange-50 text-orange-700 border border-orange-200', activeColor: 'bg-orange-500 text-white' },
-  { key: 'recorded', label: 'บันทึกผล', color: 'bg-green-50 text-green-700 border border-green-200', activeColor: 'bg-[#16A34A] text-white' },
+const STAGES: { key: ClipStatus; label: string; num: string; color: string; activeColor: string }[] = [
+  { key: 'raw', label: 'คลิปดิบ+มอบหมาย', num: '1', color: 'bg-gray-100 text-gray-600 border border-gray-200', activeColor: 'bg-[#374151] text-white' },
+  { key: 'assigned', label: 'มอบหมาย+ส่งงาน+โพส', num: '2', color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', activeColor: 'bg-yellow-500 text-white' },
+  { key: 'submitted', label: 'งานแก้', num: '2.5', color: 'bg-blue-50 text-blue-700 border border-blue-200', activeColor: 'bg-blue-600 text-white' },
+  { key: 'reviewing', label: 'รอตรวจสอบ', num: '3', color: 'bg-orange-50 text-orange-700 border border-orange-200', activeColor: 'bg-orange-500 text-white' },
+  { key: 'recorded', label: 'บันทึกผล', num: '4', color: 'bg-green-50 text-green-700 border border-green-200', activeColor: 'bg-[#16A34A] text-white' },
 ]
 
 const PLATFORM_LABELS: Record<keyof PlatformLinks, string> = {
@@ -192,7 +192,7 @@ export default function ContentProductionPage() {
                 onClick={() => setSelectedStatus(s.key)}
                 className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${selectedStatus === s.key ? s.activeColor : s.color}`}
               >
-                สถานะที่ {i + 1} {s.label} <span className="ml-1 opacity-75">({counts[s.key] ?? 0})</span>
+                สถานะที่ {s.num} {s.label} <span className="ml-1 opacity-75">({counts[s.key] ?? 0})</span>
               </button>
               {i < STAGES.length - 1 && <span className="text-gray-300 text-sm">→</span>}
             </div>
@@ -296,7 +296,7 @@ export default function ContentProductionPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-bold text-[#1E3A5F] text-sm">{selected.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">สถานะที่ {STAGES.findIndex(s => s.key === selected.status) + 1} — {STAGES.find(s => s.key === selected.status)?.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">สถานะที่ {STAGES.find(s => s.key === selected.status)?.num} — {STAGES.find(s => s.key === selected.status)?.label}</p>
                 </div>
                 <button onClick={() => setSelected(null)} className="text-gray-400 text-xl leading-none">×</button>
               </div>
