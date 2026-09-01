@@ -2,14 +2,17 @@ export async function sendLinePushMessage(groupId: string, text: string): Promis
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
   if (!token || !groupId) return
   try {
-    await fetch('https://api.line.me/v2/bot/message/push', {
+    const res = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ to: groupId, messages: [{ type: 'text', text }] }),
     })
+    if (!res.ok) {
+      const body = await res.text()
+      console.error(`[LINE] push failed (${res.status}):`, body)
+    }
   } catch (err) {
     console.error('[LINE] push failed:', err instanceof Error ? err.message : err)
-    // ไม่ throw — การแจ้งเตือนล้มเหลวต้องไม่กระทบ flow การรับทราบหลัก
   }
 }
 

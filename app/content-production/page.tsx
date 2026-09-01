@@ -192,7 +192,7 @@ export default function ContentProductionPage() {
                 onClick={() => setSelectedStatus(s.key)}
                 className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${selectedStatus === s.key ? s.activeColor : s.color}`}
               >
-                {s.label} <span className="ml-1 opacity-75">({counts[s.key] ?? 0})</span>
+                สถานะที่ {i + 1} {s.label} <span className="ml-1 opacity-75">({counts[s.key] ?? 0})</span>
               </button>
               {i < STAGES.length - 1 && <span className="text-gray-300 text-sm">→</span>}
             </div>
@@ -296,7 +296,7 @@ export default function ContentProductionPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-bold text-[#1E3A5F] text-sm">{selected.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{STAGES.find(s => s.key === selected.status)?.label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">สถานะที่ {STAGES.findIndex(s => s.key === selected.status) + 1} — {STAGES.find(s => s.key === selected.status)?.label}</p>
                 </div>
                 <button onClick={() => setSelected(null)} className="text-gray-400 text-xl leading-none">×</button>
               </div>
