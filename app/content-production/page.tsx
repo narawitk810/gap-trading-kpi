@@ -34,8 +34,8 @@ interface PlatformLinks {
 }
 
 const STAGES: { key: ClipStatus; label: string; color: string; activeColor: string }[] = [
-  { key: 'raw', label: 'คลิปดิบ', color: 'bg-gray-100 text-gray-600 border border-gray-200', activeColor: 'bg-[#374151] text-white' },
-  { key: 'assigned', label: 'มอบหมาย+ส่งงาน', color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', activeColor: 'bg-yellow-500 text-white' },
+  { key: 'raw', label: 'คลิปดิบ+มอบหมาย', color: 'bg-gray-100 text-gray-600 border border-gray-200', activeColor: 'bg-[#374151] text-white' },
+  { key: 'assigned', label: 'มอบหมาย+ส่งงาน+โพส', color: 'bg-yellow-50 text-yellow-700 border border-yellow-200', activeColor: 'bg-yellow-500 text-white' },
   { key: 'submitted', label: 'งานแก้', color: 'bg-blue-50 text-blue-700 border border-blue-200', activeColor: 'bg-blue-600 text-white' },
   { key: 'reviewing', label: 'รอตรวจสอบ', color: 'bg-orange-50 text-orange-700 border border-orange-200', activeColor: 'bg-orange-500 text-white' },
   { key: 'recorded', label: 'บันทึกผล', color: 'bg-green-50 text-green-700 border border-green-200', activeColor: 'bg-[#16A34A] text-white' },
