@@ -369,6 +369,9 @@ export default function Home() {
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
+  const [priceCheckOpen, setPriceCheckOpen] = useState(false)
+  const [priceCheckImage, setPriceCheckImage] = useState('')
+  const [priceCheckLoading, setPriceCheckLoading] = useState(false)
   const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
   const [thurakarnChecklist, setThurakarnChecklist] = useState({ storeDocs: false, checkDocInOut: false, followUpDocs: false, checkEquipment: false, dailyExpenses: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
@@ -884,6 +887,19 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
+            <button
+              onClick={() => setPriceCheckOpen(true)}
+              className="w-full flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-2xl p-4 hover:bg-purple-100 transition-colors"
+            >
+              <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shrink-0 text-white text-lg">🔍</div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-purple-800">วิเคราะห์ราคา</p>
+                <p className="text-xs text-gray-400 mt-0.5">ส่งรูปสินค้า → เปิด Taobao / eBay / Shopee</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-purple-600 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
 
@@ -2884,6 +2900,65 @@ export default function Home() {
                 className="flex-1 py-3 rounded-xl bg-[#16A34A] text-white font-bold text-sm disabled:opacity-70"
               >
                 {pageState === 'submitting' ? 'กำลังส่งข้อมูล...' : 'ยืนยันส่งข้อมูล'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Price Check Modal */}
+      {priceCheckOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) { setPriceCheckOpen(false); setPriceCheckImage('') } }}>
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+              <p className="font-bold text-[#1E3A5F]">🔍 วิเคราะห์ราคา</p>
+              <button onClick={() => { setPriceCheckOpen(false); setPriceCheckImage('') }} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-2">อัปโหลดรูปสินค้า</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = (ev) => setPriceCheckImage(ev.target?.result as string || '')
+                    reader.readAsDataURL(file)
+                  }}
+                  className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700"
+                />
+              </div>
+              {priceCheckImage && (
+                <img src={priceCheckImage} alt="preview" className="w-full h-40 object-contain rounded-xl border border-[#E2E8F0]" />
+              )}
+              <p className="text-xs text-gray-400">AI จะวิเคราะห์รูปและเปิด Taobao / eBay / Shopee พร้อมกัน</p>
+            </div>
+            <div className="px-5 pb-5">
+              <button
+                disabled={!priceCheckImage || priceCheckLoading}
+                onClick={async () => {
+                  setPriceCheckLoading(true)
+                  try {
+                    const res = await fetch('/api/price-check', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ image_data: priceCheckImage }),
+                    })
+                    const data = await res.json()
+                    if (data.error) { alert('วิเคราะห์ไม่สำเร็จ: ' + data.error); return }
+                    window.open(`https://s.taobao.com/search?q=${encodeURIComponent(data.keywords_zh || '')}`, '_blank')
+                    window.open(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(data.keywords_en || '')}`, '_blank')
+                    window.open(`https://shopee.co.th/search?keyword=${encodeURIComponent(data.keywords_th || '')}`, '_blank')
+                    setPriceCheckOpen(false)
+                    setPriceCheckImage('')
+                  } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+                  finally { setPriceCheckLoading(false) }
+                }}
+                className="w-full bg-purple-600 text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
+              >
+                {priceCheckLoading ? '⏳ กำลังวิเคราะห์...' : '🔍 เปิด Taobao / eBay / Shopee'}
               </button>
             </div>
           </div>
