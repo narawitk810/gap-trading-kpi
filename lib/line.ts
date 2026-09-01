@@ -1,4 +1,4 @@
-async function sendLinePushMessage(groupId: string, text: string): Promise<void> {
+export async function sendLinePushMessage(groupId: string, text: string): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
   if (!token || !groupId) return
   try {

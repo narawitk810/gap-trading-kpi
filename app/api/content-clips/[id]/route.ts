@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, ensureSchema } from '@/lib/db'
+import { sendLinePushMessage } from '@/lib/line'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -15,6 +16,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       sql: `UPDATE content_clips SET status='assigned', assigned_to=?, assigned_at=? WHERE id=? AND status='raw'`,
       args: [body.assigned_to.trim(), now, id],
     })
+    const groupId = process.env.LINE_GROUP_ID_CREATIVE
+    if (groupId) {
+      const clipRow = await db.execute({ sql: 'SELECT title, shoot_date, drive_link FROM content_clips WHERE id=?', args: [id] })
+      const clip = clipRow.rows[0]
+      const msg = [
+        '🎬 มอบหมายงานคอนเทนต์ใหม่',
+        `📋 คลิป: ${clip?.title || id}`,
+        `👤 มอบหมายให้: ${body.assigned_to.trim()}`,
+        clip?.shoot_date ? `📅 วันถ่าย: ${clip.shoot_date}` : '',
+        clip?.drive_link ? `📁 ไฟล์ดิบ: ${clip.drive_link}` : '',
+      ].filter(Boolean).join('\n')
+      sendLinePushMessage(groupId, msg)
+    }
     return NextResponse.json({ ok: true })
   }
 
