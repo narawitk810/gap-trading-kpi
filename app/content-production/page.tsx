@@ -64,6 +64,7 @@ export default function ContentProductionPage() {
   const [selected, setSelected] = useState<ContentClip | null>(null)
   const [modalState, setModalState] = useState<ModalState>('detail')
   const [creativeStaff, setCreativeStaff] = useState<string[]>([])
+  const [guideOpen, setGuideOpen] = useState(false)
 
   // Create form state
   const [showCreate, setShowCreate] = useState(false)
@@ -198,6 +199,34 @@ export default function ContentProductionPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Guide */}
+      <div className="px-4 pt-1 pb-2">
+        <button
+          onClick={() => setGuideOpen(v => !v)}
+          className="w-full flex items-center justify-between text-xs text-gray-500 py-1.5 px-3 bg-gray-50 rounded-xl border border-[#E2E8F0]"
+        >
+          <span>📋 คู่มือ — ใครดำเนินการสถานะไหน</span>
+          <span>{guideOpen ? '▲' : '▼'}</span>
+        </button>
+        {guideOpen && (
+          <div className="mt-2 rounded-xl border border-[#E2E8F0] bg-white overflow-hidden text-xs">
+            {[
+              { num: '1', label: 'คลิปดิบ+มอบหมาย', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true },
+              { num: '2', label: 'มอบหมาย+ส่งงาน+โพส', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false },
+              { num: '2.5', label: 'งานแก้', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false },
+              { num: '3', label: 'รอตรวจสอบ', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true },
+              { num: '4', label: 'บันทึกผล', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false },
+            ].map((row, i) => (
+              <div key={row.num} className={`flex items-center gap-3 px-3 py-2.5 ${i > 0 ? 'border-t border-[#E2E8F0]' : ''}`}>
+                <span className="shrink-0 font-bold text-[#1E3A5F] w-12">สถานะ<br/>{row.num}</span>
+                <span className="text-gray-500 flex-1">{row.label}</span>
+                <span className={`shrink-0 font-medium text-right ${row.managerRole ? 'text-[#1E3A5F]' : 'text-[#16A34A]'}`}>{row.actor}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Add Button */}
