@@ -181,6 +181,7 @@ export default function ContentProductionPage() {
       <div className="bg-[#1E3A5F] text-white px-4 py-4 flex items-center gap-3">
         <a href="/" className="text-white/70 text-sm">← กลับ</a>
         <h1 className="text-base font-bold flex-1">ระบบผลิตคอนเทนต์</h1>
+        <button onClick={() => setGuideOpen(v => !v)} className="text-white/70 text-sm px-2 py-1 rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors">📋 คู่มือ</button>
         <button onClick={fetchClips} className="text-white/70 text-sm px-2 py-1 rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors">⟳ รีเฟรช</button>
       </div>
 
@@ -201,17 +202,10 @@ export default function ContentProductionPage() {
         </div>
       </div>
 
-      {/* Guide */}
-      <div className="px-4 pt-1 pb-2">
-        <button
-          onClick={() => setGuideOpen(v => !v)}
-          className="w-full flex items-center justify-between text-xs text-gray-500 py-1.5 px-3 bg-gray-50 rounded-xl border border-[#E2E8F0]"
-        >
-          <span>📋 คู่มือ — ใครดำเนินการสถานะไหน</span>
-          <span>{guideOpen ? '▲' : '▼'}</span>
-        </button>
-        {guideOpen && (
-          <div className="mt-2 rounded-xl border border-[#E2E8F0] bg-white overflow-hidden text-xs">
+      {/* Guide Panel */}
+      {guideOpen && (
+        <div className="px-4 pt-1 pb-2">
+          <div className="rounded-xl border border-[#E2E8F0] bg-white overflow-hidden text-xs shadow-sm">
             {[
               { num: '1', label: 'คลิปดิบ+มอบหมาย', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true, note: 'KPI ส่งคลิปดิบอย่างน้อย 4 คลิปต่อคนใน 1 วัน' },
               { num: '2', label: 'มอบหมาย+ส่งงาน+โพส', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false, note: '' },
@@ -234,8 +228,8 @@ export default function ContentProductionPage() {
               </p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Add Button */}
       <div className="px-4 py-2 space-y-2">
