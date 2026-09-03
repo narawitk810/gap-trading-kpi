@@ -213,16 +213,19 @@ export default function ContentProductionPage() {
         {guideOpen && (
           <div className="mt-2 rounded-xl border border-[#E2E8F0] bg-white overflow-hidden text-xs">
             {[
-              { num: '1', label: 'คลิปดิบ+มอบหมาย', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true },
-              { num: '2', label: 'มอบหมาย+ส่งงาน+โพส', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false },
-              { num: '2.5', label: 'งานแก้', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false },
-              { num: '3', label: 'รอตรวจสอบ', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true },
-              { num: '4', label: 'บันทึกผล', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false },
+              { num: '1', label: 'คลิปดิบ+มอบหมาย', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true, note: 'KPI ส่งคลิปดิบอย่างน้อย 4 คลิปต่อคนใน 1 วัน' },
+              { num: '2', label: 'มอบหมาย+ส่งงาน+โพส', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false, note: '' },
+              { num: '2.5', label: 'งานแก้', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false, note: '' },
+              { num: '3', label: 'รอตรวจสอบ', actor: 'Senior Creative หรือ ผู้จัดการ', managerRole: true, note: '' },
+              { num: '4', label: 'บันทึกผล', actor: 'ผู้รับผิดชอบคลิปนั้นๆ', managerRole: false, note: '' },
             ].map((row, i) => (
-              <div key={row.num} className={`flex items-center gap-3 px-3 py-2.5 ${i > 0 ? 'border-t border-[#E2E8F0]' : ''}`}>
-                <span className="shrink-0 font-bold text-[#1E3A5F] w-12">สถานะ<br/>{row.num}</span>
-                <span className="text-gray-500 flex-1">{row.label}</span>
-                <span className={`shrink-0 font-medium text-right ${row.managerRole ? 'text-[#1E3A5F]' : 'text-[#16A34A]'}`}>{row.actor}</span>
+              <div key={row.num} className={`px-3 py-2.5 ${i > 0 ? 'border-t border-[#E2E8F0]' : ''}`}>
+                <div className="flex items-center gap-3">
+                  <span className="shrink-0 font-bold text-[#1E3A5F] w-12">สถานะ<br/>{row.num}</span>
+                  <span className="text-gray-500 flex-1">{row.label}</span>
+                  <span className={`shrink-0 font-medium text-right ${row.managerRole ? 'text-[#1E3A5F]' : 'text-[#16A34A]'}`}>{row.actor}</span>
+                </div>
+                {row.note ? <p className="mt-1 ml-14 text-orange-600 font-medium">{row.note}</p> : null}
               </div>
             ))}
             <div className="px-3 py-2.5 border-t border-[#E2E8F0] bg-amber-50">
