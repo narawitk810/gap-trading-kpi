@@ -225,6 +225,11 @@ export default function ContentProductionPage() {
                 <span className={`shrink-0 font-medium text-right ${row.managerRole ? 'text-[#1E3A5F]' : 'text-[#16A34A]'}`}>{row.actor}</span>
               </div>
             ))}
+            <div className="px-3 py-2.5 border-t border-[#E2E8F0] bg-amber-50">
+              <p className="text-[#374151] leading-relaxed">
+                <span className="font-semibold text-amber-700">หมายเหตุ:</span> ระบบนี้ไม่รวมคลิป Highlight — เน้นคลิปที่ทำเองสดใหม่เท่านั้น แต่หากคลิป Highlight ได้ยอดวิวหลักแสน–ล้าน สามารถส่งผลงานเข้าระบบได้
+              </p>
+            </div>
           </div>
         )}
       </div>
