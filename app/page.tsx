@@ -2387,7 +2387,7 @@ export default function Home() {
             <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
             <div className="space-y-2.5">
               {[
-                { key: 'prepare', label: '30 นาที เตรียตัว' },
+                { key: 'prepare', label: '30 นาที เตรียมตัว' },
                 { key: 'shootClip', label: '3 ชม. 30 นาที ถ่ายคลิป (ห้ามนั่งที่โต๊ะ)' },
                 { key: 'breakTime', label: '1 ชม. พักเบรค' },
                 { key: 'editClip', label: '3 ชม. 30 นาที ตัดคลิปและงานอื่นๆ' },
