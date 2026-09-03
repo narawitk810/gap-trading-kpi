@@ -374,6 +374,7 @@ export default function Home() {
   const [priceCheckLoading, setPriceCheckLoading] = useState(false)
   const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
   const [thurakarnChecklist, setThurakarnChecklist] = useState({ storeDocs: false, checkDocInOut: false, followUpDocs: false, checkEquipment: false, dailyExpenses: false })
+  const [creativeChecklist, setCreativeChecklist] = useState({ prepare: false, shootClip: false, breakTime: false, editClip: false, reportResult: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -533,6 +534,7 @@ export default function Home() {
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost || !liveChecklist.uniqueLiveLayout)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ธุรการ' && (!thurakarnChecklist.storeDocs || !thurakarnChecklist.checkDocInOut || !thurakarnChecklist.followUpDocs || !thurakarnChecklist.checkEquipment || !thurakarnChecklist.dailyExpenses)) e.thurakarnChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'Creative' && !Object.values(creativeChecklist).every(Boolean)) e.creativeChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department !== 'ไลฟ์สด' && !formData.tasks.some((t) => t.trim())) e.tasks = 'กรุณากรอกสิ่งที่ทำอย่างน้อย 1 รายการ'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -575,6 +577,9 @@ export default function Home() {
     }
     if (formData.department === 'แพค' && extra_data) {
       extra_data.checklist = packChecklist
+    }
+    if (formData.department === 'Creative' && extra_data) {
+      extra_data.checklist = creativeChecklist
     }
     if (formData.department === 'สต๊อค&จัดซื้อ' && extra_data) {
       extra_data.checklist = stockChecklist
@@ -2373,6 +2378,33 @@ export default function Home() {
             >
               ผลิตคอนเทนต์ →
             </a>
+          </div>
+        )}
+
+        {/* Creative Checklist */}
+        {formData.department === 'Creative' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <div className="space-y-2.5">
+              {[
+                { key: 'prepare', label: '30 นาที เตรียตัว' },
+                { key: 'shootClip', label: '3 ชม. 30 นาที ถ่ายคลิป (ห้ามนั่งที่โต๊ะ)' },
+                { key: 'breakTime', label: '1 ชม. พักเบรค' },
+                { key: 'editClip', label: '3 ชม. 30 นาที ตัดคลิปและงานอื่นๆ' },
+                { key: 'reportResult', label: '30 นาที เตรียงานและรายงานผล' },
+              ].map(item => (
+                <label key={item.key} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={creativeChecklist[item.key as keyof typeof creativeChecklist]}
+                    onChange={e => setCreativeChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                    className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                  />
+                  <span className="text-sm text-[#374151]">{item.label}</span>
+                </label>
+              ))}
+            </div>
+            {errors.creativeChecklist && <p className="text-[#DC2626] text-xs mt-2">{errors.creativeChecklist}</p>}
           </div>
         )}
 
