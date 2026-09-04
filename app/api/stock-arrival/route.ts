@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
     const row = await db.execute({ sql: 'SELECT image_data FROM stock_arrivals WHERE id = ?', args: [imageId] })
     const dataUri = row.rows[0]?.image_data as string
     if (!dataUri) return new Response(null, { status: 404 })
+    if (dataUri.startsWith('https://')) {
+      return Response.redirect(dataUri, 302)
+    }
     const [header, base64] = dataUri.split(',')
     const contentType = header.replace('data:', '').replace(';base64', '')
     return new Response(Buffer.from(base64, 'base64'), {

@@ -449,6 +449,31 @@ export default function Home() {
         setLoadingLiveManager(false)
         setLoadingStoreManager(false)
       })
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetch('/api/live-staff')
+          .then((r) => r.json())
+          .then((d) => {
+            const all: LiveStaffMember[] = d.staff || []
+            setLiveStaff(all.filter((s) => s.department === 'ไลฟ์สด'))
+            setCreativeStaff(all.filter((s) => s.department === 'Creative'))
+            setMarketingStaff(all.filter((s) => s.department === 'การตลาด'))
+            setSaleAdminStaff(all.filter((s) => s.department === 'Sales Admin'))
+            setStoreRetailStaff(all.filter((s) => s.department === 'Store Retail'))
+            setStockPurchasingStaff(all.filter((s) => s.department === 'สต๊อค&จัดซื้อ'))
+            setPackStaff(all.filter((s) => s.department === 'แพค'))
+            setAccountingStaff(all.filter((s) => s.department === 'บัญชี&การเงิน'))
+            setAdministrationStaff(all.filter((s) => s.department === 'ธุรการ'))
+            setHrStaff(all.filter((s) => s.department === 'บุคคล'))
+            setLiveManagerStaff(all.filter((s) => s.department === 'ผู้จัดการไลฟ์สด'))
+            setStoreManagerStaff(all.filter((s) => s.department === 'ผู้จัดการหน้าร้าน'))
+          })
+          .catch(() => {})
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
   useEffect(() => {

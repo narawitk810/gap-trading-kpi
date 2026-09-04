@@ -13,8 +13,14 @@ export async function GET(request: NextRequest) {
     const row = await db.execute({ sql: 'SELECT image_data FROM stock_arrivals WHERE id = ?', args: [imageId] })
     const data = row.rows[0]?.image_data as string
     if (!data) return new Response(null, { status: 404 })
-    // Blob URL — redirect โดยตรง
     if (data.startsWith('https://')) {
+      // proxy=1 → ส่ง binary โดยตรงสำหรับ LINE (ไม่ redirect)
+      if (searchParams.get('proxy') === '1') {
+        const blobRes = await fetch(data)
+        const buf = await blobRes.arrayBuffer()
+        const ct = blobRes.headers.get('content-type') || 'image/jpeg'
+        return new Response(buf, { headers: { 'Content-Type': ct, 'Cache-Control': 'public, max-age=86400' } })
+      }
       return Response.redirect(data, 302)
     }
     // Legacy base64 data URI

@@ -398,52 +398,6 @@ export async function ensureSchema(): Promise<void> {
   try { await db.execute(`ALTER TABLE dept_rules ADD COLUMN file_data TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
   try { await db.execute(`ALTER TABLE dept_rules ADD COLUMN file_name TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
-  {
-    const now = new Date().toISOString()
-    const seed: [string, string, string, string, number, string][] = [
-      ['ls-001', 'เอิร์น', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
-      ['ls-002', 'ต้น', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
-      ['ls-003', 'อาลีฟ', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
-      ['ls-004', 'มัส', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
-      ['ls-005', 'เดียร์', 'Junior Live Sales', '🥉', 1, 'ไลฟ์สด'],
-      ['ls-006', 'กันต์', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
-      ['ls-007', 'คิง', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
-      ['ls-008', 'จ๊าบ', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
-      ['ls-009', 'แบม', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
-      ['ls-010', 'เฉิน', 'Live Sales', '🥈', 2, 'ไลฟ์สด'],
-      ['ls-011', 'ขวัญ', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
-      ['ls-012', 'จ๊ะ', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
-      ['ls-013', 'เลย์', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
-      ['ls-014', 'ไข่เจีย', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
-      ['ls-015', 'มายด์', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
-      ['ls-016', 'เก็ท', 'Senior Live Sales', '🥇', 3, 'ไลฟ์สด'],
-      ['ls-017', 'นีล', 'Expert Live Sales', '🏅', 4, 'ไลฟ์สด'],
-      ['ls-018', 'หนิง', 'Expert Live Sales', '🏅', 4, 'ไลฟ์สด'],
-      ['ls-019', 'บิว', 'Expert Live Sales', '🏅', 4, 'ไลฟ์สด'],
-      ['cs-001', 'เฟรม', 'Junior Creative', '🥉', 1, 'Creative'],
-      ['cs-002', 'ไทด์', 'Creative', '🥈', 2, 'Creative'],
-      ['cs-003', 'แก๊ง', 'Senior Creative', '🥇', 3, 'Creative'],
-      ['mkt-001', 'เกอร์', 'Junior Marketing', '🥉', 1, 'การตลาด'],
-      ['sa-001', 'พลอย', 'Sales Admin', '🥈', 2, 'Sales Admin'],
-      ['stk-001', 'เดียร์ (สต๊อค)', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
-      ['stk-002', 'เตย', 'Senior Stock & Purchasing', '🥇', 3, 'สต๊อค&จัดซื้อ'],
-      ['pack-001', 'เฟิร์น', 'Fulfillment', '🥈', 2, 'แพค'],
-      ['acc-001', 'นิว', 'Accounting Supervisor', '📋', 2, 'บัญชี&การเงิน'],
-      ['adm-001', 'จ๋า', 'Administration Officer', '🗂️', 1, 'ธุรการ'],
-      ['hr-001', 'ปิ่น', 'HR Supervisor', '🧑‍💼', 2, 'บุคคล'],
-      ['lm-001', 'ธีร์', 'Live Team Leader', '👥', 1, 'ผู้จัดการไลฟ์สด'],
-    ]
-    for (const [id, name, rank_name, rank_emoji, rank_order, department] of seed) {
-      await db.execute({
-        sql: 'INSERT OR IGNORE INTO live_staff (id, name, rank_name, rank_emoji, rank_order, department, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        args: [id, name, rank_name, rank_emoji, rank_order, department, now],
-      })
-    }
-    for (const headName of ['บิว', 'นีล', 'แก๊ง']) {
-      await db.execute({ sql: 'UPDATE live_staff SET is_head=1 WHERE name=?', args: [headName] })
-    }
-  }
-
   await db.execute(`UPDATE live_staff SET department='Sales Admin' WHERE department='sale admin'`)
   await db.execute(`UPDATE kpi_entries SET department='Sales Admin' WHERE department='sale admin'`)
   await db.execute(`UPDATE live_staff SET name='เดียร์ (สต๊อค)' WHERE id='stk-001' AND name='เดียร์'`)

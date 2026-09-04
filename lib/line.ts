@@ -42,15 +42,11 @@ export async function notifyTiktokSeller(item: {
 
   const fmt = (n: number) => n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
-  // ถ้ามี blob URL ใช้โดยตรง, legacy ใช้ผ่าน endpoint, ไม่มีรูปไม่ส่ง image message
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'https://gap-trading-kpi.vercel.app'
-  const imageUrl = item.image_ref?.startsWith('https://')
-    ? item.image_ref
-    : item.image_ref === 'legacy'
-      ? `${baseUrl}/api/stock-prices?image_id=${item.id}`
-      : null
+  // ใช้ proxy endpoint เสมอ เพื่อให้ LINE ได้รับ binary โดยตรง (ไม่มี redirect)
+  const baseUrl = 'https://gap-trading-kpi.vercel.app'
+  const imageUrl = item.image_ref
+    ? `${baseUrl}/api/stock-prices?image_id=${item.id}&proxy=1`
+    : null
 
   const lines = [
     '🛒 สินค้า TikTok Seller ใหม่!',
@@ -69,7 +65,7 @@ export async function notifyTiktokSeller(item: {
     if (!p.no_pack_sale)
       lines.push(`• แยกซอง (โยนนอก): ${fmt(p.pack_price_external)} บาท${p.break_enabled ? ' (เปิด break เท่านั้น)' : ''}`)
   }
-  if (item.allocation) lines.push(`🏷 Allocation: ${item.allocation}`)
+  lines.push(`👤 มอบหมาย: ${item.allocation || 'ยังไม่ระบุ'}`)
   if (item.sku_code_box || item.sku_code_pack) {
     lines.push('')
     if (item.sku_code_box) lines.push(`📋 SKU กล่อง: ${item.sku_code_box}`)

@@ -1335,7 +1335,7 @@ export default function AdminDashboard() {
   const fetchSaleAdminStaff = useCallback(async () => {
     setLoadingSaleAdminStaff(true)
     try {
-      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}&department=sale admin`)
+      const res = await fetch(`/api/live-staff?key=${ADMIN_KEY}&department=Sales Admin`)
       if (res.ok) {
         const data = await res.json()
         setSaleAdminStaff(data.staff || [])
