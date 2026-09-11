@@ -80,6 +80,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!status) return NextResponse.json({ error: 'ไม่พบงานนี้' }, { status: 404 })
 
     if (status === 'assigned') {
+      const typeRow = await db.execute({ sql: `SELECT clip_type FROM content_clips WHERE id=?`, args: [id] })
+      if (typeRow.rows[0]?.clip_type === 'content') {
+        return NextResponse.json({ error: 'คอนเทนต์ไม่สามารถย้อนกลับได้ — ใช้ปุ่มลบแทน' }, { status: 400 })
+      }
       await db.execute({
         sql: `UPDATE content_clips SET status='raw', assigned_to=NULL, assigned_at=NULL WHERE id=?`,
         args: [id],

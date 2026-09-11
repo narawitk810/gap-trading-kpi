@@ -24,6 +24,8 @@ interface ContentClip {
   likes?: number
   result_recorded_at?: string
   created_at: string
+  clip_type?: string
+  content_brief?: string
 }
 
 interface PlatformLinks {
@@ -66,11 +68,18 @@ export default function ContentProductionPage() {
   const [creativeStaff, setCreativeStaff] = useState<string[]>([])
   const [guideOpen, setGuideOpen] = useState(false)
 
-  // Create form state
+  // Create clip form state
   const [showCreate, setShowCreate] = useState(false)
   const [createForm, setCreateForm] = useState({ title: '', drive_link: '', shoot_date: '', created_by: '' })
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
+
+  // Create content idea form state
+  const [showCreateContent, setShowCreateContent] = useState(false)
+  const [contentForm, setContentForm] = useState({ title: '', content_brief: '', ref_link: '', created_by: '' })
+  const [contentAssignees, setContentAssignees] = useState<string[]>([])
+  const [contentError, setContentError] = useState('')
+  const [creatingContent, setCreatingContent] = useState(false)
 
   // Action form state
   const [assignTo, setAssignTo] = useState('')
@@ -126,6 +135,38 @@ export default function ContentProductionPage() {
     setCreateForm({ title: '', drive_link: '', shoot_date: '', created_by: '' })
     setCreateError('')
     fetchClips()
+  }
+
+  async function handleCreateContent() {
+    if (!contentForm.title.trim() || !contentForm.created_by.trim()) {
+      setContentError('กรุณากรอกชื่อไอเดียและชื่อผู้สร้าง')
+      return
+    }
+    if (contentAssignees.length === 0) {
+      setContentError('กรุณาเลือกผู้รับผิดชอบอย่างน้อย 1 คน')
+      return
+    }
+    setCreatingContent(true)
+    const res = await fetch('/api/content-clips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clip_type: 'content',
+        title: contentForm.title,
+        content_brief: contentForm.content_brief,
+        drive_link: contentForm.ref_link,
+        created_by: contentForm.created_by,
+        assigned_to: contentAssignees,
+      }),
+    })
+    setCreatingContent(false)
+    if (!res.ok) { const d = await res.json(); setContentError(d.error || 'เกิดข้อผิดพลาด'); return }
+    setShowCreateContent(false)
+    setContentForm({ title: '', content_brief: '', ref_link: '', created_by: '' })
+    setContentAssignees([])
+    setContentError('')
+    fetchClips()
+    setSelectedStatus('assigned')
   }
 
   async function handleDelete() {
@@ -241,12 +282,20 @@ export default function ContentProductionPage() {
         >
           <span>📁</span> ลิ้ง Google Drive สำหรับโยนไฟล์ดิบ
         </a>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="w-full py-2.5 rounded-xl border-2 border-dashed border-[#1E3A5F]/30 text-[#1E3A5F] text-sm font-semibold hover:bg-[#1E3A5F]/5 transition-colors"
-        >
-          + เพิ่มคลิปใหม่
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-[#1E3A5F]/30 text-[#1E3A5F] text-sm font-semibold hover:bg-[#1E3A5F]/5 transition-colors"
+          >
+            + เพิ่มคลิปใหม่
+          </button>
+          <button
+            onClick={() => setShowCreateContent(true)}
+            className="flex-1 py-2.5 rounded-xl border-2 border-dashed border-purple-300 text-purple-700 text-sm font-semibold hover:bg-purple-50 transition-colors"
+          >
+            + เพิ่มคอนเทนต์ใหม่
+          </button>
+        </div>
       </div>
 
       {/* Clip List */}
@@ -263,8 +312,19 @@ export default function ContentProductionPage() {
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-[#1E3A5F] text-sm truncate">{clip.title}</p>
-                <p className="text-xs text-gray-400 mt-0.5">ถ่าย {fmtDate(clip.shoot_date)} · โดย {clip.created_by}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="font-semibold text-[#1E3A5F] text-sm truncate">{clip.title}</p>
+                  {clip.clip_type === 'content' && (
+                    <span className="shrink-0 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">📝 ไอเดีย</span>
+                  )}
+                </div>
+                {clip.clip_type === 'content'
+                  ? <p className="text-xs text-gray-400 mt-0.5">📝 ไอเดีย · โดย {clip.created_by}</p>
+                  : <p className="text-xs text-gray-400 mt-0.5">ถ่าย {fmtDate(clip.shoot_date)} · โดย {clip.created_by}</p>
+                }
+                {clip.content_brief && (
+                  <p className="text-xs text-purple-600 mt-0.5 truncate">{clip.content_brief}</p>
+                )}
                 {clip.assigned_to && (
                   <p className="text-xs text-gray-500 mt-1">มอบหมาย: <span className="font-medium text-[#374151]">{clip.assigned_to}</span></p>
                 )}
@@ -318,6 +378,62 @@ export default function ContentProductionPage() {
         </div>
       )}
 
+      {/* Create Content Idea Modal */}
+      {showCreateContent && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-5 space-y-4">
+            <h2 className="font-bold text-purple-700 text-base">📝 เพิ่มคอนเทนต์ใหม่</h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-[#374151] block mb-1">ชื่อ/หัวข้อไอเดีย <span className="text-[#DC2626]">*</span></label>
+                <input value={contentForm.title} onChange={e => setContentForm(p => ({ ...p, title: e.target.value }))} placeholder="เช่น คลิปรีวิว MTG ชุดใหม่" className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#374151] block mb-1">รายละเอียด/Brief</label>
+                <textarea value={contentForm.content_brief} onChange={e => setContentForm(p => ({ ...p, content_brief: e.target.value }))} placeholder="อธิบายไอเดีย สิ่งที่อยากให้ทำ ฯลฯ" rows={3} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#374151] block mb-1">ลิ้งค์อ้างอิง</label>
+                <input type="url" value={contentForm.ref_link} onChange={e => setContentForm(p => ({ ...p, ref_link: e.target.value }))} placeholder="https://... (ไม่บังคับ)" className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#374151] block mb-1">สร้างโดย <span className="text-[#DC2626]">*</span></label>
+                <input value={contentForm.created_by} onChange={e => setContentForm(p => ({ ...p, created_by: e.target.value }))} placeholder="ชื่อผู้มอบหมาย" className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#374151] block mb-2">มอบหมายให้ <span className="text-[#DC2626]">*</span> <span className="text-gray-400 font-normal">(เลือกได้หลายคน)</span></label>
+                <div className="space-y-2 max-h-40 overflow-y-auto border border-[#E2E8F0] rounded-xl p-3">
+                  {creativeStaff.length === 0 && <p className="text-xs text-gray-400">ไม่พบข้อมูลพนักงาน Creative</p>}
+                  {creativeStaff.map(name => (
+                    <label key={name} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={contentAssignees.includes(name)}
+                        onChange={e => setContentAssignees(prev =>
+                          e.target.checked ? [...prev, name] : prev.filter(n => n !== name)
+                        )}
+                        className="w-4 h-4 accent-purple-600"
+                      />
+                      <span className="text-sm text-[#374151]">{name}</span>
+                    </label>
+                  ))}
+                </div>
+                {contentAssignees.length > 0 && (
+                  <p className="text-xs text-purple-600 mt-1">เลือก {contentAssignees.length} คน → จะสร้าง {contentAssignees.length} งาน</p>
+                )}
+              </div>
+            </div>
+            {contentError && <p className="text-[#DC2626] text-xs">{contentError}</p>}
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => { setShowCreateContent(false); setContentError(''); setContentAssignees([]) }} className="flex-1 py-2.5 rounded-xl border border-[#E2E8F0] text-sm text-gray-500">ยกเลิก</button>
+              <button onClick={handleCreateContent} disabled={creatingContent} className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-semibold disabled:opacity-50">
+                {creatingContent ? 'กำลังบันทึก...' : `มอบหมาย${contentAssignees.length > 0 ? ` (${contentAssignees.length} งาน)` : ''}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Detail Modal */}
       {selected && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center p-4">
@@ -342,12 +458,23 @@ export default function ContentProductionPage() {
                 <>
                   {/* Step 1 info — always shown */}
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">คลิปดิบ</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {selected.clip_type === 'content' ? '📝 ไอเดียคอนเทนต์' : 'คลิปดิบ'}
+                    </p>
                     <div className="bg-[#F5F6F8] rounded-xl p-3 space-y-1.5 text-sm">
-                      <div className="flex justify-between"><span className="text-gray-500">ชื่อคลิป</span><span className="font-medium text-[#374151]">{selected.title}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-500">วันที่ถ่าย</span><span className="font-medium text-[#374151]">{fmtDate(selected.shoot_date)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">ชื่อ</span><span className="font-medium text-[#374151]">{selected.title}</span></div>
+                      {selected.clip_type !== 'content' && (
+                        <div className="flex justify-between"><span className="text-gray-500">วันที่ถ่าย</span><span className="font-medium text-[#374151]">{fmtDate(selected.shoot_date)}</span></div>
+                      )}
                       <div className="flex justify-between"><span className="text-gray-500">สร้างโดย</span><span className="font-medium text-[#374151]">{selected.created_by}</span></div>
-                      <a href={selected.drive_link} target="_blank" rel="noreferrer" className="block text-[#1E3A5F] text-xs underline truncate">{selected.drive_link}</a>
+                      {selected.content_brief && (
+                        <div><span className="text-gray-500">Brief: </span><span className="text-[#374151]">{selected.content_brief}</span></div>
+                      )}
+                      {selected.drive_link && (
+                        <a href={selected.drive_link} target="_blank" rel="noreferrer" className="block text-[#1E3A5F] text-xs underline truncate">
+                          {selected.clip_type === 'content' ? `🔗 อ้างอิง: ${selected.drive_link}` : selected.drive_link}
+                        </a>
+                      )}
                     </div>
                   </div>
 
