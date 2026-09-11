@@ -42,11 +42,16 @@ export async function notifyTiktokSeller(item: {
 
   const fmt = (n: number) => n.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
-  // ใช้ proxy endpoint เสมอ เพื่อให้ LINE ได้รับ binary โดยตรง (ไม่มี redirect)
-  const baseUrl = 'https://gap-trading-kpi.vercel.app'
-  const imageUrl = item.image_ref
-    ? `${baseUrl}/api/stock-prices?image_id=${item.id}&proxy=1`
-    : null
+  // รูปใหม่ (Vercel Blob) → ใช้ URL ตรง LINE ดึงจาก CDN ได้เลย
+  // รูปเก่า (base64 legacy) → proxy แปลงเป็น binary ให้ LINE
+  let imageUrl: string | null = null
+  if (item.image_ref) {
+    if (item.image_ref.startsWith('https://')) {
+      imageUrl = item.image_ref
+    } else {
+      imageUrl = `https://gap-trading-kpi.vercel.app/api/stock-prices?image_id=${item.id}&proxy=1`
+    }
+  }
 
   const lines = [
     '🛒 สินค้า TikTok Seller ใหม่!',
