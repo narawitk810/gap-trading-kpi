@@ -1863,6 +1863,13 @@ export default function Home() {
           </div>
         )}
 
+        {/* ไลฟ์สด — ปุ่มขอสินค้าเร่งด่วน */}
+        {formData.department === 'ไลฟ์สด' && (
+          <Link href="/live-request" className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#DC2626] text-white font-bold text-sm shadow-sm">
+            🚨 ขอสินค้าเร่งด่วนขณะไลฟ์สด
+          </Link>
+        )}
+
         {/* การตลาด — checklist */}
         {formData.department === 'การตลาด' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">

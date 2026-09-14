@@ -94,6 +94,53 @@ export async function notifyTiktokSeller(item: {
   }
 }
 
+export async function notifyLiveUrgentRequest(item: {
+  id: string
+  nickname: string
+  product_name: string
+  quantity: string
+  note?: string
+  image_data?: string | null
+}): Promise<void> {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const groupId = process.env.LINE_GROUP_ID_LIVE
+  if (!token || !groupId) return
+
+  let imageUrl: string | null = null
+  if (item.image_data) {
+    if (item.image_data.startsWith('https://')) {
+      imageUrl = item.image_data
+    } else {
+      imageUrl = `https://gap-trading-kpi.vercel.app/api/live-urgent-request?image_id=${item.id}&proxy=1`
+    }
+  }
+
+  const lines = [
+    '🚨 ขอสินค้าเร่งด่วน!',
+    '',
+    `👤 พนักงาน: ${item.nickname}`,
+    `📦 สินค้า: ${item.product_name}`,
+    `🔢 จำนวน: ${item.quantity}`,
+  ]
+  if (item.note?.trim()) lines.push(`📝 หมายเหตุ: ${item.note.trim()}`)
+
+  const messages: object[] = []
+  if (imageUrl) {
+    messages.push({ type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl })
+  }
+  messages.push({ type: 'text', text: lines.join('\n') })
+
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: groupId, messages }),
+    })
+  } catch (err) {
+    console.error('[LINE] liveUrgentRequest failed:', err instanceof Error ? err.message : err)
+  }
+}
+
 export async function notifyPromoAcknowledged(promo: {
   product_name: string
   threshold_amount: string
