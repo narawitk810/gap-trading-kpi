@@ -55,6 +55,7 @@ export async function notifyTiktokSeller(item: {
 
   const lines = [
     '🛒 สินค้า TikTok Seller ใหม่!',
+    '⏰ ช่วงเวลาลงสินค้า 10:00–19:00 น.',
     '',
     `📦 ${item.product_name}`,
     `จำนวน: ${item.quantity} | ${item.packs_per_box} ซอง/กล่อง`,
