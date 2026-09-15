@@ -614,17 +614,22 @@ export default function StockPricesPage() {
                             >
                               แก้ไขราคา
                             </button>
-                            <button
-                              onClick={() => handleToggleTiktok(r)}
-                              disabled={togglingTiktok === r.id}
-                              className={`text-xs px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap disabled:opacity-60 ${
-                                r.tiktok_listed_at
-                                  ? 'bg-[#16A34A]/10 text-[#16A34A]'
-                                  : 'bg-[#16A34A] text-white hover:bg-[#15803d]'
-                              }`}
-                            >
-                              {togglingTiktok === r.id ? '...' : r.tiktok_listed_at ? '✅ TikTok แล้ว' : '+ TikTok Seller'}
-                            </button>
+                            <div className="flex flex-col items-end gap-0.5">
+                              <button
+                                onClick={() => handleToggleTiktok(r)}
+                                disabled={togglingTiktok === r.id}
+                                className={`text-xs px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap disabled:opacity-60 ${
+                                  r.tiktok_listed_at
+                                    ? 'bg-[#16A34A]/10 text-[#16A34A]'
+                                    : 'bg-[#16A34A] text-white hover:bg-[#15803d]'
+                                }`}
+                              >
+                                {togglingTiktok === r.id ? '...' : r.tiktok_listed_at ? '✅ TikTok แล้ว' : '+ TikTok Seller'}
+                              </button>
+                              {!r.tiktok_listed_at && (
+                                <p className="text-[10px] text-gray-400 whitespace-nowrap">⏰ 10:00–19:00 น.</p>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
