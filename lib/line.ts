@@ -142,6 +142,57 @@ export async function notifyLiveUrgentRequest(item: {
   }
 }
 
+export async function notifyBlacklist(item: {
+  id: string
+  customer_name: string
+  reason: string
+  incident_date: string
+  reported_by: string
+  image_data?: string | null
+}): Promise<void> {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const groupId = process.env.LINE_GROUP_ID_LIVE
+  if (!token || !groupId) return
+
+  const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+  const [y, m, d] = item.incident_date.split('-')
+  const dateStr = `${parseInt(d)} ${months[parseInt(m) - 1]} ${parseInt(y) + 543}`
+
+  let imageUrl: string | null = null
+  if (item.image_data) {
+    if (item.image_data.startsWith('https://')) {
+      imageUrl = item.image_data
+    } else {
+      imageUrl = `https://gap-trading-kpi.vercel.app/api/blacklist?id=${item.id}&proxy=1`
+    }
+  }
+
+  const text = [
+    '🚫 แจ้ง Blacklist ลูกค้าใหม่',
+    '',
+    `👤 ลูกค้า: ${item.customer_name}`,
+    `📝 เหตุผล: ${item.reason}`,
+    `📅 วันที่เกิดเหตุ: ${dateStr}`,
+    `แจ้งโดย: ${item.reported_by}`,
+  ].join('\n')
+
+  const messages: object[] = []
+  if (imageUrl) {
+    messages.push({ type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl })
+  }
+  messages.push({ type: 'text', text })
+
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: groupId, messages }),
+    })
+  } catch (err) {
+    console.error('[LINE] notifyBlacklist failed:', err instanceof Error ? err.message : err)
+  }
+}
+
 export async function notifyPromoAcknowledged(promo: {
   product_name: string
   threshold_amount: string
