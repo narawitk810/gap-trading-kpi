@@ -402,6 +402,7 @@ export default function Home() {
   const [storeManagerStaff, setStoreManagerStaff] = useState<LiveStaffMember[]>([])
   const [storeManagerPickerOpen, setStoreManagerPickerOpen] = useState(true)
   const [loadingStoreManager, setLoadingStoreManager] = useState(false)
+  const [showKpiMenu, setShowKpiMenu] = useState(false)
   const [smActivities, setSmActivities] = useState([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
   const addSmActivity = () => { if (smActivities.length < 10) setSmActivities(prev => [...prev, { activityName: '', eventDate: '', startTime: '', facebookUrl: '' }]) }
   const removeSmActivity = (i: number) => setSmActivities(prev => prev.filter((_, idx) => idx !== i))
@@ -2285,42 +2286,54 @@ export default function Home() {
           </Link>
         )}
 
-        {/* ไลฟ์สด — ประวัติ KPI */}
+        {/* ไลฟ์สด — เมนู "ลง KPI" */}
         {formData.department === 'ไลฟ์สด' && (
-          <Link
-            href="/kpi-history"
-            className="flex items-center gap-3 bg-[#1E3A5F]/5 border border-[#1E3A5F]/20 rounded-2xl p-4 hover:bg-[#1E3A5F]/10 transition-colors"
-          >
-            <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
-              📅
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#1E3A5F]">ประวัติ KPI ของฉัน</p>
-              <p className="text-xs text-gray-400 mt-0.5">ดูย้อนหลังรายเดือน — checklist / งานที่ทำ</p>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
-
-        {/* ไลฟ์สด — รายงานการขาย-ของแถม */}
-        {formData.department === 'ไลฟ์สด' && (
-          <Link
-            href="/live-report"
-            className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl p-4 hover:bg-green-100 transition-colors"
-          >
-            <div className="w-10 h-10 bg-[#16A34A] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
-              📊
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#16A34A]">รายงานการขาย-ของแถม</p>
-              <p className="text-xs text-gray-400 mt-0.5">บันทึกยอดขายสินค้าและของแถมรายวัน</p>
-            </div>
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
+          <div className="rounded-2xl overflow-hidden border border-[#1E3A5F]/20">
+            <button
+              type="button"
+              onClick={() => setShowKpiMenu(p => !p)}
+              className="w-full flex items-center gap-3 bg-[#1E3A5F]/5 p-4 hover:bg-[#1E3A5F]/10 transition-colors"
+            >
+              <div className="w-10 h-10 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+                📋
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-[#1E3A5F]">ลง KPI</p>
+                <p className="text-xs text-gray-400 mt-0.5">ประวัติ KPI และรายงานการขาย</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 text-[#1E3A5F] ml-auto shrink-0 transition-transform ${showKpiMenu ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            {showKpiMenu && (
+              <div className="border-t border-[#1E3A5F]/10 divide-y divide-[#E2E8F0]">
+                <Link href="/kpi-history" className="flex items-center gap-3 bg-white p-4 hover:bg-[#1E3A5F]/5 transition-colors">
+                  <div className="w-9 h-9 bg-[#1E3A5F] rounded-xl flex items-center justify-center shrink-0 text-white text-base">
+                    📅
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#1E3A5F]">ประวัติ KPI ของฉัน</p>
+                    <p className="text-xs text-gray-400 mt-0.5">ดูย้อนหลังรายเดือน — checklist / งานที่ทำ</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#1E3A5F] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link href="/live-report" className="flex items-center gap-3 bg-white p-4 hover:bg-green-50 transition-colors">
+                  <div className="w-9 h-9 bg-[#16A34A] rounded-xl flex items-center justify-center shrink-0 text-white text-base">
+                    📊
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#16A34A]">รายงานการขาย-ของแถม</p>
+                    <p className="text-xs text-gray-400 mt-0.5">บันทึกยอดขายสินค้าและของแถมรายวัน</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#16A34A] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            )}
+          </div>
         )}
 
         {/* ไลฟ์สด / sale admin — ลิงก์ขอสินค้า */}
