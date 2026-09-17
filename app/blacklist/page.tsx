@@ -52,6 +52,8 @@ export default function BlacklistPage() {
   const [submitting, setSubmitting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const [customerName, setCustomerName] = useState('')
   const [reason, setReason] = useState('')
@@ -128,6 +130,15 @@ export default function BlacklistPage() {
       setErrors({ submit: 'เกิดข้อผิดพลาด กรุณาลองใหม่' })
       setShowConfirm(false)
     } finally { setSubmitting(false) }
+  }
+
+  async function handleDelete(id: string) {
+    setDeletingId(id)
+    try {
+      await fetch(`/api/blacklist?id=${id}`, { method: 'DELETE' })
+      setEntries(prev => prev.filter(e => e.id !== id))
+    } catch { /* ignore */ }
+    finally { setDeletingId(null); setConfirmDeleteId(null) }
   }
 
   return (
@@ -259,12 +270,20 @@ export default function BlacklistPage() {
                       <span className="text-xs text-gray-500">แจ้งโดย {entry.reported_by}</span>
                     </div>
                   </div>
-                  {entry.image_data && (
-                    <button onClick={() => setSelectedImage(entry.image_data)} className="shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={entry.image_data} alt="หลักฐาน" className="w-16 h-16 object-cover rounded-xl border border-[#E2E8F0]" />
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    {entry.image_data && (
+                      <button onClick={() => setSelectedImage(entry.image_data)}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={entry.image_data} alt="หลักฐาน" className="w-16 h-16 object-cover rounded-xl border border-[#E2E8F0]" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setConfirmDeleteId(entry.id)}
+                      className="text-xs text-[#DC2626] border border-[#DC2626]/30 px-2.5 py-1 rounded-lg hover:bg-[#DC2626]/5"
+                    >
+                      ลบ
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -286,6 +305,26 @@ export default function BlacklistPage() {
               <button onClick={() => setShowConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-[#E2E8F0] text-sm text-[#374151] font-semibold">แก้ไข</button>
               <button onClick={handleSubmit} disabled={submitting} className="flex-1 py-2.5 rounded-xl bg-[#DC2626] text-white text-sm font-bold disabled:opacity-50">
                 {submitting ? 'กำลังบันทึก...' : 'ยืนยัน'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm delete */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4">
+            <h3 className="text-base font-bold text-[#1E3A5F]">ยืนยันการลบ</h3>
+            <p className="text-sm text-[#374151]">ต้องการลบรายชื่อนี้ออกจาก Blacklist?</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-2.5 rounded-xl border border-[#E2E8F0] text-sm text-[#374151] font-semibold">ยกเลิก</button>
+              <button
+                onClick={() => handleDelete(confirmDeleteId)}
+                disabled={deletingId === confirmDeleteId}
+                className="flex-1 py-2.5 rounded-xl bg-[#DC2626] text-white text-sm font-bold disabled:opacity-50"
+              >
+                {deletingId === confirmDeleteId ? 'กำลังลบ...' : 'ลบเลย'}
               </button>
             </div>
           </div>

@@ -34,3 +34,13 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ id }, { status: 201 })
 }
+
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+  await ensureSchema()
+  const db = getDb()
+  await db.execute({ sql: `DELETE FROM customer_blacklist WHERE id=?`, args: [id] })
+  return NextResponse.json({ ok: true })
+}
