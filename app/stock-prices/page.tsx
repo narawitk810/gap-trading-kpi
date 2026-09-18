@@ -77,6 +77,7 @@ export default function StockPricesPage() {
   const [skuStatus, setSkuStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [allocationEdits, setAllocationEdits] = useState<Record<string, string>>({})
   const [allocationStatus, setAllocationStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
+  const [searchQuery, setSearchQuery] = useState('')
 
   const fetchData = useCallback(() => {
     fetch('/api/stock-prices')
@@ -309,6 +310,7 @@ export default function StockPricesPage() {
     const d = (r.acknowledged_at || r.created_at).slice(0, 10)
     if (dateFrom && d < dateFrom) return false
     if (dateTo && d > dateTo) return false
+    if (searchQuery.trim() && !r.product_name.toLowerCase().includes(searchQuery.trim().toLowerCase())) return false
     return true
   })
 
@@ -355,6 +357,18 @@ export default function StockPricesPage() {
           />
           {(dateFrom || dateTo) && (
             <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-gray-400 hover:text-gray-600 underline">
+              ล้าง
+            </button>
+          )}
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="ค้นหาชื่อสินค้า..."
+            className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#16A34A] flex-1 min-w-[160px]"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="text-xs text-gray-400 hover:text-gray-600 underline">
               ล้าง
             </button>
           )}
