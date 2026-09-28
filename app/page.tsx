@@ -366,7 +366,7 @@ export default function Home() {
   const [marketingPickerOpen, setMarketingPickerOpen] = useState(true)
   const [loadingMarketing, setLoadingMarketing] = useState(false)
   const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
-  const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, genAiUsed: false })
+  const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
   const [priceCheckOpen, setPriceCheckOpen] = useState(false)
@@ -555,7 +555,7 @@ export default function Home() {
     if (CHANNEL_DEPTS.includes(formData.department) && (formData.department === 'การตลาด' ? channelRows.length === 0 : formData.channelName.length === 0)) e.channelName = 'กรุณาเลือกช่องที่ดูแลอย่างน้อย 1 ช่อง'
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo || !marketingChecklist.topFiveProducts)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
-    if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.postTournamentResult || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost || !liveChecklist.uniqueLiveLayout)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
@@ -709,7 +709,7 @@ export default function Home() {
     setBestRoiEntry({ ...emptyBestRoiEntry })
     setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
     setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
-    setStoreManagerChecklist({ postNewProduct: false, postTournament: false, genAiUsed: false })
+    setStoreManagerChecklist({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
     setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setStockChecklist({ newStockFirst: false })
     setLiveChecklist({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
@@ -1919,6 +1919,15 @@ export default function Home() {
                   className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
                 />
                 <span className="text-sm text-[#374151]">โพสจัดงานแข่งอย่างน้อยวันละ 1-2 งาน</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={storeManagerChecklist.postTournamentResult}
+                  onChange={(e) => setStoreManagerChecklist(prev => ({ ...prev, postTournamentResult: e.target.checked }))}
+                  className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                />
+                <span className="text-sm text-[#374151]">โพสผลการแข่งขันอย่างน้อยวันละ 1 โพสลงเพจ</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
