@@ -193,6 +193,59 @@ export async function notifyBlacklist(item: {
   }
 }
 
+export async function notifyLeaveRequest(item: {
+  id: string
+  employee_name: string
+  department: string
+  leave_type: string
+  request_type: string
+  start_date: string
+  end_date: string
+  num_days: number
+  reason: string
+}): Promise<void> {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const groupId = process.env.LINE_GROUP_ID_LIVE
+  if (!token || !groupId) return
+
+  const leaveTypeMap: Record<string, string> = {
+    paid_personal: 'ลากิจ (รับค่าจ้าง)',
+    emergency: 'ลากิจฉุกเฉิน (ไม่รับค่าจ้าง)',
+    paid_sick: 'ลาป่วย (รับค่าจ้าง)',
+    unpaid_sick: 'ลาป่วย (ไม่รับค่าจ้าง)',
+    vacation: 'ลาพักร้อน',
+  }
+  const requestTypeMap: Record<string, string> = {
+    advance: 'ลาล่วงหน้า',
+    emergency: 'ลาฉุกเฉิน',
+  }
+
+  const fmt = (d: string) => {
+    const [y, m, mo] = d.split('-')
+    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+    return `${parseInt(mo)} ${months[parseInt(m) - 1]} ${parseInt(y) + 543}`
+  }
+
+  const text = [
+    '📋 แจ้งคำขอลาใหม่',
+    '',
+    `👤 พนักงาน: ${item.employee_name} (${item.department})`,
+    `🏷️ ประเภท: ${leaveTypeMap[item.leave_type] || item.leave_type} — ${requestTypeMap[item.request_type] || item.request_type}`,
+    `📅 วันที่: ${fmt(item.start_date)} – ${fmt(item.end_date)} (${item.num_days} วัน)`,
+    `📝 เหตุผล: ${item.reason}`,
+  ].join('\n')
+
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: groupId, messages: [{ type: 'text', text }] }),
+    })
+  } catch (err) {
+    console.error('[LINE] notifyLeaveRequest failed:', err instanceof Error ? err.message : err)
+  }
+}
+
 export async function notifyPromoAcknowledged(promo: {
   product_name: string
   threshold_amount: string

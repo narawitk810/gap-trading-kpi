@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 
 const today = new Date().toLocaleDateString('sv-SE')
 
@@ -17,6 +17,12 @@ const LEAVE_BALANCE = [
   { icon: '💼', label: 'ลากิจคงเหลือ', value: '10', color: '#D97706' },
   { icon: '🏥', label: 'ลาป่วยคงเหลือ', value: '30', color: '#16A34A' },
   { icon: '🤱', label: 'ลาคลอดคงเหลือ', value: '90', color: '#7C3AED' },
+]
+
+const DEPARTMENTS = [
+  'ไลฟ์สด', 'สต๊อค&จัดซื้อ', 'Creative', 'การตลาด', 'Sales Admin', 'Store Retail',
+  'แพค', 'บัญชี&การเงิน', 'ธุรการ', 'บุคคล', 'ผู้จัดการไลฟ์สด', 'ผู้จัดการหน้าร้าน',
+  'กฎหมาย', 'Audit',
 ]
 
 const NAV_ITEMS = [
@@ -46,13 +52,86 @@ export default function LeavePage() {
   const [reason, setReason] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [requestId, setRequestId] = useState('')
+  const [employeeName, setEmployeeName] = useState('')
+  const [department, setDepartment] = useState('')
+  const [docFile, setDocFile] = useState<File | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const days = useMemo(() => calcDays(startDate, endDate), [startDate, endDate])
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleFileDrop(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setDocFile(files[0])
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!reason.trim()) return
-    setSubmitted(true)
+    const errs: Record<string, string> = {}
+    if (!employeeName.trim()) errs.employeeName = 'กรุณากรอกชื่อ-นามสกุล'
+    if (!department) errs.department = 'กรุณาเลือกแผนก'
+    if (!reason.trim()) errs.reason = 'กรุณากรอกเหตุผลการลา'
+    if (Object.keys(errs).length > 0) { setErrors(errs); return }
+    setErrors({})
+    setSubmitting(true)
+
+    let documentData: string | null = null
+    if (docFile) {
+      try {
+        const formData = new FormData()
+        formData.append('file', docFile)
+        const uploadRes = await fetch('/api/upload-image', { method: 'POST', body: formData })
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json()
+          documentData = uploadData.url || null
+        }
+      } catch { /* skip upload, submit without doc */ }
+    }
+
+    try {
+      const res = await fetch('/api/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_name: employeeName.trim(),
+          department,
+          leave_type: leaveType,
+          request_type: requestType,
+          start_date: startDate,
+          end_date: endDate,
+          num_days: days,
+          reason: reason.trim(),
+          document_data: documentData,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง')
+        return
+      }
+      setRequestId(data.id)
+      setSubmitted(true)
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function handleReset() {
+    setSubmitted(false)
+    setReason('')
+    setStartDate(today)
+    setEndDate(today)
+    setLeaveType('paid_personal')
+    setRequestType('advance')
+    setEmployeeName('')
+    setDepartment('')
+    setDocFile(null)
+    setRequestId('')
+    setErrors({})
   }
 
   if (submitted) {
@@ -61,8 +140,11 @@ export default function LeavePage() {
         <div className="bg-white rounded-2xl p-10 text-center max-w-sm w-full shadow-sm border border-[#E2E8F0]">
           <div className="text-5xl mb-4">✅</div>
           <h2 className="text-xl font-bold text-[#16A34A] mb-2">ส่งคำขอสำเร็จ</h2>
-          <p className="text-sm text-gray-500 mb-6">คำขอลาของคุณถูกส่งไปยัง HR แล้ว กรุณารอการอนุมัติ</p>
-          <button onClick={() => setSubmitted(false)} className="bg-[#1E3A5F] text-white px-6 py-2.5 rounded-xl text-sm font-semibold">
+          <p className="text-sm text-gray-500 mb-2">คำขอลาของคุณถูกส่งไปยัง HR แล้ว กรุณารอการอนุมัติ</p>
+          {requestId && (
+            <p className="text-xs text-gray-400 bg-[#F5F6F8] rounded-lg px-3 py-2 mb-6 font-mono">รหัสคำขอ: {requestId}</p>
+          )}
+          <button onClick={handleReset} className="bg-[#1E3A5F] text-white px-6 py-2.5 rounded-xl text-sm font-semibold">
             ยื่นคำขอใหม่
           </button>
         </div>
@@ -124,13 +206,6 @@ export default function LeavePage() {
               🔔
               <span className="absolute top-1 right-1 w-4 h-4 bg-[#DC2626] text-white text-[9px] font-bold rounded-full flex items-center justify-center">3</span>
             </button>
-            <div className="flex items-center gap-2 pl-2 border-l border-[#E2E8F0]">
-              <div className="w-8 h-8 bg-[#1E3A5F] rounded-full flex items-center justify-center text-white text-sm font-bold">ก</div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-semibold text-[#374151]">น.ส. กานต์พิชชา ใจดี</p>
-                <p className="text-[10px] text-gray-400">พนักงาน</p>
-              </div>
-            </div>
           </div>
         </header>
 
@@ -143,6 +218,36 @@ export default function LeavePage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Section 0 — ข้อมูลพนักงาน */}
+              <div className="bg-white rounded-2xl p-5 border border-[#E2E8F0] space-y-4">
+                <p className="text-sm font-bold text-[#374151]">ข้อมูลพนักงาน</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">ชื่อ-นามสกุล <span className="text-[#DC2626]">*</span></label>
+                    <input
+                      type="text"
+                      value={employeeName}
+                      onChange={(e) => setEmployeeName(e.target.value)}
+                      placeholder="เช่น น.ส. สมใจ ดีมาก"
+                      className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] ${errors.employeeName ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
+                    />
+                    {errors.employeeName && <p className="text-[#DC2626] text-xs mt-1">{errors.employeeName}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#374151] mb-1.5">แผนก <span className="text-[#DC2626]">*</span></label>
+                    <select
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] bg-white ${errors.department ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
+                    >
+                      <option value="">เลือกแผนก</option>
+                      {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    {errors.department && <p className="text-[#DC2626] text-xs mt-1">{errors.department}</p>}
+                  </div>
+                </div>
+              </div>
 
               {/* Section 1 */}
               <div className="bg-white rounded-2xl p-5 border border-[#E2E8F0]">
@@ -227,40 +332,59 @@ export default function LeavePage() {
                 <div>
                   <label className="block text-xs font-semibold text-[#374151] mb-1.5">เหตุผลการลา <span className="text-[#DC2626]">*</span></label>
                   <textarea
-                    required value={reason} onChange={(e) => setReason(e.target.value)}
+                    value={reason} onChange={(e) => setReason(e.target.value)}
                     placeholder="กรอกเหตุผลการลา"
                     rows={3}
-                    className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none"
+                    className={`w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] resize-none ${errors.reason ? 'border-[#DC2626]' : 'border-[#E2E8F0]'}`}
                   />
+                  {errors.reason && <p className="text-[#DC2626] text-xs mt-1">{errors.reason}</p>}
                 </div>
 
                 {/* File upload */}
                 <div>
                   <label className="block text-xs font-semibold text-[#374151] mb-1.5">แนบเอกสาร/หลักฐาน</label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => handleFileDrop(e.target.files)}
+                  />
                   <div
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
                     onDragLeave={() => setDragOver(false)}
-                    onDrop={(e) => { e.preventDefault(); setDragOver(false) }}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileDrop(e.dataTransfer.files) }}
+                    onClick={() => fileInputRef.current?.click()}
                     className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
                       dragOver ? 'border-[#1E3A5F] bg-[#1E3A5F]/5' : 'border-[#E2E8F0] hover:border-[#1E3A5F]/50'
                     }`}
                   >
-                    <span className="text-xl">☁️</span>
-                    <p className="text-sm text-[#374151] font-semibold mt-1">คลิกหรือลากไฟล์มาวางที่นี่</p>
-                    <p className="text-xs text-gray-400 mt-0.5">รองรับไฟล์ .pdf, .jpg, .jpeg, .png ขนาดไม่เกิน 10 MB</p>
+                    {docFile ? (
+                      <div>
+                        <p className="text-sm font-semibold text-[#16A34A]">📎 {docFile.name}</p>
+                        <p className="text-xs text-gray-400 mt-1">{(docFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setDocFile(null) }} className="text-xs text-[#DC2626] mt-2 underline">ลบไฟล์</button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="text-xl">☁️</span>
+                        <p className="text-sm text-[#374151] font-semibold mt-1">คลิกหรือลากไฟล์มาวางที่นี่</p>
+                        <p className="text-xs text-gray-400 mt-0.5">รองรับไฟล์ .pdf, .jpg, .jpeg, .png ขนาดไม่เกิน 10 MB</p>
+                      </>
+                    )}
                   </div>
                   <p className="text-xs text-[#DC2626] mt-1.5">* เงื่อนไขการแนบเอกสาร: ประเภทการลาที่ต้องแนบหลักฐานจะขึ้นอยู่กับประเภทการลาที่เลือก</p>
                 </div>
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => { setReason(''); setStartDate(today); setEndDate(today); setLeaveType('paid_personal') }}
+                  <button type="button" onClick={handleReset}
                     className="flex-1 sm:flex-none sm:px-8 py-2.5 border border-[#E2E8F0] rounded-xl text-sm font-semibold text-[#374151] hover:bg-[#F5F6F8] transition-colors">
                     ยกเลิก
                   </button>
-                  <button type="submit"
-                    className="flex-1 sm:flex-none sm:px-8 py-2.5 bg-[#1E3A5F] text-white rounded-xl text-sm font-semibold hover:bg-[#1E3A5F]/90 transition-colors flex items-center justify-center gap-2">
-                    <span>📤</span> บันทึกและส่งคำขอ
+                  <button type="submit" disabled={submitting}
+                    className="flex-1 sm:flex-none sm:px-8 py-2.5 bg-[#1E3A5F] text-white rounded-xl text-sm font-semibold hover:bg-[#1E3A5F]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60">
+                    {submitting ? <><span className="animate-spin">⏳</span> กำลังส่ง...</> : <><span>📤</span> บันทึกและส่งคำขอ</>}
                   </button>
                 </div>
               </div>

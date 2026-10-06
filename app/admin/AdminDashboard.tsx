@@ -459,7 +459,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members' | 'tcg-bookings'>('kpi')
+  const [activeTab, setActiveTab] = useState<'kpi' | 'requests' | 'complaints' | 'wage' | 'tax' | 'restock' | 'stock-arrival' | 'codes' | 'promo' | 'equipment' | 'meetings' | 'adjust-rank' | 'preorder' | 'tournament-creds' | 'tournament-schedule' | 'announcements' | 'tcg-rewards' | 'tcg-members' | 'tcg-bookings' | 'leave'>('kpi')
   const [announcements, setAnnouncements] = useState<{ id: string; title: string; content: string; image_data: string; file_name: string; is_pinned: number; is_active: number; created_by: string; created_at: string; has_image?: number; has_file?: number; attached_file_name?: string }[]>([])
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false)
   const [tcgGames, setTcgGames] = useState<{ id: string; name: string; short_name: string }[]>([])
@@ -478,6 +478,13 @@ export default function AdminDashboard() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
   })
   const [tcgBookingsLoading, setTcgBookingsLoading] = useState(false)
+  const [leaveRequests, setLeaveRequests] = useState<{id:string,employee_name:string,department:string,leave_type:string,request_type:string,start_date:string,end_date:string,num_days:number,reason:string,document_data:string|null,status:string,reviewed_by:string|null,rejection_reason:string|null,created_at:string}[]>([])
+  const [leaveLoading, setLeaveLoading] = useState(false)
+  const [leaveFetched, setLeaveFetched] = useState(false)
+  const [leaveRejectId, setLeaveRejectId] = useState<string | null>(null)
+  const [leaveRejectReason, setLeaveRejectReason] = useState('')
+  const [leaveReviewer, setLeaveReviewer] = useState('')
+  const [leaveUpdating, setLeaveUpdating] = useState<string | null>(null)
   const [annForm, setAnnForm] = useState({ title: '', content: '', created_by: '', is_pinned: false, image_data: '', file_name: '', file_data: '', attached_file_name: '' })
   const [submittingAnn, setSubmittingAnn] = useState(false)
   const [deletingAnnId, setDeletingAnnId] = useState<string | null>(null)
@@ -1054,6 +1061,35 @@ export default function AdminDashboard() {
       }
     } catch { /* silent */ }
   }, [])
+
+  const fetchLeaveRequests = useCallback(async () => {
+    setLeaveLoading(true)
+    try {
+      const res = await fetch('/api/leave')
+      if (!res.ok) return
+      setLeaveRequests(await res.json())
+      setLeaveFetched(true)
+    } catch { /* silent */ } finally {
+      setLeaveLoading(false)
+    }
+  }, [])
+
+  async function handleLeaveUpdate(id: string, status: 'approved' | 'rejected', rejectionReason?: string) {
+    setLeaveUpdating(id)
+    try {
+      const res = await fetch('/api/leave', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status, reviewed_by: leaveReviewer.trim() || 'Admin', rejection_reason: rejectionReason || null }),
+      })
+      if (!res.ok) { alert('เกิดข้อผิดพลาด'); return }
+      setLeaveRequests(prev => prev.map(r => r.id === id ? { ...r, status, reviewed_by: leaveReviewer.trim() || 'Admin', rejection_reason: rejectionReason || null } : r))
+      setLeaveRejectId(null)
+      setLeaveRejectReason('')
+    } catch { alert('เกิดข้อผิดพลาด') } finally {
+      setLeaveUpdating(null)
+    }
+  }
 
   const fetchTournamentCreds = useCallback(async () => {
     try {
@@ -1935,6 +1971,16 @@ export default function AdminDashboard() {
             }`}
           >
             📅 จองเวลา TCG
+          </button>
+          <button
+            onClick={() => { setActiveTab('leave'); if (!leaveFetched) fetchLeaveRequests() }}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'leave'
+                ? 'bg-white text-[#1E3A5F]'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            📋 ขอแจ้งลา
           </button>
         </div>
       </div>
@@ -7678,6 +7724,110 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Leave Requests Tab */}
+      {activeTab === 'leave' && (
+        <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-[#1E3A5F]">คำขอแจ้งลา</h2>
+              <p className="text-sm text-gray-400 mt-0.5">{leaveRequests.length} รายการ</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={leaveReviewer}
+                onChange={(e) => setLeaveReviewer(e.target.value)}
+                placeholder="ชื่อผู้อนุมัติ"
+                className="border border-[#E2E8F0] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] w-36"
+              />
+              <button onClick={fetchLeaveRequests} disabled={leaveLoading} className="border border-[#E2E8F0] text-[#374151] px-3 py-1.5 rounded-lg text-sm hover:bg-[#F5F6F8] disabled:opacity-50">
+                {leaveLoading ? '...' : '🔄 รีเฟรช'}
+              </button>
+            </div>
+          </div>
+
+          {leaveLoading ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">กำลังโหลด...</div>
+          ) : leaveRequests.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm py-16 text-center text-gray-400 text-sm">ยังไม่มีคำขอลา</div>
+          ) : (
+            <div className="space-y-3">
+              {leaveRequests.map((r) => {
+                const leaveTypeMap: Record<string, string> = {
+                  paid_personal: 'ลากิจ (รับค่าจ้าง)', emergency: 'ลากิจฉุกเฉิน', paid_sick: 'ลาป่วย (รับค่าจ้าง)', unpaid_sick: 'ลาป่วย (ไม่รับค่าจ้าง)', vacation: 'ลาพักร้อน',
+                }
+                const statusColor = r.status === 'approved' ? 'bg-green-100 text-[#16A34A]' : r.status === 'rejected' ? 'bg-red-100 text-[#DC2626]' : 'bg-yellow-100 text-[#D97706]'
+                const statusLabel = r.status === 'approved' ? 'อนุมัติแล้ว' : r.status === 'rejected' ? 'ไม่อนุมัติ' : 'รออนุมัติ'
+                const fmtDate = (d: string) => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+                return (
+                  <div key={r.id} className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-[#1E3A5F] text-sm">{r.employee_name} <span className="font-normal text-gray-400">({r.department})</span></p>
+                        <p className="text-xs text-gray-500 mt-0.5">{leaveTypeMap[r.leave_type] || r.leave_type} — {r.request_type === 'advance' ? 'ลาล่วงหน้า' : 'ลาฉุกเฉิน'}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">📅 {fmtDate(r.start_date)} – {fmtDate(r.end_date)} ({r.num_days} วัน)</p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusColor}`}>{statusLabel}</span>
+                    </div>
+                    <p className="text-sm text-[#374151] bg-[#F5F6F8] rounded-lg px-3 py-2">{r.reason}</p>
+                    {r.document_data && (
+                      <a href={r.document_data} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-[#1E3A5F] underline">
+                        📎 ดูเอกสารแนบ
+                      </a>
+                    )}
+                    {r.status === 'rejected' && r.rejection_reason && (
+                      <p className="text-xs text-[#DC2626] bg-red-50 rounded-lg px-3 py-2">เหตุผลที่ไม่อนุมัติ: {r.rejection_reason}</p>
+                    )}
+                    {r.reviewed_by && (
+                      <p className="text-xs text-gray-400">ดำเนินการโดย: {r.reviewed_by}</p>
+                    )}
+                    {r.status === 'pending' && (
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={() => handleLeaveUpdate(r.id, 'approved')}
+                          disabled={leaveUpdating === r.id}
+                          className="flex-1 bg-[#16A34A] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-[#15803d]"
+                        >
+                          {leaveUpdating === r.id ? '...' : '✓ อนุมัติ'}
+                        </button>
+                        <button
+                          onClick={() => { setLeaveRejectId(r.id); setLeaveRejectReason('') }}
+                          disabled={leaveUpdating === r.id}
+                          className="flex-1 border border-[#DC2626] text-[#DC2626] py-2 rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-red-50"
+                        >
+                          ✗ ไม่อนุมัติ
+                        </button>
+                      </div>
+                    )}
+                    {leaveRejectId === r.id && (
+                      <div className="space-y-2 pt-1">
+                        <textarea
+                          value={leaveRejectReason}
+                          onChange={(e) => setLeaveRejectReason(e.target.value)}
+                          placeholder="ระบุเหตุผลที่ไม่อนุมัติ"
+                          rows={2}
+                          className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#DC2626]"
+                        />
+                        <div className="flex gap-2">
+                          <button onClick={() => setLeaveRejectId(null)} className="flex-1 border border-[#E2E8F0] text-[#374151] py-2 rounded-xl text-sm font-semibold">ยกเลิก</button>
+                          <button
+                            onClick={() => handleLeaveUpdate(r.id, 'rejected', leaveRejectReason)}
+                            disabled={!leaveRejectReason.trim() || leaveUpdating === r.id}
+                            className="flex-1 bg-[#DC2626] text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-60"
+                          >
+                            {leaveUpdating === r.id ? '...' : 'ยืนยันไม่อนุมัติ'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
