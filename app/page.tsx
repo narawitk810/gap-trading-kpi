@@ -931,6 +931,21 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
+            <Link
+              href="/tournament-promo"
+              className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 hover:bg-amber-100 transition-colors"
+            >
+              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shrink-0 text-white text-lg">
+                📢
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-800">แจ้งโปรโมงานแข่ง+เอกสาร</p>
+                <p className="text-xs text-gray-400 mt-0.5">ส่งรูปโปรโมชั่น/เอกสารไปยังกลุ่มงานแข่ง</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-500 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         )}
 

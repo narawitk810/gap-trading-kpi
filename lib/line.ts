@@ -246,6 +246,35 @@ export async function notifyLeaveRequest(item: {
   }
 }
 
+export async function notifyTournamentPromo(item: {
+  id: string
+  image_data: string
+}): Promise<void> {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const groupId = process.env.LINE_GROUP_ID_TOURNAMENT
+  if (!token || !groupId) return
+
+  let imageUrl: string
+  if (item.image_data.startsWith('https://')) {
+    imageUrl = item.image_data
+  } else {
+    imageUrl = `https://gap-trading-kpi.vercel.app/api/tournament-promo?id=${item.id}&proxy=1`
+  }
+
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        to: groupId,
+        messages: [{ type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl }],
+      }),
+    })
+  } catch (err) {
+    console.error('[LINE] notifyTournamentPromo failed:', err instanceof Error ? err.message : err)
+  }
+}
+
 export async function notifyPromoAcknowledged(promo: {
   product_name: string
   threshold_amount: string

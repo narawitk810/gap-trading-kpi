@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 46
+const SCHEMA_VERSION = 47
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -838,6 +838,14 @@ export async function ensureSchema(): Promise<void> {
       reviewed_by      TEXT,
       rejection_reason TEXT,
       created_at       TEXT NOT NULL
+    )
+  `)
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS tournament_promos (
+      id         TEXT PRIMARY KEY,
+      image_data TEXT NOT NULL,
+      created_at TEXT NOT NULL
     )
   `)
 
