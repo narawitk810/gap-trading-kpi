@@ -205,7 +205,7 @@ export async function notifyLeaveRequest(item: {
   reason: string
 }): Promise<void> {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
-  const groupId = process.env.LINE_GROUP_ID_LIVE
+  const groupId = process.env.LINE_GROUP_ID_HR
   if (!token || !groupId) return
 
   const leaveTypeMap: Record<string, string> = {
