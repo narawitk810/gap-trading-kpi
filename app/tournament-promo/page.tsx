@@ -232,25 +232,19 @@ export default function TournamentPromoPage() {
           ) : (
             <div className="space-y-3">
               {filtered.map((item, idx) => (
-                <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0]">
+                <div key={item.id} className="bg-white rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-3 px-4 py-3">
                     <span className="w-6 h-6 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-bold flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
-                    <div>
-                      <p className="text-xs font-semibold text-[#374151]">{fmtDate(item.created_at)}</p>
-                    </div>
-                  </div>
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => setImageModal(`/api/tournament-promo?id=${item.id}&proxy=1`)}
-                  >
+                    <p className="flex-1 text-xs font-semibold text-[#374151]">{fmtDate(item.created_at)}</p>
                     <img
                       src={`/api/tournament-promo?id=${item.id}&proxy=1`}
                       alt={`เอกสาร ${idx + 1}`}
-                      className="w-full object-contain max-h-48 bg-[#F5F6F8]"
+                      loading="lazy"
+                      onClick={() => setImageModal(`/api/tournament-promo?id=${item.id}&proxy=1`)}
+                      className="w-14 h-14 object-cover rounded-xl cursor-pointer hover:opacity-80 shrink-0"
                     />
-                    <p className="text-xs text-center text-gray-400 py-2">แตะเพื่อดูขนาดเต็ม</p>
                   </div>
                 </div>
               ))}
