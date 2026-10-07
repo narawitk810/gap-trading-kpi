@@ -124,7 +124,6 @@ export default function TournamentPromoPage() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             className="hidden"
             onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
           />
