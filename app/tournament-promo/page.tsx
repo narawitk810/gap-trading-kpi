@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+type HistoryItem = { id: string; created_at: string }
 
 export default function TournamentPromoPage() {
   const router = useRouter()
@@ -9,6 +11,37 @@ export default function TournamentPromoPage() {
   const [imageData, setImageData] = useState<string | null>(null)
   const [stage, setStage] = useState<'form' | 'confirm' | 'submitting' | 'success'>('form')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [imageModal, setImageModal] = useState<string | null>(null)
+
+  async function fetchHistory() {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch('/api/tournament-promo')
+      if (res.ok) setHistoryItems(await res.json())
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchHistory() }, [])
+
+  const filtered = historyItems.filter((r) => {
+    const d = r.created_at.slice(0, 10)
+    if (dateFrom && d < dateFrom) return false
+    if (dateTo && d > dateTo) return false
+    return true
+  })
+
+  function fmtDate(iso: string) {
+    const d = new Date(iso)
+    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.']
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}  ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} น.`
+  }
 
   function compressImage(file: File): Promise<string> {
     return new Promise((resolve) => {
@@ -37,7 +70,6 @@ export default function TournamentPromoPage() {
     if (!file) return
     const compressed = await compressImage(file)
     setImagePreview(compressed)
-    // upload to Vercel Blob
     try {
       const res = await fetch('/api/upload-image', {
         method: 'POST',
@@ -70,6 +102,7 @@ export default function TournamentPromoPage() {
         setStage('confirm')
         return
       }
+      await fetchHistory()
       setStage('success')
     } catch {
       alert('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง')
@@ -162,6 +195,68 @@ export default function TournamentPromoPage() {
             ส่ง
           </button>
         )}
+
+        {/* History */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-bold text-[#1E3A5F] px-1">ประวัติการส่ง</h2>
+
+          {/* Date filter */}
+          <div className="bg-white rounded-2xl shadow-sm px-4 py-3 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-semibold text-gray-500">วันที่</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+            />
+            <span className="text-xs text-gray-400">ถึง</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+            />
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo('') }} className="text-xs text-gray-400 hover:text-gray-600 underline">
+                ล้าง
+              </button>
+            )}
+            <span className="ml-auto text-xs text-gray-500 font-semibold">{filtered.length} รายการ</span>
+          </div>
+
+          {/* List */}
+          {historyLoading ? (
+            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-sm text-gray-400">กำลังโหลด...</div>
+          ) : filtered.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-sm text-gray-400">ยังไม่มีประวัติการส่ง</div>
+          ) : (
+            <div className="space-y-3">
+              {filtered.map((item, idx) => (
+                <div key={item.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E2E8F0]">
+                    <span className="w-6 h-6 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-bold flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold text-[#374151]">{fmtDate(item.created_at)}</p>
+                    </div>
+                  </div>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => setImageModal(`/api/tournament-promo?id=${item.id}&proxy=1`)}
+                  >
+                    <img
+                      src={`/api/tournament-promo?id=${item.id}&proxy=1`}
+                      alt={`เอกสาร ${idx + 1}`}
+                      className="w-full object-contain max-h-48 bg-[#F5F6F8]"
+                    />
+                    <p className="text-xs text-center text-gray-400 py-2">แตะเพื่อดูขนาดเต็ม</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Confirm modal */}
@@ -190,6 +285,16 @@ export default function TournamentPromoPage() {
           <div className="bg-white rounded-2xl px-8 py-6 text-center">
             <p className="text-sm font-semibold text-[#374151]">กำลังส่ง...</p>
           </div>
+        </div>
+      )}
+
+      {/* Image modal */}
+      {imageModal && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setImageModal(null)}
+        >
+          <img src={imageModal} alt="เอกสาร" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl" />
         </div>
       )}
     </div>

@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
     const buffer = Buffer.from(base64, 'base64')
     return new Response(buffer, { headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=86400' } })
   }
-  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  await ensureSchema()
+  const db = getDb()
+  const result = await db.execute({
+    sql: 'SELECT id, created_at FROM tournament_promos ORDER BY created_at DESC LIMIT 200',
+    args: [],
+  })
+  return NextResponse.json(result.rows)
 }
 
 export async function POST(request: NextRequest) {
