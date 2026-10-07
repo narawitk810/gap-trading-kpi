@@ -119,7 +119,7 @@ export default function TournamentPromoPage() {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* Image picker */}
         <div className="bg-white rounded-2xl shadow-sm p-5">
-          <p className="text-sm font-semibold text-[#374151] mb-3">แนบรูปโปรโมชั่น/เอกสาร <span className="text-[#DC2626]">*</span></p>
+          <p className="text-sm font-semibold text-[#374151] mb-3">แนบรูปโปรโมงานแข่ง/เอกสาร <span className="text-[#DC2626]">*</span></p>
           <input
             ref={fileInputRef}
             type="file"
