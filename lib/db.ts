@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 47
+const SCHEMA_VERSION = 48
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -848,6 +848,14 @@ export async function ensureSchema(): Promise<void> {
       created_at TEXT NOT NULL
     )
   `)
+
+  for (const internName of ['ไอซ์(ฝึกงาน)', 'เน(ฝึกงาน)', 'บิว(ฝึกงาน)']) {
+    const iid = 'cs' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase()
+    await db.execute({
+      sql: `INSERT OR IGNORE INTO live_staff (id, name, rank_name, rank_emoji, rank_order, department, created_at) VALUES (?, ?, 'ฝึกงาน', '🎓', 99, 'Creative', ?)`,
+      args: [iid, internName, new Date().toISOString()],
+    })
+  }
 
   await db.execute(`INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', '${SCHEMA_VERSION}')`)
   g.dbVersion = SCHEMA_VERSION
