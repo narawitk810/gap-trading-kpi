@@ -1809,7 +1809,7 @@ export default function AdminDashboard() {
             )}
           </button>
           <button
-            onClick={() => { setActiveTab('stock-arrival'); if (stockArrivals.length === 0) fetchStockArrivals() }}
+            onClick={() => { setActiveTab('stock-arrival'); fetchStockArrivals() }}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'stock-arrival'
                 ? 'bg-white text-[#16A34A]'
