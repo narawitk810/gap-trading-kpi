@@ -558,10 +558,6 @@ export default function AdminDashboard() {
   const [pmBoxNoExternal, setPmBoxNoExternal] = useState(false)
   const [pmBreakEnabled, setPmBreakEnabled] = useState(false)
   const [pmNoPackSale, setPmNoPackSale] = useState(false)
-  const [pmManualOldBoxSystem, setPmManualOldBoxSystem] = useState('')
-  const [pmManualOldBoxExternal, setPmManualOldBoxExternal] = useState('')
-  const [pmManualOldPackSystem, setPmManualOldPackSystem] = useState('')
-  const [pmManualOldPackExternal, setPmManualOldPackExternal] = useState('')
   const [pmSubmitting, setPmSubmitting] = useState(false)
   const [taxInvoices, setTaxInvoices] = useState<TaxInvoice[]>([])
   const [loadingTax, setLoadingTax] = useState(false)
@@ -1194,10 +1190,6 @@ export default function AdminDashboard() {
       setPmBreakEnabled(false)
       setPmNoPackSale(false)
     }
-    setPmManualOldBoxSystem('')
-    setPmManualOldBoxExternal('')
-    setPmManualOldPackSystem('')
-    setPmManualOldPackExternal('')
   }
 
   async function handlePricingSubmit() {
@@ -1212,20 +1204,13 @@ export default function AdminDashboard() {
       oldPricing = pricingModal.old_pricing_data ? JSON.parse(pricingModal.old_pricing_data) : null
     } catch { oldPricing = null }
 
-    if (pmMultiplier === 'old' && !oldPricing?.box_price_system && !pmManualOldBoxSystem.trim()) {
-      alert('กรุณากรอกราคาเดิม (ยกกล่อง ในระบบ) ก่อน')
+    if (pmMultiplier === 'old' && !oldPricing?.box_price_system) {
+      alert('ไม่มีราคาเดิม (ยกกล่อง) สำหรับสินค้านี้ กรุณาเลือกวิธีอื่น')
       return
     }
 
     const cost = Number(pricingModal.cost) || 0
     const packs = Number(pricingModal.packs_per_box) || 1
-
-    const effectiveOldForCalc = oldPricing ?? (pmManualOldBoxSystem.trim() ? {
-      box_price_system: pmManualOldBoxSystem,
-      box_price_external: pmManualOldBoxExternal,
-      pack_price_system: pmManualOldPackSystem,
-      pack_price_external: pmManualOldPackExternal,
-    } : null)
 
     let boxPriceSystem: number
     let boxPriceExternal: number
@@ -1233,12 +1218,12 @@ export default function AdminDashboard() {
     let packPriceExternal: number
 
     if (pmMultiplier === 'old') {
-      boxPriceSystem = Number(effectiveOldForCalc!.box_price_system)
-      boxPriceExternal = effectiveOldForCalc!.box_price_external ? Number(effectiveOldForCalc!.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
-      packPriceSystem = effectiveOldForCalc!.pack_price_system ? Number(effectiveOldForCalc!.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
+      boxPriceSystem = Number(oldPricing!.box_price_system)
+      boxPriceExternal = oldPricing!.box_price_external ? Number(oldPricing!.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
+      packPriceSystem = oldPricing!.pack_price_system ? Number(oldPricing!.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
       packPriceExternal = pmBreakEnabled
         ? roundUp10(boxPriceExternal / packs)
-        : (effectiveOldForCalc!.pack_price_external ? Number(effectiveOldForCalc!.pack_price_external) : roundUp10(packPriceSystem * 0.90))
+        : (oldPricing!.pack_price_external ? Number(oldPricing!.pack_price_external) : roundUp10(packPriceSystem * 0.90))
     } else {
       const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
       const rawBoxSystem = pmMultiplier === 'msrp' ? Number(pmMsrpPrice) : cost * effectiveMult
@@ -1265,24 +1250,16 @@ export default function AdminDashboard() {
       pack_price_external: packPriceExternal,
     }
 
-    const manualOldPricing = (!oldPricing && pmManualOldBoxSystem.trim()) ? {
-      box_price_system: pmManualOldBoxSystem,
-      box_price_external: pmManualOldBoxExternal || '',
-      pack_price_system: pmManualOldPackSystem || '',
-      pack_price_external: pmManualOldPackExternal || '',
-    } : undefined
-
     setPmSubmitting(true)
     try {
       const res = await fetch(`/api/stock-arrival?key=${ADMIN_KEY}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: pricingModal.id, pricing, old_pricing: manualOldPricing }),
+        body: JSON.stringify({ id: pricingModal.id, pricing }),
       })
       if (res.ok) {
         setStockArrivals((prev) => prev.map((r) => r.id === pricingModal!.id
-          ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString(), pricing_data: JSON.stringify(pricing),
-              old_pricing_data: manualOldPricing ? JSON.stringify(manualOldPricing) : r.old_pricing_data }
+          ? { ...r, status: 'acknowledged', acknowledged_at: new Date().toISOString(), pricing_data: JSON.stringify(pricing) }
           : r
         ))
         setPricingModal(null)
@@ -3237,24 +3214,17 @@ export default function AdminDashboard() {
                 oldPricing = pricingModal.old_pricing_data ? JSON.parse(pricingModal.old_pricing_data) : null
               } catch { oldPricing = null }
 
-              const effectiveOld = oldPricing ?? (pmManualOldBoxSystem.trim() ? {
-                box_price_system: pmManualOldBoxSystem,
-                box_price_external: pmManualOldBoxExternal,
-                pack_price_system: pmManualOldPackSystem,
-                pack_price_external: pmManualOldPackExternal,
-              } : null)
-
               if (pmMultiplier) {
                 if (pmMultiplier === 'msrp' && pmMsrpPrice) {
                   boxPriceSystem = Number(pmMsrpPrice)
                   calcReady = true
-                } else if (pmMultiplier === 'old' && effectiveOld?.box_price_system) {
-                  boxPriceSystem = Number(effectiveOld.box_price_system)
-                  boxPriceExternal = effectiveOld.box_price_external ? Number(effectiveOld.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
-                  packPriceSystem = effectiveOld.pack_price_system ? Number(effectiveOld.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
+                } else if (pmMultiplier === 'old' && oldPricing?.box_price_system) {
+                  boxPriceSystem = Number(oldPricing.box_price_system)
+                  boxPriceExternal = oldPricing.box_price_external ? Number(oldPricing.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
+                  packPriceSystem = oldPricing.pack_price_system ? Number(oldPricing.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
                   packPriceExternal = pmBreakEnabled
                     ? roundUp10(boxPriceExternal / packs)
-                    : (effectiveOld.pack_price_external ? Number(effectiveOld.pack_price_external) : roundUp10(packPriceSystem * 0.90))
+                    : (oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90))
                   calcReady = true
                 } else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') {
                   const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
@@ -3314,48 +3284,24 @@ export default function AdminDashboard() {
                                 )}
                               </label>
                               {/* Old price option */}
-                              <div className={`rounded-xl border transition-colors ${pmMultiplier === 'old' ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
-                                <label className="flex items-center gap-3 p-3 cursor-pointer">
-                                  <input
-                                    type="radio"
-                                    name="multiplier"
-                                    value="old"
-                                    checked={pmMultiplier === 'old'}
-                                    onChange={() => setPmMultiplier('old')}
-                                    className="accent-[#1E3A5F]"
-                                  />
-                                  <span className="text-sm font-semibold text-[#374151]">ราคาเดิม</span>
-                                  <span className="text-xs text-gray-400">(ตามที่ Stock แจ้ง)</span>
-                                  {oldPricing?.box_price_system ? (
-                                    <span className="ml-auto text-sm font-bold text-[#1E3A5F]">{oldPricing.box_price_system} ฿</span>
-                                  ) : (
-                                    <span className="ml-auto text-xs text-amber-600 font-semibold">กรอกเอง</span>
-                                  )}
-                                </label>
-                                {!oldPricing && pmMultiplier === 'old' && (
-                                  <div className="px-4 pb-4 space-y-2 border-t border-amber-100">
-                                    <p className="text-xs text-amber-700 font-semibold pt-2">ราคาเดิมไม่มีในระบบ — กรอกเองได้เลย</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <div>
-                                        <p className="text-xs text-gray-500 mb-1">ยกกล่อง (ในระบบ) <span className="text-[#DC2626]">*</span></p>
-                                        <input type="number" value={pmManualOldBoxSystem} onChange={(e) => setPmManualOldBoxSystem(e.target.value)} onClick={(e) => e.stopPropagation()} placeholder="ราคา ฿" className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
-                                      </div>
-                                      <div>
-                                        <p className="text-xs text-gray-500 mb-1">ยกกล่อง (โยนนอก)</p>
-                                        <input type="number" value={pmManualOldBoxExternal} onChange={(e) => setPmManualOldBoxExternal(e.target.value)} onClick={(e) => e.stopPropagation()} placeholder="ราคา ฿" className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
-                                      </div>
-                                      <div>
-                                        <p className="text-xs text-gray-500 mb-1">แยกซอง (ในระบบ)</p>
-                                        <input type="number" value={pmManualOldPackSystem} onChange={(e) => setPmManualOldPackSystem(e.target.value)} onClick={(e) => e.stopPropagation()} placeholder="ราคา ฿" className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
-                                      </div>
-                                      <div>
-                                        <p className="text-xs text-gray-500 mb-1">แยกซอง (โยนนอก)</p>
-                                        <input type="number" value={pmManualOldPackExternal} onChange={(e) => setPmManualOldPackExternal(e.target.value)} onClick={(e) => e.stopPropagation()} placeholder="ราคา ฿" className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
-                                      </div>
-                                    </div>
-                                  </div>
+                              <label className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${oldPricing?.box_price_system ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'} ${pmMultiplier === 'old' ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
+                                <input
+                                  type="radio"
+                                  name="multiplier"
+                                  value="old"
+                                  checked={pmMultiplier === 'old'}
+                                  disabled={!oldPricing?.box_price_system}
+                                  onChange={() => setPmMultiplier('old')}
+                                  className="accent-[#1E3A5F]"
+                                />
+                                <span className="text-sm font-semibold text-[#374151]">ราคาเดิม</span>
+                                <span className="text-xs text-gray-400">(ตามที่ Stock แจ้ง)</span>
+                                {oldPricing?.box_price_system ? (
+                                  <span className="ml-auto text-sm font-bold text-[#1E3A5F]">{oldPricing.box_price_system} ฿</span>
+                                ) : (
+                                  <span className="ml-auto text-xs text-gray-400">ไม่มีข้อมูล</span>
                                 )}
-                              </div>
+                              </label>
                               {/* Multiplier options */}
                               {MULTIPLIERS.map((m) => (
                                 <label key={m.key} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${pmMultiplier === m.key ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
