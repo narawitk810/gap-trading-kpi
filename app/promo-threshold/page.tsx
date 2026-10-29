@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 async function compressImage(file: File): Promise<string> {
@@ -30,6 +30,20 @@ async function compressImage(file: File): Promise<string> {
 
 type PageState = 'form' | 'confirm' | 'submitting' | 'success'
 
+type PromoItem = {
+  id: string
+  nickname: string
+  product_name: string
+  threshold_amount: string
+  start_month: string
+  end_month: string
+  note: string | null
+  has_image: number
+  status: string
+  created_at: string
+  acknowledged_at: string | null
+}
+
 export default function PromoThresholdPage() {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -45,6 +59,66 @@ export default function PromoThresholdPage() {
   const [note, setNote] = useState('')
   const [imageData, setImageData] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const [promos, setPromos] = useState<PromoItem[]>([])
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [extendModal, setExtendModal] = useState<{ promo: PromoItem; startMonth: string; endMonth: string } | null>(null)
+  const [extendNickname, setExtendNickname] = useState('')
+  const [extending, setExtending] = useState(false)
+  const [imageModal, setImageModal] = useState<string | null>(null)
+
+  async function fetchPromos() {
+    setPromoLoading(true)
+    try {
+      const res = await fetch('/api/promo-threshold?view=all')
+      if (res.ok) setPromos(await res.json())
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchPromos() }, [])
+
+  function nextMonth(ym: string) {
+    const [y, mo] = ym.split('-').map(Number)
+    const d = new Date(y, mo)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  }
+
+  function getStatusDisplay(status: string) {
+    if (status === 'acknowledged') return { label: 'รับทราบแล้ว', color: 'bg-[#16A34A]/10 text-[#16A34A]' }
+    return { label: 'รอดำเนินการ', color: 'bg-amber-50 text-amber-700' }
+  }
+
+  async function handleExtend() {
+    if (!extendModal || !extendNickname.trim()) return
+    setExtending(true)
+    try {
+      const res = await fetch('/api/promo-threshold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname: extendNickname.trim(),
+          product_name: extendModal.promo.product_name,
+          threshold_amount: extendModal.promo.threshold_amount,
+          start_month: extendModal.startMonth,
+          end_month: extendModal.endMonth,
+          note: extendModal.promo.note || '',
+          copy_from: extendModal.promo.id,
+        }),
+      })
+      if (res.ok) {
+        setExtendModal(null)
+        setExtendNickname('')
+        await fetchPromos()
+        alert('ต่อโปรสำเร็จ! Admin จะรับทราบรายการใหม่')
+      } else {
+        const err = await res.json()
+        alert(err.error || 'เกิดข้อผิดพลาด')
+      }
+    } catch { alert('เกิดข้อผิดพลาด กรุณาลองใหม่') }
+    finally { setExtending(false) }
+  }
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -92,8 +166,14 @@ export default function PromoThresholdPage() {
         }),
       })
       const data = await res.json()
-      if (res.ok) { setSubmittedId(data.id); setPageState('success') }
-      else { alert(data.error || 'เกิดข้อผิดพลาด'); setPageState('confirm') }
+      if (res.ok) {
+        setSubmittedId(data.id)
+        setPageState('success')
+        fetchPromos()
+      } else {
+        alert(data.error || 'เกิดข้อผิดพลาด')
+        setPageState('confirm')
+      }
     } catch {
       alert('เกิดข้อผิดพลาด กรุณาตรวจสอบการเชื่อมต่อ')
       setPageState('confirm')
@@ -180,7 +260,7 @@ export default function PromoThresholdPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8]">
+    <div className="min-h-screen bg-[#F5F6F8]" style={{ fontFamily: "'Sarabun', 'Noto Sans Thai', sans-serif" }}>
       <div className="bg-[#1E3A5F] text-white px-4 py-5 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={() => router.back()} className="text-white/70 hover:text-white text-lg w-8">←</button>
@@ -192,6 +272,7 @@ export default function PromoThresholdPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4 pb-10">
+        {/* Form */}
         <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
           <div>
             <label className="block text-sm font-semibold text-[#374151] mb-1.5">
@@ -287,7 +368,136 @@ export default function PromoThresholdPage() {
           className="w-full bg-[#1E3A5F] text-white py-4 rounded-xl font-bold text-base shadow-md active:opacity-90">
           บันทึกโปรซื้อครบ
         </button>
+
+        {/* Promo history */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-bold text-[#1E3A5F]">ประวัติโปรซื้อครบ</h2>
+            <button onClick={fetchPromos} className="text-xs text-[#1E3A5F] underline">รีเฟรช</button>
+          </div>
+
+          {promoLoading ? (
+            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-sm text-gray-400">กำลังโหลด...</div>
+          ) : promos.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-sm text-gray-400">ยังไม่มีโปรซื้อครบ</div>
+          ) : (
+            promos.map((promo) => {
+              const s = getStatusDisplay(promo.status)
+              return (
+                <div key={promo.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  <div className="p-4 flex gap-3">
+                    {promo.has_image === 1 && (
+                      <img
+                        src={`/api/promo-threshold?image_id=${promo.id}`}
+                        alt={promo.product_name}
+                        loading="lazy"
+                        onClick={() => setImageModal(`/api/promo-threshold?image_id=${promo.id}`)}
+                        className="w-16 h-16 object-cover rounded-xl shrink-0 cursor-pointer hover:opacity-80"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-bold text-[#1E3A5F] leading-snug">{promo.product_name}</p>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${s.color}`}>{s.label}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">ซื้อครบ <span className="font-bold text-[#374151]">{promo.threshold_amount} บาท</span></p>
+                      <p className="text-xs text-gray-400 mt-0.5">{formatMonthThai(promo.start_month)} – {formatMonthThai(promo.end_month)}</p>
+                      {promo.note && <p className="text-xs text-gray-400 mt-0.5 truncate">{promo.note}</p>}
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-gray-400">โดย {promo.nickname}</p>
+                        <button
+                          onClick={() => {
+                            setExtendNickname('')
+                            setExtendModal({
+                              promo,
+                              startMonth: nextMonth(promo.start_month),
+                              endMonth: nextMonth(promo.end_month),
+                            })
+                          }}
+                          className="text-xs bg-[#1E3A5F] text-white px-3 py-1 rounded-lg font-semibold"
+                        >
+                          ต่อโปร
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
+
+      {/* Extend modal */}
+      {extendModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-base font-bold text-[#1E3A5F]">ต่อโปร</h3>
+            <div className="bg-[#F5F6F8] rounded-xl p-3 space-y-1">
+              <p className="text-xs text-gray-500">สินค้า</p>
+              <p className="text-sm font-bold text-[#374151]">{extendModal.promo.product_name}</p>
+              <p className="text-xs text-gray-500">ซื้อครบ <span className="font-semibold text-[#374151]">{extendModal.promo.threshold_amount} บาท</span></p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-[#374151] mb-1.5">
+                ชื่อเล่น <span className="text-[#DC2626]">*</span>
+              </label>
+              <input
+                type="text"
+                value={extendNickname}
+                onChange={(e) => setExtendNickname(e.target.value)}
+                placeholder="ชื่อเล่นของคุณ"
+                className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">เริ่มเดือน</label>
+                <input
+                  type="month"
+                  value={extendModal.startMonth}
+                  onChange={(e) => setExtendModal(m => m ? { ...m, startMonth: e.target.value } : null)}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-1">สิ้นสุดเดือน</label>
+                <input
+                  type="month"
+                  value={extendModal.endMonth}
+                  onChange={(e) => setExtendModal(m => m ? { ...m, endMonth: e.target.value } : null)}
+                  className="w-full border border-[#E2E8F0] rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setExtendModal(null); setExtendNickname('') }}
+                className="flex-1 border border-[#E2E8F0] text-[#374151] py-2.5 rounded-xl text-sm font-semibold"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleExtend}
+                disabled={extending || !extendNickname.trim()}
+                className="flex-1 bg-[#1E3A5F] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+              >
+                {extending ? 'กำลังส่ง...' : 'ยืนยันต่อโปร'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image modal */}
+      {imageModal && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setImageModal(null)}
+        >
+          <img src={imageModal} alt="สินค้า" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl" />
+        </div>
+      )}
     </div>
   )
 }

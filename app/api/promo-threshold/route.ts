@@ -22,6 +22,18 @@ export async function GET(request: NextRequest) {
     })
   }
 
+  if (searchParams.get('view') === 'all') {
+    await ensureSchema()
+    const db = getDb()
+    const result = await db.execute(
+      `SELECT id, nickname, product_name, threshold_amount, start_month, end_month,
+              note, status, created_at, acknowledged_at,
+              CASE WHEN image_data != '' AND image_data IS NOT NULL THEN 1 ELSE 0 END as has_image
+       FROM promo_thresholds ORDER BY created_at DESC`
+    )
+    return NextResponse.json(result.rows)
+  }
+
   if (searchParams.get('key') !== ADMIN_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
