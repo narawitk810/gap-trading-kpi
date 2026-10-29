@@ -3218,14 +3218,20 @@ export default function AdminDashboard() {
                 if (pmMultiplier === 'msrp' && pmMsrpPrice) {
                   boxPriceSystem = Number(pmMsrpPrice)
                   calcReady = true
-                } else if (pmMultiplier === 'old' && oldPricing?.box_price_system) {
-                  boxPriceSystem = Number(oldPricing.box_price_system)
+                } else if (pmMultiplier === 'old' && oldPricing) {
+                  if (oldPricing.box_price_system) {
+                    boxPriceSystem = Number(oldPricing.box_price_system)
+                  } else if (oldPricing.box_price_external) {
+                    boxPriceSystem = Math.round(Number(oldPricing.box_price_external) / (0.90 * 0.84))
+                  } else if (oldPricing.pack_price_system) {
+                    boxPriceSystem = (Number(oldPricing.pack_price_system) - pmRisk) * packs
+                  }
                   boxPriceExternal = oldPricing.box_price_external ? Number(oldPricing.box_price_external) : roundUp10(boxPriceSystem * 0.90 * 0.84)
                   packPriceSystem = oldPricing.pack_price_system ? Number(oldPricing.pack_price_system) : roundUp10((boxPriceSystem / packs) + pmRisk)
                   packPriceExternal = pmBreakEnabled
                     ? roundUp10(boxPriceExternal / packs)
                     : (oldPricing.pack_price_external ? Number(oldPricing.pack_price_external) : roundUp10(packPriceSystem * 0.90))
-                  calcReady = true
+                  calcReady = boxPriceSystem > 0
                 } else if (pmMultiplier !== 'msrp' && pmMultiplier !== 'old') {
                   const effectiveMult = pmMultiplier === 'custom' ? Number(pmCustomMultiplier) : Number(pmMultiplier)
                   if (pmMultiplier !== 'custom' || (pmCustomMultiplier && Number(pmCustomMultiplier) > 0)) {
@@ -3284,20 +3290,28 @@ export default function AdminDashboard() {
                                 )}
                               </label>
                               {/* Old price option */}
-                              <label className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${oldPricing?.box_price_system ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'} ${pmMultiplier === 'old' ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
+                              <label className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${oldPricing ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'} ${pmMultiplier === 'old' ? 'border-[#1E3A5F] bg-blue-50' : 'border-[#E2E8F0]'}`}>
                                 <input
                                   type="radio"
                                   name="multiplier"
                                   value="old"
                                   checked={pmMultiplier === 'old'}
-                                  disabled={!oldPricing?.box_price_system}
+                                  disabled={!oldPricing}
                                   onChange={() => setPmMultiplier('old')}
                                   className="accent-[#1E3A5F]"
                                 />
                                 <span className="text-sm font-semibold text-[#374151]">ราคาเดิม</span>
                                 <span className="text-xs text-gray-400">(ตามที่ Stock แจ้ง)</span>
-                                {oldPricing?.box_price_system ? (
-                                  <span className="ml-auto text-sm font-bold text-[#1E3A5F]">{oldPricing.box_price_system} ฿</span>
+                                {oldPricing ? (
+                                  <span className="ml-auto text-sm font-bold text-[#1E3A5F]">
+                                    {oldPricing.box_price_system
+                                      ? `กล่อง ${oldPricing.box_price_system} ฿`
+                                      : oldPricing.box_price_external
+                                      ? `นอก ${oldPricing.box_price_external} ฿`
+                                      : oldPricing.pack_price_system
+                                      ? `ซอง ${oldPricing.pack_price_system} ฿`
+                                      : '(มีข้อมูล)'}
+                                  </span>
                                 ) : (
                                   <span className="ml-auto text-xs text-gray-400">ไม่มีข้อมูล</span>
                                 )}
