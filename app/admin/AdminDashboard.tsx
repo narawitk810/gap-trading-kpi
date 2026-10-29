@@ -3375,6 +3375,22 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
+                          {/* Old pricing reference panel */}
+                          {oldPricing && (
+                            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                              <p className="text-xs font-semibold text-amber-800 mb-2">📋 ราคาเดิมจากพนักงาน</p>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                {oldPricing.box_price_system && <p className="text-xs text-gray-600">ยกกล่อง(ในระบบ): <span className="font-bold text-[#1E3A5F]">{oldPricing.box_price_system} ฿</span></p>}
+                                {oldPricing.box_price_external && <p className="text-xs text-gray-600">ยกกล่อง(โยนนอก): <span className="font-bold text-[#374151]">{oldPricing.box_price_external} ฿</span></p>}
+                                {oldPricing.pack_price_system && <p className="text-xs text-gray-600">แยกซอง(ในระบบ): <span className="font-bold text-[#16A34A]">{oldPricing.pack_price_system} ฿</span></p>}
+                                {oldPricing.pack_price_external && <p className="text-xs text-gray-600">แยกซอง(โยนนอก): <span className="font-bold text-[#374151]">{oldPricing.pack_price_external} ฿</span></p>}
+                                {!oldPricing.box_price_system && (
+                                  <p className="text-xs text-amber-600 col-span-2 mt-1">⚠️ ไม่มียกกล่อง(ในระบบ) — เลือก "ราคาเดิม" ไม่ได้</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Risk amount */}
                           <div>
                             <p className="text-xs font-semibold text-[#374151] mb-2">บวกความเสี่ยง (ราคาซอง)</p>
