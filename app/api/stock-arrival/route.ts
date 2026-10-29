@@ -151,10 +151,19 @@ export async function PATCH(request: NextRequest) {
 
   if (isAdmin) {
     const now = new Date().toISOString()
-    await db.execute({
-      sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ?, pricing_data = ? WHERE id = ?`,
-      args: [now, body.pricing ? JSON.stringify(body.pricing) : null, body.id],
-    })
+    const newOldPricingStr = body.old_pricing?.box_price_system
+      ? JSON.stringify(body.old_pricing) : null
+    if (newOldPricingStr) {
+      await db.execute({
+        sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ?, pricing_data = ?, old_pricing_data = ? WHERE id = ?`,
+        args: [now, body.pricing ? JSON.stringify(body.pricing) : null, newOldPricingStr, body.id],
+      })
+    } else {
+      await db.execute({
+        sql: `UPDATE stock_arrivals SET status = 'acknowledged', acknowledged_at = ?, pricing_data = ? WHERE id = ?`,
+        args: [now, body.pricing ? JSON.stringify(body.pricing) : null, body.id],
+      })
+    }
     return NextResponse.json({ ok: true })
   }
 
