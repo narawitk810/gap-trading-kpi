@@ -375,6 +375,7 @@ export default function Home() {
   const [liveChecklist, setLiveChecklist] = useState({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
   const [thurakarnChecklist, setThurakarnChecklist] = useState({ storeDocs: false, checkDocInOut: false, followUpDocs: false, checkEquipment: false, dailyExpenses: false })
   const [creativeChecklist, setCreativeChecklist] = useState({ prepare: false, shootClip: false, breakTime: false, editClip: false, reportResult: false })
+  const [creativeMonthlyChecklist, setCreativeMonthlyChecklist] = useState({ openchatActivity: false })
   const [saleAdminStaff, setSaleAdminStaff] = useState<LiveStaffMember[]>([])
   const [saleAdminPickerOpen, setSaleAdminPickerOpen] = useState(true)
   const [loadingSaleAdmin, setLoadingSaleAdmin] = useState(false)
@@ -606,6 +607,7 @@ export default function Home() {
     }
     if (formData.department === 'Creative' && extra_data) {
       extra_data.checklist = creativeChecklist
+      extra_data.monthly_checklist = creativeMonthlyChecklist
     }
     if (formData.department === 'สต๊อค&จัดซื้อ' && extra_data) {
       extra_data.checklist = stockChecklist
@@ -712,6 +714,7 @@ export default function Home() {
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
     setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setStockChecklist({ newStockFirst: false })
+    setCreativeMonthlyChecklist({ openchatActivity: false })
     setLiveChecklist({ promo5: false, reviewReply: false, chatReply: false, prepareForPack: false, story1Post: false, content1Clip: false, content1FBPost: false, uniqueLiveLayout: false })
     setErrors({})
     setPageState('form')
@@ -2491,28 +2494,44 @@ export default function Home() {
 
         {/* Creative Checklist */}
         {formData.department === 'Creative' && (
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
-            <div className="space-y-2.5">
-              {[
-                { key: 'prepare', label: '30 นาที เตรียมตัว' },
-                { key: 'shootClip', label: '3 ชม. 30 นาที ถ่ายคลิป (ห้ามนั่งที่โต๊ะ)' },
-                { key: 'breakTime', label: '1 ชม. พักเบรค' },
-                { key: 'editClip', label: '3 ชม. 30 นาที ตัดคลิปและงานอื่นๆ' },
-                { key: 'reportResult', label: '30 นาที เตรียงานและรายงานผล' },
-              ].map(item => (
-                <label key={item.key} className="flex items-center gap-3 cursor-pointer">
+          <div className="grid grid-cols-2 gap-3 items-start">
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+              <div className="space-y-2.5">
+                {[
+                  { key: 'prepare', label: '30 นาที เตรียมตัว' },
+                  { key: 'shootClip', label: '3 ชม. 30 นาที ถ่ายคลิป (ห้ามนั่งที่โต๊ะ)' },
+                  { key: 'breakTime', label: '1 ชม. พักเบรค' },
+                  { key: 'editClip', label: '3 ชม. 30 นาที ตัดคลิปและงานอื่นๆ' },
+                  { key: 'reportResult', label: '30 นาที เตรียงานและรายงานผล' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={creativeChecklist[item.key as keyof typeof creativeChecklist]}
+                      onChange={e => setCreativeChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                      className="w-4 h-4 mt-0.5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer shrink-0"
+                    />
+                    <span className="text-xs text-[#374151] leading-snug">{item.label}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.creativeChecklist && <p className="text-[#DC2626] text-xs mt-2">{errors.creativeChecklist}</p>}
+            </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-sm font-semibold text-[#374151] mb-3">Checklist รายเดือน</p>
+              <div className="space-y-2.5">
+                <label className="flex items-start gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={creativeChecklist[item.key as keyof typeof creativeChecklist]}
-                    onChange={e => setCreativeChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
-                    className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                    checked={creativeMonthlyChecklist.openchatActivity}
+                    onChange={e => setCreativeMonthlyChecklist(prev => ({ ...prev, openchatActivity: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer shrink-0"
                   />
-                  <span className="text-sm text-[#374151]">{item.label}</span>
+                  <span className="text-xs text-[#374151] leading-snug">แจกซองทำกิจกรรมใน openchat เดือนละ 4 ครั้งต่อช่อง</span>
                 </label>
-              ))}
+              </div>
             </div>
-            {errors.creativeChecklist && <p className="text-[#DC2626] text-xs mt-2">{errors.creativeChecklist}</p>}
           </div>
         )}
 
