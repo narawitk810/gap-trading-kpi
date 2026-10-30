@@ -2528,7 +2528,7 @@ export default function Home() {
                     onChange={e => setCreativeMonthlyChecklist(prev => ({ ...prev, openchatActivity: e.target.checked }))}
                     className="w-4 h-4 mt-0.5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer shrink-0"
                   />
-                  <span className="text-xs text-[#374151] leading-snug">แจกซองทำกิจกรรมใน openchat เดือนละ 4 ครั้งต่อช่อง</span>
+                  <span className="text-xs text-[#374151] leading-snug">แจกซองทำกิจกรรมใน openchat อาทิตย์ละ 1 ครั้ง (เดือนละ 4 ครั้ง)</span>
                 </label>
               </div>
             </div>
