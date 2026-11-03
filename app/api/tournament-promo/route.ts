@@ -27,10 +27,25 @@ export async function GET(request: NextRequest) {
   await ensureSchema()
   const db = getDb()
   const result = await db.execute({
-    sql: 'SELECT id, created_at FROM tournament_promos ORDER BY created_at DESC LIMIT 200',
+    sql: 'SELECT id, status, received_by, created_at FROM tournament_promos ORDER BY created_at DESC LIMIT 200',
     args: [],
   })
   return NextResponse.json(result.rows)
+}
+
+export async function PATCH(request: NextRequest) {
+  const body = await request.json()
+  const { id, received_by } = body
+  if (!id || !received_by?.trim()) {
+    return NextResponse.json({ error: 'กรุณาระบุชื่อผู้รับเอกสาร' }, { status: 400 })
+  }
+  await ensureSchema()
+  const db = getDb()
+  await db.execute({
+    sql: `UPDATE tournament_promos SET status='received', received_by=? WHERE id=?`,
+    args: [received_by.trim(), id],
+  })
+  return NextResponse.json({ ok: true })
 }
 
 export async function POST(request: NextRequest) {

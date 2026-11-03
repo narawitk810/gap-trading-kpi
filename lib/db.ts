@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 48
+const SCHEMA_VERSION = 49
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -843,11 +843,15 @@ export async function ensureSchema(): Promise<void> {
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS tournament_promos (
-      id         TEXT PRIMARY KEY,
-      image_data TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      id          TEXT PRIMARY KEY,
+      image_data  TEXT NOT NULL,
+      status      TEXT NOT NULL DEFAULT 'pending',
+      received_by TEXT NOT NULL DEFAULT '',
+      created_at  TEXT NOT NULL
     )
   `)
+  try { await db.execute(`ALTER TABLE tournament_promos ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`) } catch { /* exists */ }
+  try { await db.execute(`ALTER TABLE tournament_promos ADD COLUMN received_by TEXT NOT NULL DEFAULT ''`) } catch { /* exists */ }
 
   for (const internName of ['ไอซ์(ฝึกงาน)', 'เน(ฝึกงาน)', 'บิว(ฝึกงาน)']) {
     const iid = 'cs' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase()

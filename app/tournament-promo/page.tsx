@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-type HistoryItem = { id: string; created_at: string }
+type HistoryItem = { id: string; status: string; received_by: string; created_at: string }
 
 export default function TournamentPromoPage() {
   const router = useRouter()
@@ -17,6 +17,9 @@ export default function TournamentPromoPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [imageModal, setImageModal] = useState<string | null>(null)
+  const [receivingId, setReceivingId] = useState<string | null>(null)
+  const [receiverName, setReceiverName] = useState('')
+  const [receivingLoading, setReceivingLoading] = useState(false)
 
   async function fetchHistory() {
     setHistoryLoading(true)
@@ -114,6 +117,27 @@ export default function TournamentPromoPage() {
     setImagePreview(null)
     setImageData(null)
     setStage('form')
+  }
+
+  async function handleConfirmReceive(id: string) {
+    if (!receiverName.trim()) return
+    setReceivingLoading(true)
+    try {
+      const res = await fetch('/api/tournament-promo', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, received_by: receiverName.trim() }),
+      })
+      if (res.ok) {
+        setHistoryItems(prev => prev.map(item =>
+          item.id === id ? { ...item, status: 'received', received_by: receiverName.trim() } : item
+        ))
+        setReceivingId(null)
+        setReceiverName('')
+      }
+    } finally {
+      setReceivingLoading(false)
+    }
   }
 
   if (stage === 'success') {
@@ -237,7 +261,53 @@ export default function TournamentPromoPage() {
                     <span className="w-6 h-6 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-bold flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
-                    <p className="flex-1 text-xs font-semibold text-[#374151]">{fmtDate(item.created_at)}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-[#374151]">{fmtDate(item.created_at)}</p>
+                      {item.status === 'received' ? (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <span className="inline-block bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">รับเอกสารแล้ว</span>
+                          <span className="text-[10px] text-green-700">โดย {item.received_by}</span>
+                        </div>
+                      ) : (
+                        <div className="mt-1.5">
+                          {receivingId === item.id ? (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <input
+                                type="text"
+                                value={receiverName}
+                                onChange={e => setReceiverName(e.target.value)}
+                                placeholder="ชื่อผู้รับเอกสาร"
+                                className="border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] w-32"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleConfirmReceive(item.id)}
+                                disabled={receivingLoading || !receiverName.trim()}
+                                className="bg-[#16A34A] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg disabled:opacity-50"
+                              >
+                                ยืนยัน
+                              </button>
+                              <button
+                                onClick={() => { setReceivingId(null); setReceiverName('') }}
+                                className="text-[10px] text-gray-400 hover:text-gray-600"
+                              >
+                                ยกเลิก
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-block bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded-full">รอรับเอกสาร</span>
+                              <button
+                                onClick={() => { setReceivingId(item.id); setReceiverName('') }}
+                                className="text-[10px] text-[#1E3A5F] underline font-semibold"
+                              >
+                                รับเอกสาร
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <img
                       src={`/api/tournament-promo?id=${item.id}&proxy=1`}
                       alt={`เอกสาร ${idx + 1}`}
