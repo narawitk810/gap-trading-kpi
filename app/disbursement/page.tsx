@@ -469,7 +469,7 @@ export default function DisbursementDashboard() {
       if (!taxInvoiceStatus) e.taxInvoiceStatus = 'กรุณาเลือกสถานะเอกสาร'
     } else if (selected.status === 'payment_recorded') {
       if (!closeMonth.trim()) e.closeMonth = 'กรุณาระบุเดือน (ปี-เดือน)'
-      if (!closedBy.trim()) e.closedBy = 'กรุณากรอกชื่อผู้ปิดงบ'
+      if (!closedBy.trim()) e.closedBy = 'กรุณาเลือกบัญชีค่าใช้จ่าย'
     }
     setFormErrors(e)
     return Object.keys(e).length === 0
@@ -1311,7 +1311,7 @@ export default function DisbursementDashboard() {
                           <p className="font-semibold text-[#374151]">{selected.close_month}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">ผู้ปิดงบ</p>
+                          <p className="text-xs text-gray-500">ลงบัญชีค่าใช้จ่าย</p>
                           <p className="font-semibold text-[#374151]">{selected.closed_by}</p>
                         </div>
                       </div>
@@ -1752,12 +1752,18 @@ export default function DisbursementDashboard() {
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-[#374151] mb-1.5">
-                            ผู้ปิดงบ <span className="text-[#DC2626]">*</span>
+                            ลงบัญชีค่าใช้จ่าย <span className="text-[#DC2626]">*</span>
                           </label>
-                          <input type="text" value={closedBy}
+                          <select value={closedBy}
                             onChange={(e) => { setClosedBy(e.target.value); setFormErrors((p) => ({ ...p, closedBy: '' })) }}
-                            placeholder="ชื่อผู้ปิดงบเดือน"
-                            className={inputClass} />
+                            className={inputClass}>
+                            <option value="">— เลือกบัญชี —</option>
+                            <option value="SCB 866-2-46694-1 บจก.จีเอพี เทรดดิ้ง">SCB 866-2-46694-1 บจก.จีเอพี เทรดดิ้ง</option>
+                            <option value="KBANK 176-1-18138-2 บจก.จีเอพี เทรดดิ้ง">KBANK 176-1-18138-2 บจก.จีเอพี เทรดดิ้ง</option>
+                            <option value="KBANK 176-1-18181-1 บจก.จีเอพี เทรดดิ้ง">KBANK 176-1-18181-1 บจก.จีเอพี เทรดดิ้ง</option>
+                            <option value="KBANK 093-8-24852-4 บจก.จีเอพี เทรดดิ้ง">KBANK 093-8-24852-4 บจก.จีเอพี เทรดดิ้ง</option>
+                            <option value="TTB 110-2-41763-9 บจก.จีเอพี เทรดดิ้ง">TTB 110-2-41763-9 บจก.จีเอพี เทรดดิ้ง</option>
+                          </select>
                           {formErrors.closedBy && <p className="text-[#DC2626] text-xs mt-1">{formErrors.closedBy}</p>}
                         </div>
                       </>
@@ -1811,7 +1817,7 @@ export default function DisbursementDashboard() {
                     {selected.status === 'payment_recorded' && (
                       <>
                         <p className="text-gray-600">เดือน: <span className="font-semibold">{closeMonth}</span></p>
-                        <p className="text-gray-600">ผู้ปิดงบ: <span className="font-semibold">{closedBy}</span></p>
+                        <p className="text-gray-600">ลงบัญชีค่าใช้จ่าย: <span className="font-semibold">{closedBy}</span></p>
                       </>
                     )}
                   </div>
