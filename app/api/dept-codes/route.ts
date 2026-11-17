@@ -3,6 +3,7 @@ import { getDb, ensureSchema } from '@/lib/db'
 import { DEPARTMENTS } from '@/types/kpi'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
+const IT_DEPT = 'IT'
 
 function getCurrentQuarter(): string {
   const now = new Date()
@@ -18,7 +19,7 @@ async function ensureCodes(db: Awaited<ReturnType<typeof getDb>>, forceRegen = f
   const quarter = getCurrentQuarter()
   const now = new Date().toISOString()
 
-  for (const dept of DEPARTMENTS) {
+  for (const dept of [...DEPARTMENTS, IT_DEPT]) {
     const existing = await db.execute({
       sql: 'SELECT quarter FROM dept_codes WHERE department = ?',
       args: [dept],

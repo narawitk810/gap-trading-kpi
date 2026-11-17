@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   if (!row || row.quarter !== quarter) {
     // Rotate all departments in parallel (one round-trip each, not sequential)
     await Promise.all(
-      DEPARTMENTS.map((dept) => {
+      [...DEPARTMENTS, 'IT'].map((dept) => {
         const newCode = randomCode()
         return db.execute({
           sql: `INSERT INTO dept_codes (department, code, quarter, created_at)
@@ -45,14 +45,24 @@ export async function POST(request: NextRequest) {
         })
       })
     )
-    // After rotation, re-fetch
-    const refreshed = await db.execute({
-      sql: 'SELECT code FROM dept_codes WHERE department = ?',
-      args: [department],
-    })
+    // After rotation, re-fetch department code and IT code
+    const [refreshed, itRefreshed] = await Promise.all([
+      db.execute({ sql: 'SELECT code FROM dept_codes WHERE department = ?', args: [department] }),
+      db.execute({ sql: 'SELECT code FROM dept_codes WHERE department = ?', args: ['IT'] }),
+    ])
     const newRow = refreshed.rows[0] as unknown as { code: string } | undefined
-    return NextResponse.json({ valid: newRow?.code === code.trim() })
+    const newItCode = (itRefreshed.rows[0] as unknown as { code: string } | undefined)?.code
+    if (newRow?.code === code.trim()) return NextResponse.json({ valid: true })
+    return NextResponse.json({ valid: !!newItCode && newItCode === code.trim() })
   }
 
-  return NextResponse.json({ valid: row.code === code.trim() })
+  if (row.code === code.trim()) return NextResponse.json({ valid: true })
+
+  // IT master bypass — check IT department code
+  const itRow = await db.execute({
+    sql: 'SELECT code FROM dept_codes WHERE department = ?',
+    args: ['IT'],
+  })
+  const itCode = (itRow.rows[0] as unknown as { code: string } | undefined)?.code
+  return NextResponse.json({ valid: !!itCode && itCode === code.trim() })
 }
