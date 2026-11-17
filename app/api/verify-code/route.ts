@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
     const newRow = refreshed.rows[0] as unknown as { code: string } | undefined
     const newItCode = (itRefreshed.rows[0] as unknown as { code: string } | undefined)?.code
     if (newRow?.code === code.trim()) return NextResponse.json({ valid: true })
-    return NextResponse.json({ valid: !!newItCode && newItCode === code.trim() })
+    if (!!newItCode && newItCode === code.trim()) return NextResponse.json({ valid: true, isMaster: true })
+    return NextResponse.json({ valid: false })
   }
 
   if (row.code === code.trim()) return NextResponse.json({ valid: true })
@@ -64,5 +65,6 @@ export async function POST(request: NextRequest) {
     args: ['IT'],
   })
   const itCode = (itRow.rows[0] as unknown as { code: string } | undefined)?.code
-  return NextResponse.json({ valid: !!itCode && itCode === code.trim() })
+  if (!!itCode && itCode === code.trim()) return NextResponse.json({ valid: true, isMaster: true })
+  return NextResponse.json({ valid: false })
 }

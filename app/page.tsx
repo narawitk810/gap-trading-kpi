@@ -542,8 +542,14 @@ export default function Home() {
         body: JSON.stringify({ department: formData.department, code: codeInput }),
       })
       const data = await res.json()
-      if (data.valid) { saveCodeVerified(formData.department); setCodeVerified(true); setCodeInput(''); setCodeError('') }
-      else setCodeError('รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง')
+      if (data.valid) {
+        if (data.isMaster) {
+          DEPARTMENTS.forEach(dept => saveCodeVerified(dept))
+        } else {
+          saveCodeVerified(formData.department)
+        }
+        setCodeVerified(true); setCodeInput(''); setCodeError('')
+      } else setCodeError('รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง')
     } catch { setCodeError('เกิดข้อผิดพลาด กรุณาลองใหม่') }
     finally { setVerifying(false) }
   }
