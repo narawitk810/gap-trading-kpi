@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 type ClipStatus = 'raw' | 'assigned' | 'submitted' | 'reviewing' | 'recorded'
-type ModalState = 'detail' | 'action_form' | 'submitting'
+type ModalState = 'detail' | 'action_form' | 'edit_raw' | 'submitting'
 
 interface ContentClip {
   id: string
@@ -81,6 +81,11 @@ export default function ContentProductionPage() {
   const [contentError, setContentError] = useState('')
   const [creatingContent, setCreatingContent] = useState(false)
 
+  // Edit raw clip state
+  const [editRawForm, setEditRawForm] = useState({ title: '', drive_link: '', shoot_date: '' })
+  const [editRawError, setEditRawError] = useState('')
+  const [editRawLoading, setEditRawLoading] = useState(false)
+
   // Action form state
   const [assignTo, setAssignTo] = useState('')
   const [platformLinks, setPlatformLinks] = useState<PlatformLinks>({ tiktok: '', facebook: '', youtube: '', instagram: '' })
@@ -120,6 +125,8 @@ export default function ContentProductionPage() {
     setResultWatchTime('')
     setResultLikes('')
     setActionError('')
+    setEditRawForm({ title: clip.title, drive_link: clip.drive_link, shoot_date: clip.shoot_date })
+    setEditRawError('')
   }
 
   async function handleCreate() {
@@ -167,6 +174,21 @@ export default function ContentProductionPage() {
     setContentError('')
     fetchClips()
     setSelectedStatus('assigned')
+  }
+
+  async function handleEditRaw() {
+    if (!selected) return
+    if (!editRawForm.title.trim()) { setEditRawError('กรุณากรอกชื่อคลิป'); return }
+    setEditRawLoading(true)
+    const res = await fetch(`/api/content-clips/${selected.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_raw', ...editRawForm }),
+    })
+    setEditRawLoading(false)
+    if (!res.ok) { const d = await res.json(); setEditRawError(d.error || 'เกิดข้อผิดพลาด'); return }
+    setSelected(null)
+    fetchClips()
   }
 
   async function handleDelete() {
@@ -454,7 +476,7 @@ export default function ContentProductionPage() {
                 <p className="text-center text-gray-400 text-sm py-8">กำลังบันทึก...</p>
               )}
 
-              {(modalState === 'detail' || modalState === 'action_form') && (
+              {(modalState === 'detail' || modalState === 'action_form' || modalState === 'edit_raw') && (
                 <>
                   {/* Step 1 info — always shown */}
                   <div className="space-y-1">
@@ -615,11 +637,37 @@ export default function ContentProductionPage() {
                     </div>
                   )}
 
+                  {/* Edit raw form */}
+                  {modalState === 'edit_raw' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs font-semibold text-[#374151] block mb-1">ชื่อคลิป <span className="text-[#DC2626]">*</span></label>
+                        <input value={editRawForm.title} onChange={e => setEditRawForm(p => ({ ...p, title: e.target.value }))} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#374151] block mb-1">ลิ้งค์ Google Drive</label>
+                        <input type="url" value={editRawForm.drive_link} onChange={e => setEditRawForm(p => ({ ...p, drive_link: e.target.value }))} placeholder="https://drive.google.com/..." className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-[#374151] block mb-1">วันที่ถ่าย</label>
+                        <input type="date" value={editRawForm.shoot_date} onChange={e => setEditRawForm(p => ({ ...p, shoot_date: e.target.value }))} className="w-full border border-[#E2E8F0] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]" />
+                      </div>
+                      {editRawError && <p className="text-[#DC2626] text-xs">{editRawError}</p>}
+                      <button onClick={handleEditRaw} disabled={editRawLoading} className="w-full py-2.5 rounded-xl bg-[#1E3A5F] text-white text-sm font-semibold disabled:opacity-50">
+                        {editRawLoading ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+                      </button>
+                      <button onClick={() => { setModalState('detail'); setEditRawError('') }} className="w-full py-2 text-sm text-gray-400 hover:text-gray-600">← ยกเลิก</button>
+                    </div>
+                  )}
+
                   {/* Action trigger buttons (shown in detail view) */}
                   {modalState === 'detail' && (
                     <div className="pt-2 space-y-2">
                       {selected.status === 'raw' && (
-                        <button onClick={() => setModalState('action_form')} className="w-full py-2.5 rounded-xl bg-yellow-500 text-white text-sm font-semibold">มอบหมายงาน</button>
+                        <div className="flex gap-2">
+                          <button onClick={() => setModalState('action_form')} className="flex-1 py-2.5 rounded-xl bg-yellow-500 text-white text-sm font-semibold">มอบหมายงาน</button>
+                          <button onClick={() => { setEditRawForm({ title: selected.title, drive_link: selected.drive_link, shoot_date: selected.shoot_date }); setEditRawError(''); setModalState('edit_raw') }} className="px-4 py-2.5 rounded-xl border border-[#1E3A5F] text-[#1E3A5F] text-sm font-semibold hover:bg-[#1E3A5F]/5 transition-colors">แก้ไข</button>
+                        </div>
                       )}
                       {(selected.status === 'assigned' || selected.status === 'submitted') && (
                         <button onClick={() => setModalState('action_form')} className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold">

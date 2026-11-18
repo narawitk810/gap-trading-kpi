@@ -74,6 +74,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ ok: true })
   }
 
+  if (action === 'update_raw') {
+    if (!body.title?.trim()) return NextResponse.json({ error: 'กรุณากรอกชื่อคลิป' }, { status: 400 })
+    await db.execute({
+      sql: `UPDATE content_clips SET title=?, drive_link=?, shoot_date=? WHERE id=? AND status='raw'`,
+      args: [body.title.trim(), body.drive_link?.trim() || '', body.shoot_date || '', id],
+    })
+    return NextResponse.json({ ok: true })
+  }
+
   if (action === 'rollback') {
     const row = await db.execute({ sql: `SELECT status FROM content_clips WHERE id=?`, args: [id] })
     const status = row.rows[0]?.status as string | undefined
