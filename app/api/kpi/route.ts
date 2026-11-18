@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb, generateId, ensureSchema } from '@/lib/db'
 import { appendKPIRow } from '@/lib/sheets'
+import { notifyLiveManagerChecklist } from '@/lib/line'
 import type { KPIEntryCreate } from '@/types/kpi'
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'GAPtrading2024admin'
@@ -109,6 +110,15 @@ export async function POST(request: NextRequest) {
   })
 
   appendKPIRow(entry)
+
+  if (body.department === 'ผู้จัดการไลฟ์สด') {
+    const ed = body.extra_data as Record<string, unknown> | undefined
+    notifyLiveManagerChecklist({
+      nickname: entry.nickname,
+      date: entry.date,
+      imageUrl: (ed?.image_data as string | undefined) || null,
+    }).catch(() => {})
+  }
 
   if (body.department === 'ผู้จัดการหน้าร้าน' && body.extra_data) {
     const ed = body.extra_data as Record<string, unknown>

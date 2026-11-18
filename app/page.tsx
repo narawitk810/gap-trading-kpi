@@ -368,6 +368,8 @@ export default function Home() {
   const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
   const [liveManagerChecklist, setLiveManagerChecklist] = useState({ callLowRoi: false })
+  const [liveManagerImagePreview, setLiveManagerImagePreview] = useState<string | null>(null)
+  const [liveManagerImage, setLiveManagerImage] = useState<string | null>(null)
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
   const [priceCheckOpen, setPriceCheckOpen] = useState(false)
@@ -612,6 +614,7 @@ export default function Home() {
     }
     if (formData.department === 'ผู้จัดการไลฟ์สด' && extra_data) {
       extra_data.checklist = liveManagerChecklist
+      if (liveManagerImage) extra_data.image_data = liveManagerImage
     }
     if (formData.department === 'แพค' && extra_data) {
       extra_data.checklist = packChecklist
@@ -724,6 +727,8 @@ export default function Home() {
     setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
     setLiveManagerChecklist({ callLowRoi: false })
+    setLiveManagerImagePreview(null)
+    setLiveManagerImage(null)
     setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setStockChecklist({ newStockFirst: false })
     setCreativeMonthlyChecklist({ openchatActivity: false })
@@ -1995,6 +2000,56 @@ export default function Home() {
             {(errors as Record<string, string>).liveManagerChecklist && (
               <p className="text-[#DC2626] text-xs mt-2">{(errors as Record<string, string>).liveManagerChecklist}</p>
             )}
+            <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
+              <p className="text-xs font-semibold text-[#374151] mb-2">แนบรูป (ไม่บังคับ)</p>
+              {liveManagerImagePreview ? (
+                <div className="space-y-2">
+                  <img src={liveManagerImagePreview} alt="preview" className="w-full max-h-48 object-contain rounded-xl border border-[#E2E8F0]" />
+                  <button
+                    type="button"
+                    onClick={() => { setLiveManagerImagePreview(null); setLiveManagerImage(null) }}
+                    className="text-xs text-gray-400 underline"
+                  >
+                    ลบรูป
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-[#E2E8F0] rounded-xl px-3 py-2.5 hover:border-[#1E3A5F]/50 transition-colors">
+                  <span className="text-lg">📷</span>
+                  <span className="text-xs text-gray-500">ถ่ายรูปหรือเลือกจากคลัง</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = async (ev) => {
+                        const base64 = ev.target?.result as string
+                        setLiveManagerImagePreview(base64)
+                        try {
+                          const res = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ base64 }),
+                          })
+                          if (res.ok) {
+                            const data = await res.json()
+                            setLiveManagerImage(data.url || base64)
+                          } else {
+                            setLiveManagerImage(base64)
+                          }
+                        } catch {
+                          setLiveManagerImage(base64)
+                        }
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                </label>
+              )}
+            </div>
           </div>
         )}
 

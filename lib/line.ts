@@ -298,3 +298,36 @@ export async function notifyPromoAcknowledged(promo: {
     .filter((id): id is string => !!id)
   await Promise.all(groupIds.map((id) => sendLinePushMessage(id, text)))
 }
+
+export async function notifyLiveManagerChecklist(item: {
+  nickname: string
+  date: string
+  imageUrl?: string | null
+}): Promise<void> {
+  const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+  const groupId = process.env.LINE_GROUP_ID_MANAGEMENT
+  if (!token || !groupId) return
+
+  const text = [
+    '📊 Checklist รายวัน ผู้จัดการไลฟ์สด',
+    `👤 ${item.nickname}`,
+    `📅 ${item.date}`,
+    '✅ เรียกคุยพนักงานไลฟ์สดที่ได้ ROI ต่ำกว่า 15 แล้ว',
+  ].join('\n')
+
+  const messages: object[] = []
+  if (item.imageUrl?.startsWith('https://')) {
+    messages.push({ type: 'image', originalContentUrl: item.imageUrl, previewImageUrl: item.imageUrl })
+  }
+  messages.push({ type: 'text', text })
+
+  try {
+    await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: groupId, messages }),
+    })
+  } catch (err) {
+    console.error('[LINE] notifyLiveManagerChecklist failed:', err instanceof Error ? err.message : err)
+  }
+}
