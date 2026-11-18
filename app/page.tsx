@@ -1980,7 +1980,7 @@ export default function Home() {
 
         {formData.department === 'ผู้จัดการไลฟ์สด' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist รายวัน <span className="text-[#DC2626]">*</span></p>
             <div className="space-y-2.5">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
