@@ -149,6 +149,12 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  if (body.action === 'update_cost') {
+    if (!body.cost?.toString().trim()) return NextResponse.json({ error: 'กรุณาระบุต้นทุน' }, { status: 400 })
+    await db.execute({ sql: 'UPDATE stock_arrivals SET cost = ? WHERE id = ?', args: [body.cost.toString().trim(), body.id] })
+    return NextResponse.json({ ok: true })
+  }
+
   if (isAdmin) {
     const now = new Date().toISOString()
     await db.execute({

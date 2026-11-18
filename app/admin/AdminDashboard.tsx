@@ -548,6 +548,8 @@ export default function AdminDashboard() {
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
   const [allocationEdits, setAllocationEdits] = useState<Record<string, string>>({})
   const [allocationStatus, setAllocationStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
+  const [costEdits, setCostEdits] = useState<Record<string, string>>({})
+  const [costStatus, setCostStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
   const [pmMultiplier, setPmMultiplier] = useState<string>('')
   const [pmCustomMultiplier, setPmCustomMultiplier] = useState('')
@@ -3102,7 +3104,50 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.quantity}</td>
                           <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.packs_per_box}</td>
-                          <td className="px-4 py-3 text-right text-xs font-semibold text-[#374151]">{Number(r.cost).toLocaleString()}</td>
+                          <td className="px-4 py-3 text-right min-w-[110px]">
+                            <div className="flex flex-col items-end gap-1">
+                              <input
+                                type="number"
+                                value={costEdits[r.id] ?? r.cost}
+                                onChange={(e) => {
+                                  setCostEdits(prev => ({ ...prev, [r.id]: e.target.value }))
+                                  setCostStatus(prev => ({ ...prev, [r.id]: 'idle' }))
+                                }}
+                                className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs text-right focus:outline-none focus:border-[#1E3A5F]"
+                              />
+                              {costStatus[r.id] === 'saved' ? (
+                                <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                              ) : costStatus[r.id] === 'error' ? (
+                                <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                              ) : (
+                                <button
+                                  onClick={async () => {
+                                    const val = (costEdits[r.id] ?? r.cost).toString().trim()
+                                    if (!val) return
+                                    setCostStatus(prev => ({ ...prev, [r.id]: 'saving' }))
+                                    try {
+                                      const res = await fetch('/api/stock-arrival', {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: r.id, action: 'update_cost', cost: val }),
+                                      })
+                                      if (!res.ok) throw new Error()
+                                      setStockArrivals(prev => prev.map(x => x.id === r.id ? { ...x, cost: val } : x))
+                                      setCostStatus(prev => ({ ...prev, [r.id]: 'saved' }))
+                                      setTimeout(() => setCostStatus(prev => ({ ...prev, [r.id]: 'idle' })), 2000)
+                                    } catch {
+                                      setCostStatus(prev => ({ ...prev, [r.id]: 'error' }))
+                                      setTimeout(() => setCostStatus(prev => ({ ...prev, [r.id]: 'idle' })), 3000)
+                                    }
+                                  }}
+                                  disabled={costStatus[r.id] === 'saving'}
+                                  className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {costStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
                           <td className="px-4 py-3 text-center">
                             <span className={`text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap ${
                               r.status === 'pending'
