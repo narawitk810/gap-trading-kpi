@@ -3098,9 +3098,9 @@ export default function AdminDashboard() {
                           <td className="px-4 py-3 whitespace-nowrap text-gray-600 text-xs">{formatDate(r.created_at.slice(0, 10))}</td>
                           <td className="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">{r.created_at.slice(11, 16)}</td>
                           <td className="px-4 py-3 font-semibold text-[#374151] whitespace-nowrap text-xs">{r.nickname}</td>
-                          <td className="px-4 py-3 text-[#1E3A5F] font-semibold text-xs max-w-[180px]">
-                            <span className="block truncate">{r.product_name}</span>
-                            {r.note && <span className="block text-gray-400 font-normal truncate">{r.note}</span>}
+                          <td className="px-4 py-3 text-[#1E3A5F] font-semibold text-xs min-w-[160px]">
+                            <span className="block">{r.product_name}</span>
+                            {r.note && <span className="block text-gray-400 font-normal">{r.note}</span>}
                           </td>
                           <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.quantity}</td>
                           <td className="px-4 py-3 text-center text-xs text-[#374151]">{r.packs_per_box}</td>
