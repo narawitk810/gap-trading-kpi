@@ -367,6 +367,7 @@ export default function Home() {
   const [loadingMarketing, setLoadingMarketing] = useState(false)
   const [marketingChecklist, setMarketingChecklist] = useState({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
   const [storeManagerChecklist, setStoreManagerChecklist] = useState({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
+  const [liveManagerChecklist, setLiveManagerChecklist] = useState({ callLowRoi: false })
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
   const [priceCheckOpen, setPriceCheckOpen] = useState(false)
@@ -563,6 +564,7 @@ export default function Home() {
     if (formData.department === 'การตลาด' && !formData.bestRoiChannel) e.bestRoiChannel = 'กรุณาเลือกช่องที่ ROI สูงสุด 1 ช่อง'
     if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo || !marketingChecklist.topFiveProducts)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.postTournamentResult || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'ผู้จัดการไลฟ์สด' && !liveManagerChecklist.callLowRoi) e.liveManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost || !liveChecklist.uniqueLiveLayout)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
@@ -607,6 +609,9 @@ export default function Home() {
     }
     if (formData.department === 'ผู้จัดการหน้าร้าน' && extra_data) {
       extra_data.checklist = storeManagerChecklist
+    }
+    if (formData.department === 'ผู้จัดการไลฟ์สด' && extra_data) {
+      extra_data.checklist = liveManagerChecklist
     }
     if (formData.department === 'แพค' && extra_data) {
       extra_data.checklist = packChecklist
@@ -718,6 +723,7 @@ export default function Home() {
     setSmActivities([{ activityName: '', eventDate: '', startTime: '', facebookUrl: '' }])
     setMarketingChecklist({ newProductDiscount: false, tiktokAiPromo: false, topFiveProducts: false })
     setStoreManagerChecklist({ postNewProduct: false, postTournament: false, postTournamentResult: false, genAiUsed: false })
+    setLiveManagerChecklist({ callLowRoi: false })
     setPackChecklist({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
     setStockChecklist({ newStockFirst: false })
     setCreativeMonthlyChecklist({ openchatActivity: false })
@@ -1968,6 +1974,26 @@ export default function Home() {
             </div>
             {errors.storeManagerChecklist && (
               <p className="text-[#DC2626] text-xs mt-2">{errors.storeManagerChecklist}</p>
+            )}
+          </div>
+        )}
+
+        {formData.department === 'ผู้จัดการไลฟ์สด' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist <span className="text-[#DC2626]">*</span></p>
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={liveManagerChecklist.callLowRoi}
+                  onChange={(e) => setLiveManagerChecklist(prev => ({ ...prev, callLowRoi: e.target.checked }))}
+                  className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                />
+                <span className="text-sm text-[#374151]">เรียกคุยพนักงานไลฟ์สดที่ได้ roi ต่ำกว่า 15 รายคน</span>
+              </label>
+            </div>
+            {(errors as Record<string, string>).liveManagerChecklist && (
+              <p className="text-[#DC2626] text-xs mt-2">{(errors as Record<string, string>).liveManagerChecklist}</p>
             )}
           </div>
         )}
