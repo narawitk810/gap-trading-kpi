@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import path from 'path'
 import fs from 'fs'
 
-const SCHEMA_VERSION = 49
+const SCHEMA_VERSION = 50
 const g = globalThis as unknown as { db: Client | undefined; dbVersion: number }
 
 function createDb(): Client {
@@ -860,6 +860,14 @@ export async function ensureSchema(): Promise<void> {
       args: [iid, internName, new Date().toISOString()],
     })
   }
+
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS live_manager_reports (
+      id         TEXT PRIMARY KEY,
+      image_data TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    )
+  `)
 
   await db.execute(`INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', '${SCHEMA_VERSION}')`)
   g.dbVersion = SCHEMA_VERSION
