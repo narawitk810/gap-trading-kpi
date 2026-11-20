@@ -370,6 +370,7 @@ export default function Home() {
   const [liveManagerChecklist, setLiveManagerChecklist] = useState({ callLowRoi: false })
   const [liveManagerImagePreview, setLiveManagerImagePreview] = useState<string | null>(null)
   const [liveManagerImage, setLiveManagerImage] = useState<string | null>(null)
+  const [liveManagerUploading, setLiveManagerUploading] = useState(false)
   const [liveManagerReporting, setLiveManagerReporting] = useState(false)
   const [liveManagerReported, setLiveManagerReported] = useState(false)
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
@@ -2012,30 +2013,41 @@ export default function Home() {
                 <div className="space-y-2">
                   <img src={liveManagerImagePreview} alt="preview" className="w-full max-h-48 object-contain rounded-xl border border-[#E2E8F0]" />
                   <div className="flex items-center gap-3">
+                    {liveManagerUploading ? (
+                      <span className="text-xs text-gray-400">กำลังอัปโหลดรูป...</span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={liveManagerReporting || !liveManagerImage}
+                        onClick={async () => {
+                          const url = liveManagerImage?.startsWith('https://') ? liveManagerImage : null
+                          if (!url) { alert('รูปยังอัปโหลดไม่สำเร็จ กรุณาลองใหม่'); return }
+                          setLiveManagerReporting(true)
+                          try {
+                            const res = await fetch('/api/live-manager-report', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ imageUrl: url, nickname: formData.nickname }),
+                            })
+                            if (res.ok) {
+                              setLiveManagerReported(true)
+                            } else {
+                              alert('ส่ง LINE ไม่สำเร็จ กรุณาลองใหม่')
+                            }
+                          } catch {
+                            alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+                          } finally {
+                            setLiveManagerReporting(false)
+                          }
+                        }}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${liveManagerReported ? 'bg-[#16A34A] text-white' : 'bg-[#1E3A5F] text-white active:bg-[#1E3A5F]/80'} disabled:opacity-50`}
+                      >
+                        {liveManagerReporting ? 'กำลังส่ง...' : liveManagerReported ? '✓ ส่งแล้ว' : 'รายงาน'}
+                      </button>
+                    )}
                     <button
                       type="button"
-                      disabled={liveManagerReporting}
-                      onClick={async () => {
-                        if (!liveManagerImage?.startsWith('https://')) return
-                        setLiveManagerReporting(true)
-                        try {
-                          await fetch('/api/live-manager-report', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ imageUrl: liveManagerImage, nickname: formData.nickname }),
-                          })
-                          setLiveManagerReported(true)
-                        } finally {
-                          setLiveManagerReporting(false)
-                        }
-                      }}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${liveManagerReported ? 'bg-[#16A34A] text-white' : 'bg-[#1E3A5F] text-white active:bg-[#1E3A5F]/80'} disabled:opacity-50`}
-                    >
-                      {liveManagerReporting ? 'กำลังส่ง...' : liveManagerReported ? '✓ ส่งแล้ว' : 'รายงาน'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setLiveManagerImagePreview(null); setLiveManagerImage(null); setLiveManagerReported(false) }}
+                      onClick={() => { setLiveManagerImagePreview(null); setLiveManagerImage(null); setLiveManagerReported(false); setLiveManagerUploading(false) }}
                       className="text-xs text-gray-400 underline"
                     >
                       ลบรูป
@@ -2057,6 +2069,8 @@ export default function Home() {
                       reader.onload = async (ev) => {
                         const base64 = ev.target?.result as string
                         setLiveManagerImagePreview(base64)
+                        setLiveManagerUploading(true)
+                        setLiveManagerReported(false)
                         try {
                           const res = await fetch('/api/upload-image', {
                             method: 'POST',
@@ -2065,12 +2079,14 @@ export default function Home() {
                           })
                           if (res.ok) {
                             const data = await res.json()
-                            setLiveManagerImage(data.url || base64)
+                            setLiveManagerImage(data.url || null)
                           } else {
-                            setLiveManagerImage(base64)
+                            setLiveManagerImage(null)
                           }
                         } catch {
-                          setLiveManagerImage(base64)
+                          setLiveManagerImage(null)
+                        } finally {
+                          setLiveManagerUploading(false)
                         }
                       }
                       reader.readAsDataURL(file)
