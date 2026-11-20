@@ -567,6 +567,7 @@ export default function Home() {
     if (formData.department === 'การตลาด' && (!marketingChecklist.newProductDiscount || !marketingChecklist.tiktokAiPromo || !marketingChecklist.topFiveProducts)) e.marketingChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.postTournamentResult || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการไลฟ์สด' && !liveManagerChecklist.callLowRoi) e.liveManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'ผู้จัดการไลฟ์สด' && !liveManagerImage) e.liveManagerImage = 'กรุณาแนบรูปก่อนส่ง'
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost || !liveChecklist.uniqueLiveLayout)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
@@ -2001,7 +2002,10 @@ export default function Home() {
               <p className="text-[#DC2626] text-xs mt-2">{(errors as Record<string, string>).liveManagerChecklist}</p>
             )}
             <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
-              <p className="text-xs font-semibold text-[#374151] mb-2">แนบรูป (ไม่บังคับ)</p>
+              <p className="text-xs font-semibold text-[#374151] mb-2">แนบรูป <span className="text-[#DC2626]">*</span></p>
+              {(errors as Record<string, string>).liveManagerImage && (
+                <p className="text-[#DC2626] text-xs mb-2">{(errors as Record<string, string>).liveManagerImage}</p>
+              )}
               {liveManagerImagePreview ? (
                 <div className="space-y-2">
                   <img src={liveManagerImagePreview} alt="preview" className="w-full max-h-48 object-contain rounded-xl border border-[#E2E8F0]" />
