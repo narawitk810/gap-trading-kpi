@@ -373,6 +373,11 @@ export default function Home() {
   const [liveManagerUploading, setLiveManagerUploading] = useState(false)
   const [liveManagerReporting, setLiveManagerReporting] = useState(false)
   const [liveManagerReported, setLiveManagerReported] = useState(false)
+  const [hrChecklist, setHrChecklist] = useState({ interviewNewStaff: false })
+  const [hrImagePreview, setHrImagePreview] = useState<string | null>(null)
+  const [hrImage, setHrImage] = useState<string | null>(null)
+  const [hrReporting, setHrReporting] = useState(false)
+  const [hrReported, setHrReported] = useState(false)
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
   const [priceCheckOpen, setPriceCheckOpen] = useState(false)
@@ -571,6 +576,8 @@ export default function Home() {
     if (formData.department === 'ผู้จัดการหน้าร้าน' && (!storeManagerChecklist.postNewProduct || !storeManagerChecklist.postTournament || !storeManagerChecklist.postTournamentResult || !storeManagerChecklist.genAiUsed)) e.storeManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการไลฟ์สด' && !liveManagerChecklist.callLowRoi) e.liveManagerChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ผู้จัดการไลฟ์สด' && !liveManagerImage) e.liveManagerImage = 'กรุณาแนบรูปก่อนส่ง'
+    if (formData.department === 'บุคคล' && !hrChecklist.interviewNewStaff) e.hrChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
+    if (formData.department === 'บุคคล' && !hrImage) e.hrImage = 'กรุณาแนบรูปก่อนส่ง'
     if (formData.department === 'แพค' && (!packChecklist.restockSchedule || !packChecklist.cleanWarehouse || !packChecklist.organizeShelf)) e.packChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'สต๊อค&จัดซื้อ' && !stockChecklist.newStockFirst) e.stockChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
     if (formData.department === 'ไลฟ์สด' && (!liveChecklist.promo5 || !liveChecklist.reviewReply || !liveChecklist.chatReply || !liveChecklist.prepareForPack || !liveChecklist.story1Post || !liveChecklist.content1Clip || !liveChecklist.content1FBPost || !liveChecklist.uniqueLiveLayout)) e.liveChecklist = 'กรุณาติ๊ก checklist ให้ครบก่อนส่ง'
@@ -619,6 +626,10 @@ export default function Home() {
     if (formData.department === 'ผู้จัดการไลฟ์สด' && extra_data) {
       extra_data.checklist = liveManagerChecklist
       if (liveManagerImage) extra_data.image_data = liveManagerImage
+    }
+    if (formData.department === 'บุคคล' && extra_data) {
+      extra_data.checklist = hrChecklist
+      if (hrImage) extra_data.image_data = hrImage
     }
     if (formData.department === 'แพค' && extra_data) {
       extra_data.checklist = packChecklist
@@ -2311,6 +2322,109 @@ export default function Home() {
         )}
 
 
+
+        {formData.department === 'บุคคล' && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-sm font-semibold text-[#374151] mb-3">Checklist รายสัปดาห์ <span className="text-[#DC2626]">*</span></p>
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hrChecklist.interviewNewStaff}
+                  onChange={(e) => setHrChecklist(prev => ({ ...prev, interviewNewStaff: e.target.checked }))}
+                  className="w-5 h-5 rounded border-[#E2E8F0] accent-[#1E3A5F] cursor-pointer"
+                />
+                <span className="text-sm text-[#374151]">สัมภาษณ์พนักงานใหม่ อย่างน้อยอาทิตย์ละ 2 คน</span>
+              </label>
+            </div>
+            {(errors as Record<string, string>).hrChecklist && (
+              <p className="text-[#DC2626] text-xs mt-2">{(errors as Record<string, string>).hrChecklist}</p>
+            )}
+            <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
+              <p className="text-xs font-semibold text-[#374151] mb-2">แนบรูป <span className="text-[#DC2626]">*</span></p>
+              {(errors as Record<string, string>).hrImage && (
+                <p className="text-[#DC2626] text-xs mb-2">{(errors as Record<string, string>).hrImage}</p>
+              )}
+              {hrImagePreview ? (
+                <div className="space-y-2">
+                  <img src={hrImagePreview} alt="preview" className="w-full max-h-48 object-contain rounded-xl border border-[#E2E8F0]" />
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={hrReporting || !hrImage}
+                      onClick={async () => {
+                        if (!hrImage) return
+                        setHrReporting(true)
+                        try {
+                          const res = await fetch('/api/hr-report', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ imageBase64: hrImage, nickname: formData.nickname }),
+                          })
+                          if (res.ok) {
+                            setHrReported(true)
+                          } else {
+                            const d = await res.json()
+                            alert(d.error || 'ส่ง LINE ไม่สำเร็จ กรุณาลองใหม่')
+                          }
+                        } catch (err) {
+                          alert('เกิดข้อผิดพลาด: ' + (err instanceof Error ? err.message : String(err)))
+                        } finally {
+                          setHrReporting(false)
+                        }
+                      }}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${hrReported ? 'bg-[#16A34A] text-white' : 'bg-[#1E3A5F] text-white active:bg-[#1E3A5F]/80'} disabled:opacity-50`}
+                    >
+                      {hrReporting ? 'กำลังส่ง...' : hrReported ? '✓ ส่งแล้ว' : 'รายงาน'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setHrImagePreview(null); setHrImage(null); setHrReported(false) }}
+                      className="text-xs text-gray-400 underline"
+                    >
+                      ลบรูป
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-[#E2E8F0] rounded-xl px-3 py-2.5 hover:border-[#1E3A5F]/50 transition-colors">
+                  <span className="text-lg">📷</span>
+                  <span className="text-xs text-gray-500">ถ่ายรูปหรือเลือกจากคลัง</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      setHrReported(false)
+                      const reader = new FileReader()
+                      reader.onload = (ev) => {
+                        const img = new Image()
+                        img.onload = () => {
+                          const MAX = 800
+                          let w = img.width, h = img.height
+                          if (w > MAX || h > MAX) {
+                            if (w > h) { h = Math.round((h * MAX) / w); w = MAX }
+                            else { w = Math.round((w * MAX) / h); h = MAX }
+                          }
+                          const canvas = document.createElement('canvas')
+                          canvas.width = w; canvas.height = h
+                          canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+                          const compressed = canvas.toDataURL('image/jpeg', 0.7)
+                          setHrImagePreview(compressed)
+                          setHrImage(compressed)
+                        }
+                        img.src = ev.target!.result as string
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+        )}
 
         {formData.department === 'บุคคล' && (
           <Link
