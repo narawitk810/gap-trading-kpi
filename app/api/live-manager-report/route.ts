@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
   const messages = [
     { type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl },
-    { type: 'text', text: `รายงานการประชุม\n📅 ${date}\n⏰ ${time}` },
+    { type: 'text', text: `รายงานการประชุม เสริมทักษะการขาย ปรับทัศนคติ\n📅 ${date}\n⏰ ${time}` },
   ]
 
   const res = await fetch('https://api.line.me/v2/bot/message/push', {
