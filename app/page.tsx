@@ -370,6 +370,8 @@ export default function Home() {
   const [liveManagerChecklist, setLiveManagerChecklist] = useState({ callLowRoi: false })
   const [liveManagerImagePreview, setLiveManagerImagePreview] = useState<string | null>(null)
   const [liveManagerImage, setLiveManagerImage] = useState<string | null>(null)
+  const [liveManagerReporting, setLiveManagerReporting] = useState(false)
+  const [liveManagerReported, setLiveManagerReported] = useState(false)
   const [packChecklist, setPackChecklist] = useState({ restockSchedule: false, cleanWarehouse: false, organizeShelf: false })
   const [stockChecklist, setStockChecklist] = useState({ newStockFirst: false })
   const [priceCheckOpen, setPriceCheckOpen] = useState(false)
@@ -2009,13 +2011,36 @@ export default function Home() {
               {liveManagerImagePreview ? (
                 <div className="space-y-2">
                   <img src={liveManagerImagePreview} alt="preview" className="w-full max-h-48 object-contain rounded-xl border border-[#E2E8F0]" />
-                  <button
-                    type="button"
-                    onClick={() => { setLiveManagerImagePreview(null); setLiveManagerImage(null) }}
-                    className="text-xs text-gray-400 underline"
-                  >
-                    ลบรูป
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={liveManagerReporting}
+                      onClick={async () => {
+                        if (!liveManagerImage?.startsWith('https://')) return
+                        setLiveManagerReporting(true)
+                        try {
+                          await fetch('/api/live-manager-report', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ imageUrl: liveManagerImage, nickname: formData.nickname }),
+                          })
+                          setLiveManagerReported(true)
+                        } finally {
+                          setLiveManagerReporting(false)
+                        }
+                      }}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${liveManagerReported ? 'bg-[#16A34A] text-white' : 'bg-[#1E3A5F] text-white active:bg-[#1E3A5F]/80'} disabled:opacity-50`}
+                    >
+                      {liveManagerReporting ? 'กำลังส่ง...' : liveManagerReported ? '✓ ส่งแล้ว' : 'รายงาน'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setLiveManagerImagePreview(null); setLiveManagerImage(null); setLiveManagerReported(false) }}
+                      className="text-xs text-gray-400 underline"
+                    >
+                      ลบรูป
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <label className="flex items-center gap-2 cursor-pointer border border-dashed border-[#E2E8F0] rounded-xl px-3 py-2.5 hover:border-[#1E3A5F]/50 transition-colors">
