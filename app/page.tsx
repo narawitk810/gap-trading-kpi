@@ -2005,7 +2005,7 @@ export default function Home() {
               <p className="text-[#DC2626] text-xs mt-2">{(errors as Record<string, string>).liveManagerChecklist}</p>
             )}
             <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
-              <p className="text-xs font-semibold text-[#374151] mb-2">แนบรูป <span className="text-[#DC2626]">*</span></p>
+              <p className="text-xs font-semibold text-[#374151] mb-2">แนบรูป (เซลฟี่กับพนักงานลดความตึงเครียด) <span className="text-[#DC2626]">*</span></p>
               {(errors as Record<string, string>).liveManagerImage && (
                 <p className="text-[#DC2626] text-xs mb-2">{(errors as Record<string, string>).liveManagerImage}</p>
               )}
