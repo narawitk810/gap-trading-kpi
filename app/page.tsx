@@ -2080,10 +2080,25 @@ export default function Home() {
                       if (!file) return
                       const reader = new FileReader()
                       reader.onload = async (ev) => {
-                        const base64 = ev.target?.result as string
-                        setLiveManagerImagePreview(base64)
+                        const originalBase64 = ev.target?.result as string
+                        setLiveManagerImagePreview(originalBase64)
                         setLiveManagerUploading(true)
                         setLiveManagerReported(false)
+                        // บีบอัดรูปก่อน upload เพื่อลดขนาด
+                        const base64 = await new Promise<string>((resolve) => {
+                          const img = new Image()
+                          img.onload = () => {
+                            const MAX = 1024
+                            const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+                            const canvas = document.createElement('canvas')
+                            canvas.width = Math.round(img.width * scale)
+                            canvas.height = Math.round(img.height * scale)
+                            canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+                            resolve(canvas.toDataURL('image/jpeg', 0.75))
+                          }
+                          img.onerror = () => resolve(originalBase64)
+                          img.src = originalBase64
+                        })
                         try {
                           const res = await fetch('/api/upload-image', {
                             method: 'POST',
