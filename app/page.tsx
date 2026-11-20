@@ -2032,8 +2032,8 @@ export default function Home() {
                               const d = await res.json()
                               alert(d.error || 'ส่ง LINE ไม่สำเร็จ กรุณาลองใหม่')
                             }
-                          } catch {
-                            alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+                          } catch (err) {
+                            alert('เกิดข้อผิดพลาด: ' + (err instanceof Error ? err.message : String(err)))
                           } finally {
                             setLiveManagerReporting(false)
                           }
