@@ -2020,14 +2020,27 @@ export default function Home() {
                         type="button"
                         disabled={liveManagerReporting || !liveManagerImage}
                         onClick={async () => {
-                          const url = liveManagerImage?.startsWith('https://') ? liveManagerImage : null
-                          if (!url) { alert('รูปยังอัปโหลดไม่สำเร็จ กรุณาลองใหม่'); return }
+                          if (!liveManagerImage) return
                           setLiveManagerReporting(true)
                           try {
+                            let httpsUrl = liveManagerImage.startsWith('https://') ? liveManagerImage : null
+                            if (!httpsUrl) {
+                              const up = await fetch('/api/upload-image', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ base64: liveManagerImage }),
+                              })
+                              if (up.ok) {
+                                const d = await up.json()
+                                httpsUrl = d.url
+                                if (httpsUrl) setLiveManagerImage(httpsUrl)
+                              }
+                            }
+                            if (!httpsUrl) { alert('อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่'); return }
                             const res = await fetch('/api/live-manager-report', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ imageUrl: url, nickname: formData.nickname }),
+                              body: JSON.stringify({ imageUrl: httpsUrl, nickname: formData.nickname }),
                             })
                             if (res.ok) {
                               setLiveManagerReported(true)
@@ -2079,12 +2092,12 @@ export default function Home() {
                           })
                           if (res.ok) {
                             const data = await res.json()
-                            setLiveManagerImage(data.url || null)
+                            setLiveManagerImage(data.url || base64)
                           } else {
-                            setLiveManagerImage(null)
+                            setLiveManagerImage(base64)
                           }
                         } catch {
-                          setLiveManagerImage(null)
+                          setLiveManagerImage(base64)
                         } finally {
                           setLiveManagerUploading(false)
                         }
