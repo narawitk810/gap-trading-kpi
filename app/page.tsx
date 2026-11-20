@@ -2013,9 +2013,7 @@ export default function Home() {
                 <div className="space-y-2">
                   <img src={liveManagerImagePreview} alt="preview" className="w-full max-h-48 object-contain rounded-xl border border-[#E2E8F0]" />
                   <div className="flex items-center gap-3">
-                    {liveManagerUploading ? (
-                      <span className="text-xs text-gray-400">กำลังอัปโหลดรูป...</span>
-                    ) : (
+                    {false ? null : (
                       <button
                         type="button"
                         disabled={liveManagerReporting || !liveManagerImage}
@@ -2023,29 +2021,16 @@ export default function Home() {
                           if (!liveManagerImage) return
                           setLiveManagerReporting(true)
                           try {
-                            let httpsUrl = liveManagerImage.startsWith('https://') ? liveManagerImage : null
-                            if (!httpsUrl) {
-                              const up = await fetch('/api/upload-image', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ base64: liveManagerImage }),
-                              })
-                              if (up.ok) {
-                                const d = await up.json()
-                                httpsUrl = d.url
-                                if (httpsUrl) setLiveManagerImage(httpsUrl)
-                              }
-                            }
-                            if (!httpsUrl) { alert('อัปโหลดรูปไม่สำเร็จ กรุณาลองใหม่'); return }
                             const res = await fetch('/api/live-manager-report', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ imageUrl: httpsUrl, nickname: formData.nickname }),
+                              body: JSON.stringify({ imageBase64: liveManagerImage, nickname: formData.nickname }),
                             })
                             if (res.ok) {
                               setLiveManagerReported(true)
                             } else {
-                              alert('ส่ง LINE ไม่สำเร็จ กรุณาลองใหม่')
+                              const d = await res.json()
+                              alert(d.error || 'ส่ง LINE ไม่สำเร็จ กรุณาลองใหม่')
                             }
                           } catch {
                             alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
@@ -2075,50 +2060,30 @@ export default function Home() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={async (e) => {
+                    onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      setLiveManagerUploading(true)
                       setLiveManagerReported(false)
-                      const compressed = await new Promise<string>((resolve) => {
-                        const reader = new FileReader()
-                        reader.onload = (ev) => {
-                          const img = new Image()
-                          img.onload = () => {
-                            const MAX = 800
-                            let w = img.width, h = img.height
-                            if (w > MAX || h > MAX) {
-                              if (w > h) { h = Math.round((h * MAX) / w); w = MAX }
-                              else { w = Math.round((w * MAX) / h); h = MAX }
-                            }
-                            const canvas = document.createElement('canvas')
-                            canvas.width = w; canvas.height = h
-                            canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-                            resolve(canvas.toDataURL('image/jpeg', 0.7))
+                      const reader = new FileReader()
+                      reader.onload = (ev) => {
+                        const img = new Image()
+                        img.onload = () => {
+                          const MAX = 800
+                          let w = img.width, h = img.height
+                          if (w > MAX || h > MAX) {
+                            if (w > h) { h = Math.round((h * MAX) / w); w = MAX }
+                            else { w = Math.round((w * MAX) / h); h = MAX }
                           }
-                          img.onerror = () => resolve(ev.target!.result as string)
-                          img.src = ev.target!.result as string
-                        }
-                        reader.readAsDataURL(file)
-                      })
-                      setLiveManagerImagePreview(compressed)
-                      try {
-                        const res = await fetch('/api/upload-image', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ base64: compressed }),
-                        })
-                        if (res.ok) {
-                          const data = await res.json()
-                          setLiveManagerImage(data.url || compressed)
-                        } else {
+                          const canvas = document.createElement('canvas')
+                          canvas.width = w; canvas.height = h
+                          canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+                          const compressed = canvas.toDataURL('image/jpeg', 0.7)
+                          setLiveManagerImagePreview(compressed)
                           setLiveManagerImage(compressed)
                         }
-                      } catch {
-                        setLiveManagerImage(compressed)
-                      } finally {
-                        setLiveManagerUploading(false)
+                        img.src = ev.target!.result as string
                       }
+                      reader.readAsDataURL(file)
                     }}
                   />
                 </label>
