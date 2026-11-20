@@ -41,10 +41,12 @@ export async function POST(request: NextRequest) {
   })
 
   const imageUrl = `${BASE_URL}/api/live-manager-report?id=${id}`
-  const date = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+  const now = new Date()
+  const date = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' })
+  const time = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
   const messages = [
     { type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl },
-    { type: 'text', text: `📸 รายงาน\n👤 ${nickname || '-'}\n📅 ${date}` },
+    { type: 'text', text: `รายงานการประชุม\n📅 ${date}\n⏰ ${time}` },
   ]
 
   const res = await fetch('https://api.line.me/v2/bot/message/push', {
