@@ -2078,46 +2078,47 @@ export default function Home() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      const reader = new FileReader()
-                      reader.onload = async (ev) => {
-                        const originalBase64 = ev.target?.result as string
-                        setLiveManagerImagePreview(originalBase64)
-                        setLiveManagerUploading(true)
-                        setLiveManagerReported(false)
-                        // บีบอัดรูปก่อน upload เพื่อลดขนาด
-                        const base64 = await new Promise<string>((resolve) => {
+                      setLiveManagerUploading(true)
+                      setLiveManagerReported(false)
+                      const compressed = await new Promise<string>((resolve) => {
+                        const reader = new FileReader()
+                        reader.onload = (ev) => {
                           const img = new Image()
                           img.onload = () => {
-                            const MAX = 1024
-                            const scale = Math.min(1, MAX / Math.max(img.width, img.height))
+                            const MAX = 800
+                            let w = img.width, h = img.height
+                            if (w > MAX || h > MAX) {
+                              if (w > h) { h = Math.round((h * MAX) / w); w = MAX }
+                              else { w = Math.round((w * MAX) / h); h = MAX }
+                            }
                             const canvas = document.createElement('canvas')
-                            canvas.width = Math.round(img.width * scale)
-                            canvas.height = Math.round(img.height * scale)
-                            canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
-                            resolve(canvas.toDataURL('image/jpeg', 0.75))
+                            canvas.width = w; canvas.height = h
+                            canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+                            resolve(canvas.toDataURL('image/jpeg', 0.7))
                           }
-                          img.onerror = () => resolve(originalBase64)
-                          img.src = originalBase64
-                        })
-                        try {
-                          const res = await fetch('/api/upload-image', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ base64 }),
-                          })
-                          if (res.ok) {
-                            const data = await res.json()
-                            setLiveManagerImage(data.url || base64)
-                          } else {
-                            setLiveManagerImage(base64)
-                          }
-                        } catch {
-                          setLiveManagerImage(base64)
-                        } finally {
-                          setLiveManagerUploading(false)
+                          img.onerror = () => resolve(ev.target!.result as string)
+                          img.src = ev.target!.result as string
                         }
+                        reader.readAsDataURL(file)
+                      })
+                      setLiveManagerImagePreview(compressed)
+                      try {
+                        const res = await fetch('/api/upload-image', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ base64: compressed }),
+                        })
+                        if (res.ok) {
+                          const data = await res.json()
+                          setLiveManagerImage(data.url || compressed)
+                        } else {
+                          setLiveManagerImage(compressed)
+                        }
+                      } catch {
+                        setLiveManagerImage(compressed)
+                      } finally {
+                        setLiveManagerUploading(false)
                       }
-                      reader.readAsDataURL(file)
                     }}
                   />
                 </label>
