@@ -607,8 +607,8 @@ export default function AnnouncementsPage() {
                           onClick={() => setSelectedStockId(prev => prev === item.id ? null : item.id)}
                           className={`border-t border-[#E2E8F0] cursor-pointer transition-colors ${
                             selectedStockId === item.id
-                              ? 'bg-[#1E3A5F]/10 border-l-4 border-l-[#1E3A5F]'
-                              : idx % 2 === 1 ? 'bg-[#FAFBFC] hover:bg-[#EEF2F7]' : 'bg-white hover:bg-[#EEF2F7]'
+                              ? 'bg-yellow-200 border-l-4 border-l-yellow-500'
+                              : idx % 2 === 1 ? 'bg-[#FAFBFC] hover:bg-yellow-50' : 'bg-white hover:bg-yellow-50'
                           }`}
                         >
                           <td className="px-3 py-3 text-xs max-w-[140px]">
