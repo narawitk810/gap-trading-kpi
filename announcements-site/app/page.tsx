@@ -28,6 +28,7 @@ type StockItem = {
   acknowledged_at: string | null
   pricing_data: string | null
   tiktok_listed_at: string | null
+  urgent_promo?: string
 }
 
 type PricingData = {
@@ -221,6 +222,9 @@ export default function AnnouncementsPage() {
                         <div key={item.id} className="px-4 py-3 flex items-center justify-between gap-3">
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-[#374151] truncate">{item.product_name}</p>
+                            {item.urgent_promo && (
+                              <p className="text-xs font-bold text-[#DC2626] mt-0.5">🔥 {item.urgent_promo}</p>
+                            )}
                             <p className="text-xs text-gray-400 mt-0.5">
                               {item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง
                             </p>

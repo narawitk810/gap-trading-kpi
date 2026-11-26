@@ -35,6 +35,7 @@ type StockPrice = {
   sku_code_box: string
   sku_code_pack: string
   allocation: string | null
+  urgent_promo: string | null
 }
 
 function formatDate(iso: string) {
@@ -77,6 +78,8 @@ export default function StockPricesPage() {
   const [skuStatus, setSkuStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [allocationEdits, setAllocationEdits] = useState<Record<string, string>>({})
   const [allocationStatus, setAllocationStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
+  const [urgentPromoEdits, setUrgentPromoEdits] = useState<Record<string, string>>({})
+  const [urgentPromoStatus, setUrgentPromoStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchData = useCallback(() => {
@@ -170,6 +173,24 @@ export default function StockPricesPage() {
     } catch {
       setAllocationStatus(prev => ({ ...prev, [id]: 'error' }))
       setTimeout(() => setAllocationStatus(prev => ({ ...prev, [id]: 'idle' })), 3000)
+    }
+  }
+
+  async function saveUrgentPromo(id: string, val: string) {
+    setUrgentPromoStatus(prev => ({ ...prev, [id]: 'saving' }))
+    try {
+      const res = await fetch('/api/stock-arrival', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'update_urgent_promo', urgent_promo: val.trim() }),
+      })
+      if (!res.ok) throw new Error()
+      setItems(prev => prev.map(x => x.id === id ? { ...x, urgent_promo: val.trim() } : x))
+      setUrgentPromoStatus(prev => ({ ...prev, [id]: 'saved' }))
+      setTimeout(() => setUrgentPromoStatus(prev => ({ ...prev, [id]: 'idle' })), 2000)
+    } catch {
+      setUrgentPromoStatus(prev => ({ ...prev, [id]: 'error' }))
+      setTimeout(() => setUrgentPromoStatus(prev => ({ ...prev, [id]: 'idle' })), 3000)
     }
   }
 
@@ -398,6 +419,7 @@ export default function StockPricesPage() {
                     <th className="text-center px-3 py-3">รูป</th>
                     <th className="text-center px-3 py-3">เลข SKU</th>
                     <th className="text-left px-3 py-3">Allocation</th>
+                    <th className="text-left px-3 py-3">โปรเร่งด่วน</th>
                     <th className="text-center px-3 py-3">สถานะ</th>
                   </tr>
                 </thead>
@@ -482,6 +504,32 @@ export default function StockPricesPage() {
                                   className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
                                 >
                                   {allocationStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-3 min-w-[120px]">
+                            <div className="flex flex-col items-start gap-1">
+                              <input
+                                type="text"
+                                value={urgentPromoEdits[r.id] ?? (r.urgent_promo || '')}
+                                onChange={(e) => {
+                                  setUrgentPromoEdits(prev => ({ ...prev, [r.id]: e.target.value }))
+                                  setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'idle' }))
+                                }}
+                                className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#DC2626]"
+                              />
+                              {urgentPromoStatus[r.id] === 'saved' ? (
+                                <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                              ) : urgentPromoStatus[r.id] === 'error' ? (
+                                <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                              ) : (
+                                <button
+                                  onClick={() => saveUrgentPromo(r.id, urgentPromoEdits[r.id] ?? (r.urgent_promo || ''))}
+                                  disabled={urgentPromoStatus[r.id] === 'saving'}
+                                  className="text-[10px] bg-[#DC2626] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {urgentPromoStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
                                 </button>
                               )}
                             </div>
@@ -616,6 +664,32 @@ export default function StockPricesPage() {
                                 className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
                               >
                                 {allocationStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 min-w-[120px]">
+                          <div className="flex flex-col items-start gap-1">
+                            <input
+                              type="text"
+                              value={urgentPromoEdits[r.id] ?? (r.urgent_promo || '')}
+                              onChange={(e) => {
+                                setUrgentPromoEdits(prev => ({ ...prev, [r.id]: e.target.value }))
+                                setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'idle' }))
+                              }}
+                              className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#DC2626]"
+                            />
+                            {urgentPromoStatus[r.id] === 'saved' ? (
+                              <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                            ) : urgentPromoStatus[r.id] === 'error' ? (
+                              <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                            ) : (
+                              <button
+                                onClick={() => saveUrgentPromo(r.id, urgentPromoEdits[r.id] ?? (r.urgent_promo || ''))}
+                                disabled={urgentPromoStatus[r.id] === 'saving'}
+                                className="text-[10px] bg-[#DC2626] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                              >
+                                {urgentPromoStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
                               </button>
                             )}
                           </div>

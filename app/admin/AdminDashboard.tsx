@@ -90,6 +90,7 @@ type StockArrival = {
   sku_code_box: string | null
   sku_code_pack: string | null
   allocation: string | null
+  urgent_promo: string | null
 }
 
 type PromoThreshold = {
@@ -548,6 +549,8 @@ export default function AdminDashboard() {
   const [arrivalImageModal, setArrivalImageModal] = useState<string | null>(null)
   const [allocationEdits, setAllocationEdits] = useState<Record<string, string>>({})
   const [allocationStatus, setAllocationStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
+  const [urgentPromoEdits, setUrgentPromoEdits] = useState<Record<string, string>>({})
+  const [urgentPromoStatus, setUrgentPromoStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [costEdits, setCostEdits] = useState<Record<string, string>>({})
   const [costStatus, setCostStatus] = useState<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
   const [pricingModal, setPricingModal] = useState<StockArrival | null>(null)
@@ -3089,6 +3092,7 @@ export default function AdminDashboard() {
                         <th className="text-center px-4 py-3">สถานะ</th>
                         <th className="text-center px-4 py-3">รูป</th>
                         <th className="text-left px-4 py-3">Allocation</th>
+                        <th className="text-left px-4 py-3">โปรเร่งด่วน</th>
                         <th className="text-center px-4 py-3">การดำเนินการ</th>
                       </tr>
                     </thead>
@@ -3205,6 +3209,49 @@ export default function AdminDashboard() {
                                   className="text-[10px] bg-[#1E3A5F] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
                                 >
                                   {allocationStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 min-w-[140px]">
+                            <div className="flex flex-col items-start gap-1">
+                              <input
+                                type="text"
+                                value={urgentPromoEdits[r.id] ?? (r.urgent_promo || '')}
+                                onChange={(e) => {
+                                  setUrgentPromoEdits(prev => ({ ...prev, [r.id]: e.target.value }))
+                                  setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'idle' }))
+                                }}
+                                className="w-full border border-[#E2E8F0] rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-[#DC2626]"
+                              />
+                              {urgentPromoStatus[r.id] === 'saved' ? (
+                                <span className="text-[10px] text-[#16A34A] font-semibold">✓ บันทึกแล้ว</span>
+                              ) : urgentPromoStatus[r.id] === 'error' ? (
+                                <span className="text-[10px] text-[#DC2626]">ผิดพลาด</span>
+                              ) : (
+                                <button
+                                  onClick={async () => {
+                                    const val = (urgentPromoEdits[r.id] ?? (r.urgent_promo || '')).trim()
+                                    setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'saving' }))
+                                    try {
+                                      const res = await fetch('/api/stock-arrival', {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: r.id, action: 'update_urgent_promo', urgent_promo: val }),
+                                      })
+                                      if (!res.ok) throw new Error()
+                                      setStockArrivals(prev => prev.map(x => x.id === r.id ? { ...x, urgent_promo: val } : x))
+                                      setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'saved' }))
+                                      setTimeout(() => setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'idle' })), 2000)
+                                    } catch {
+                                      setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'error' }))
+                                      setTimeout(() => setUrgentPromoStatus(prev => ({ ...prev, [r.id]: 'idle' })), 3000)
+                                    }
+                                  }}
+                                  disabled={urgentPromoStatus[r.id] === 'saving'}
+                                  className="text-[10px] bg-[#DC2626] text-white px-2 py-0.5 rounded-lg disabled:opacity-50 whitespace-nowrap"
+                                >
+                                  {urgentPromoStatus[r.id] === 'saving' ? '...' : 'บันทึก'}
                                 </button>
                               )}
                             </div>
