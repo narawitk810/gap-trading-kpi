@@ -92,6 +92,7 @@ export default function AnnouncementsPage() {
   const [loadingData, setLoadingData] = useState(false)
   const [imageModal, setImageModal] = useState<string | null>(null)
   const [stockSearch, setStockSearch] = useState('')
+  const [selectedStockId, setSelectedStockId] = useState<string | null>(null)
 
   const [annTab, setAnnTab] = useState<'important' | 'company' | 'dept' | 'rules'>('important')
   const [deptAnnouncements, setDeptAnnouncements] = useState<DeptAnn[]>([])
@@ -601,7 +602,15 @@ export default function AnnouncementsPage() {
                       try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
                       const commTier = pricing?.commission_tier ?? ''
                       return (
-                        <tr key={item.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                        <tr
+                          key={item.id}
+                          onClick={() => setSelectedStockId(prev => prev === item.id ? null : item.id)}
+                          className={`border-t border-[#E2E8F0] cursor-pointer transition-colors ${
+                            selectedStockId === item.id
+                              ? 'bg-[#1E3A5F]/10 border-l-4 border-l-[#1E3A5F]'
+                              : idx % 2 === 1 ? 'bg-[#FAFBFC] hover:bg-[#EEF2F7]' : 'bg-white hover:bg-[#EEF2F7]'
+                          }`}
+                        >
                           <td className="px-3 py-3 text-xs max-w-[140px]">
                             <p className="font-semibold text-[#1E3A5F] leading-snug">{item.product_name}</p>
                             {item.acknowledged_at && (
