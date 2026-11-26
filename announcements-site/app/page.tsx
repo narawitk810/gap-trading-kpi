@@ -214,44 +214,49 @@ export default function AnnouncementsPage() {
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                  <div className="divide-y divide-[#E2E8F0]">
-                    {stockItems.map((item) => {
-                      let pricing: PricingData | null = null
-                      try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
-                      return (
-                        <div key={item.id} className="px-4 py-3 flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[#374151] truncate">{item.product_name}</p>
-                            {item.urgent_promo && (
-                              <p className="text-xs font-bold text-[#DC2626] mt-0.5">🔥 {item.urgent_promo}</p>
-                            )}
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง
-                            </p>
-                            {pricing && (
-                              <p className="text-xs text-[#1E3A5F] mt-0.5">
-                                แพ็คละ {fmt(pricing.pack_price_system)} บ.
-                                {pricing.box_system_enabled !== false && ` · กล่องละ ${fmt(pricing.box_price_system)} บ.`}
-                              </p>
-                            )}
-                            {item.acknowledged_at && (
-                              <p className="text-[10px] text-gray-300 mt-0.5">ตั้งราคา {formatDate(item.acknowledged_at)}</p>
-                            )}
-                          </div>
-                          <div className="shrink-0">
-                            {item.tiktok_listed_at ? (
-                              <span className="inline-flex items-center gap-1 bg-[#16A34A]/10 text-[#16A34A] text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                                ✅ TikTok แล้ว
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
-                                🔵 ตั้งราคาแล้ว
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-[#F5F6F8] border-b border-[#E2E8F0]">
+                          <th className="px-4 py-2 text-xs font-semibold text-[#374151]">ชื่อสินค้า</th>
+                          <th className="px-3 py-2 text-xs font-semibold text-[#DC2626] whitespace-nowrap">🔥 โปรเร่งด่วน</th>
+                          <th className="px-3 py-2 text-xs font-semibold text-[#1E3A5F] text-right whitespace-nowrap">ราคา</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stockItems.map((item, idx) => {
+                          let pricing: PricingData | null = null
+                          try { pricing = item.pricing_data ? JSON.parse(item.pricing_data) : null } catch { pricing = null }
+                          return (
+                            <tr key={item.id} className={`border-t border-[#E2E8F0] ${idx % 2 === 1 ? 'bg-[#FAFBFC]' : 'bg-white'}`}>
+                              <td className="px-4 py-3">
+                                <p className="text-sm font-semibold text-[#374151]">{item.product_name}</p>
+                                <p className="text-xs text-gray-400 mt-0.5">{item.quantity} กล่อง · {item.packs_per_box} แพ็ค/กล่อง</p>
+                              </td>
+                              <td className="px-3 py-3">
+                                {item.urgent_promo ? (
+                                  <span className="text-xs font-bold text-[#DC2626]">{item.urgent_promo}</span>
+                                ) : (
+                                  <span className="text-xs text-gray-300">—</span>
+                                )}
+                              </td>
+                              <td className="px-3 py-3 text-right">
+                                {pricing ? (
+                                  <>
+                                    <p className="text-xs font-bold text-[#16A34A] whitespace-nowrap">แพ็ค {fmt(pricing.pack_price_system)} บ.</p>
+                                    {pricing.box_system_enabled !== false && (
+                                      <p className="text-xs text-[#1E3A5F] whitespace-nowrap">กล่อง {fmt(pricing.box_price_system)} บ.</p>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-gray-300">รอตั้งราคา</span>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
