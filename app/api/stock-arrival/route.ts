@@ -100,6 +100,27 @@ export async function PATCH(request: NextRequest) {
   const isAdmin = searchParams.get('key') === ADMIN_KEY
   const body = await request.json()
   if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+
+  // Fast path: ข้าม ensureSchema สำหรับ simple field updates
+  if (body.action === 'update_allocation') {
+    const db = getDb()
+    await db.execute({ sql: 'UPDATE stock_arrivals SET allocation = ? WHERE id = ?', args: [body.allocation ?? '', body.id] })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'update_urgent_promo') {
+    const db = getDb()
+    await db.execute({ sql: 'UPDATE stock_arrivals SET urgent_promo = ? WHERE id = ?', args: [body.urgent_promo ?? '', body.id] })
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body.action === 'update_cost') {
+    if (!body.cost?.toString().trim()) return NextResponse.json({ error: 'กรุณาระบุต้นทุน' }, { status: 400 })
+    const db = getDb()
+    await db.execute({ sql: 'UPDATE stock_arrivals SET cost = ? WHERE id = ?', args: [body.cost.toString().trim(), body.id] })
+    return NextResponse.json({ ok: true })
+  }
+
   await ensureSchema()
   const db = getDb()
 
@@ -141,22 +162,6 @@ export async function PATCH(request: NextRequest) {
       sql: `UPDATE stock_arrivals SET tiktok_listed_at = '' WHERE id = ? AND status = 'acknowledged'`,
       args: [body.id],
     })
-    return NextResponse.json({ ok: true })
-  }
-
-  if (body.action === 'update_allocation') {
-    await db.execute({ sql: 'UPDATE stock_arrivals SET allocation = ? WHERE id = ?', args: [body.allocation ?? '', body.id] })
-    return NextResponse.json({ ok: true })
-  }
-
-  if (body.action === 'update_urgent_promo') {
-    await db.execute({ sql: 'UPDATE stock_arrivals SET urgent_promo = ? WHERE id = ?', args: [body.urgent_promo ?? '', body.id] })
-    return NextResponse.json({ ok: true })
-  }
-
-  if (body.action === 'update_cost') {
-    if (!body.cost?.toString().trim()) return NextResponse.json({ error: 'กรุณาระบุต้นทุน' }, { status: 400 })
-    await db.execute({ sql: 'UPDATE stock_arrivals SET cost = ? WHERE id = ?', args: [body.cost.toString().trim(), body.id] })
     return NextResponse.json({ ok: true })
   }
 
