@@ -85,6 +85,7 @@ export default function ContentProductionPage() {
   const [editRawForm, setEditRawForm] = useState({ title: '', drive_link: '', shoot_date: '' })
   const [editRawError, setEditRawError] = useState('')
   const [editRawLoading, setEditRawLoading] = useState(false)
+  const [showEditingApp, setShowEditingApp] = useState(false)
 
   // Action form state
   const [assignTo, setAssignTo] = useState('')
@@ -318,6 +319,12 @@ export default function ContentProductionPage() {
             + เพิ่มคอนเทนต์ใหม่
           </button>
         </div>
+        <button
+          onClick={() => setShowEditingApp(true)}
+          className="w-full py-2.5 rounded-xl bg-[#374151] text-white text-sm font-semibold hover:bg-[#1f2937] transition-colors flex items-center justify-center gap-2"
+        >
+          🎬 แอปตัดต่อคลิป
+        </button>
       </div>
 
       {/* Clip List */}
@@ -697,6 +704,35 @@ export default function ContentProductionPage() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* แอปตัดต่อคลิป Modal */}
+      {showEditingApp && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowEditingApp(false)}>
+          <div className="bg-white w-full max-w-lg rounded-t-2xl p-5 pb-8 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-bold text-[#1E3A5F]">🎬 แอปตัดต่อคลิป</h2>
+              <button onClick={() => setShowEditingApp(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">ทำตามขั้นตอนนี้ทุกครั้งก่อน export คลิป</p>
+            <div className="space-y-3">
+              {[
+                { step: 1, title: 'ตัด Dead Air', desc: 'ตัดช่วงเงียบ / หยุดพูดนานเกิน 1 วิ ออกให้หมด' },
+                { step: 2, title: 'ใส่ Sub', desc: 'ใส่ subtitle ให้ครบทุกประโยค ตรวจความถูกต้องของคำ' },
+              ].map(({ step, title, desc }) => (
+                <div key={step} className="flex gap-3 bg-[#F5F6F8] rounded-xl p-4">
+                  <div className="w-8 h-8 rounded-full bg-[#1E3A5F] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                    {step}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1E3A5F]">{title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
