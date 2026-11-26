@@ -4,7 +4,8 @@ import { getDb } from '@/lib/db'
 export async function GET() {
   const db = getDb()
   const result = await db.execute(
-    `SELECT id, product_name, quantity, packs_per_box, acknowledged_at, pricing_data, tiktok_listed_at
+    `SELECT id, product_name, quantity, packs_per_box, acknowledged_at,
+            pricing_data, tiktok_listed_at, urgent_promo
      FROM stock_arrivals
      WHERE status = 'acknowledged'
      ORDER BY COALESCE(acknowledged_at, '') DESC`
