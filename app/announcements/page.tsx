@@ -589,7 +589,7 @@ export default function AnnouncementsPage() {
                       <th className="text-center px-2 py-3">รูป</th>
                       <th className="text-center px-2 py-3">SKU</th>
                       <th className="text-left px-2 py-3">Allocation</th>
-                      <th className="text-left px-2 py-3 text-[#DC2626]">โปรเร่งด่วน</th>
+                      <th className="text-left px-3 py-3 text-[#DC2626] min-w-[160px]">🔥 โปรเร่งด่วน</th>
                       <th className="text-center px-2 py-3">สถานะ</th>
                     </tr>
                   </thead>
@@ -658,10 +658,10 @@ export default function AnnouncementsPage() {
                           <td className="px-2 py-3 text-xs text-[#374151]">
                             {item.allocation || <span className="text-gray-300">—</span>}
                           </td>
-                          <td className="px-2 py-3 text-xs">
+                          <td className="px-3 py-3 min-w-[160px]">
                             {item.urgent_promo
-                              ? <span className="font-bold text-[#DC2626]">{item.urgent_promo}</span>
-                              : <span className="text-gray-300">—</span>}
+                              ? <span className="inline-block bg-[#DC2626]/10 text-[#DC2626] font-semibold text-xs px-2.5 py-1 rounded-lg leading-snug">{item.urgent_promo}</span>
+                              : <span className="text-gray-300 text-xs">—</span>}
                           </td>
                           <td className="px-2 py-3 text-center">
                             {item.status === 'pending' ? (
