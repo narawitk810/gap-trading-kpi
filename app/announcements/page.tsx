@@ -59,6 +59,7 @@ type StockItem = {
   sku_code_box?: string
   sku_code_pack?: string
   allocation?: string
+  urgent_promo?: string
   status?: string
 }
 
@@ -588,6 +589,7 @@ export default function AnnouncementsPage() {
                       <th className="text-center px-2 py-3">รูป</th>
                       <th className="text-center px-2 py-3">SKU</th>
                       <th className="text-left px-2 py-3">Allocation</th>
+                      <th className="text-left px-2 py-3 text-[#DC2626]">โปรเร่งด่วน</th>
                       <th className="text-center px-2 py-3">สถานะ</th>
                     </tr>
                   </thead>
@@ -655,6 +657,11 @@ export default function AnnouncementsPage() {
                           </td>
                           <td className="px-2 py-3 text-xs text-[#374151]">
                             {item.allocation || <span className="text-gray-300">—</span>}
+                          </td>
+                          <td className="px-2 py-3 text-xs">
+                            {item.urgent_promo
+                              ? <span className="font-bold text-[#DC2626]">{item.urgent_promo}</span>
+                              : <span className="text-gray-300">—</span>}
                           </td>
                           <td className="px-2 py-3 text-center">
                             {item.status === 'pending' ? (
